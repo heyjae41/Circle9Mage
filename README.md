@@ -67,7 +67,27 @@ CirclePay Global은 **Circle의 4개 Developer Bounties 챌린지를 모두 통�
 - Python 3.9+ (백엔드)
 - Node.js 18+ (모바일 앱)
 - iOS/Android 개발 환경 (Expo)
+- PostgreSQL 13+ (데이터베이스)
+- Redis 6+ (캐싱)
 ```
+
+### 🔐 환경 설정
+
+#### Circle API 키 발급
+1. [Circle Developer Console](https://console.circle.com) 방문
+2. 계정 생성 및 로그인
+3. API Keys 섹션에서 **Sandbox API Key** 생성
+
+#### 환경 변수 설정
+```bash
+# 환경 변수 템플릿 복사
+cp env.example .env
+
+# .env 파일을 열어서 실제 값으로 수정
+nano .env
+```
+
+⚠️ **중요**: `.env` 파일은 절대로 Git에 커밋하지 마세요! `.gitignore`에 의해 자동 제외됩니다.
 
 ### 🔧 설치 및 실행
 
@@ -131,7 +151,7 @@ circle9mage/
 ├── 🐍 backend/                     # FastAPI 백엔드
 │   ├── main.py                     # 메인 애플리케이션
 │   ├── requirements.txt            # Python 의존성
-│   ├── app/
+│   ├── app/                        # Backend Modules
 │   │   ├── core/
 │   │   │   └── config.py          # 설정 관리
 │   │   ├── database/
