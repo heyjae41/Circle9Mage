@@ -1,0 +1,406 @@
+# 🌍 CirclePay Global - Git Ignore Rules
+# Circle Developer Bounties 해커톤 프로젝트용
+
+# ====================================
+# 🔐 환경 변수 및 보안 파일 (최우선)
+# ====================================
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+.env.test
+*.env
+secrets.json
+config.json
+*.key
+*.pem
+*.p12
+*.crt
+*.cer
+
+# Circle API 키 및 설정 파일
+circle_config.json
+circle_keys.json
+api_keys.json
+wallet_keys.json
+
+# ====================================
+# 🐍 Python/FastAPI Backend
+# ====================================
+# Virtual Environment
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+.pyenv/
+pipenv/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# pytest
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# Alembic (Database Migration)
+alembic/versions/*.py
+!alembic/versions/__init__.py
+
+# ====================================
+# 📱 React Native/Expo Mobile App
+# ====================================
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+web-build/
+expo-env.d.ts
+
+# Metro
+.metro-health-check*
+
+# React Native
+# Built application files
+*.apk
+*.aab
+*.ipa
+*.app
+
+# Flipper
+ios/Pods/
+android/.gradle/
+android/app/build/
+android/build/
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/local.properties
+
+# ====================================
+# 💾 데이터베이스 파일
+# ====================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+database.db
+circlepay.db
+test.db
+
+# PostgreSQL
+postgresql_data/
+postgres_data/
+pg_data/
+
+# Redis
+redis_data/
+dump.rdb
+
+# ====================================
+# 📄 로그 파일
+# ====================================
+*.log
+*.log.*
+logs/
+log/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm/_logs/
+
+# FastAPI/Uvicorn 로그
+uvicorn.log
+fastapi.log
+app.log
+error.log
+access.log
+
+# ====================================
+# 🔧 IDE 및 에디터 설정
+# ====================================
+# VSCode
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# PyCharm
+.idea/
+*.swp
+*.swo
+*~
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ====================================
+# 💻 운영체제 생성 파일
+# ====================================
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ====================================
+# 📦 패키지 관리자 파일
+# ====================================
+# npm
+package-lock.json
+.npm/
+.npmrc
+
+# Yarn
+.yarn/
+.yarnrc.yml
+yarn.lock
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# ====================================
+# 🔨 빌드 및 캐시 파일
+# ====================================
+# Build outputs
+build/
+dist/
+out/
+target/
+
+# Cache directories
+.cache/
+.tmp/
+.temp/
+tmp/
+temp/
+
+# Webpack
+.webpack/
+
+# Next.js
+.next/
+
+# Gatsby
+.cache/
+public/
+
+# ====================================
+# 🧪 테스트 파일
+# ====================================
+# Coverage reports
+coverage/
+.nyc_output/
+lcov.info
+
+# Test results
+test-results/
+test-output/
+.jest/
+
+# ====================================
+# 📊 모니터링 및 분석
+# ====================================
+# Sentry
+.sentryclirc
+
+# Analytics
+.analytics/
+
+# ====================================
+# 🌐 Circle SDK 및 블록체인
+# ====================================
+# Circle SDK Cache
+.circle/
+circle_cache/
+
+# Blockchain data
+blockchain_data/
+chain_data/
+
+# Wallet files (NEVER commit!)
+*.wallet
+*.keystore
+private_keys/
+mnemonics/
+
+# ====================================
+# 📋 기타 프로젝트 특화 파일
+# ====================================
+# Documentation builds
+docs/_build/
+docs/build/
+
+# Backup files
+*.backup
+*.bak
+*.orig
+
+# Archive files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Temporary files
+*.tmp
+*.temp
+*~$*
+
+# ====================================
+# 🚫 절대 커밋하면 안 되는 파일들
+# ====================================
+# API Keys & Secrets
+*key*
+*secret*
+*token*
+*password*
+*credential*
+
+# Personal notes
+NOTES.md
+TODO_PERSONAL.md
+PRIVATE.md
+
+# Local scripts
+run_local.sh
+test_local.sh
+deploy_local.sh
+
+# ====================================
+# ✅ 예외사항 (커밋 허용)
+# ====================================
+# 이 파일들은 .으로 시작하지만 커밋 허용
+!.gitignore
+!.gitattributes
+!.github/
+!.eslintrc.js
+!.prettierrc
+!.babelrc
+!.dockerignore
+
+# README 파일들
+!README.md
+!readme.md
+!README.txt
+
+# License 파일
+!LICENSE
+!LICENSE.md
+!LICENSE.txt
+
+# 설정 템플릿 파일들
+!.env.example
+!.env.template
+!config.example.json
+
+# CI/CD 설정
+!.circleci/
+!.travis.yml
+!.gitlab-ci.yml
+
+# Docker 설정
+!Dockerfile
+!docker-compose.yml
+!.dockerignore
+
+# ====================================
+# 📝 추가 설명
+# ====================================
+# 이 .gitignore는 Circle Developer Bounties 해커톤을 위해
+# 특별히 설계되었습니다. Circle API 키와 같은 민감한
+# 정보가 실수로 커밋되는 것을 방지합니다.
+#
+# 새로운 파일 유형이 생기면 이 파일을 업데이트해주세요.
+#
+# CirclePay Global Team
+# https://github.com/heyjae41/Circle9Mage 
