@@ -2,7 +2,7 @@
 컴플라이언스 관련 API 엔드포인트
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime
@@ -224,9 +224,9 @@ async def check_watchlist(address: str):
 
 @router.post("/alerts/configure")
 async def configure_compliance_alerts(
-    risk_threshold: float = Field(..., ge=0.0, le=1.0),
-    alert_types: List[str] = Field(...),
-    notification_channels: List[str] = Field(...)
+    risk_threshold: float = Query(..., ge=0.0, le=1.0),
+    alert_types: List[str] = Query(...),
+    notification_channels: List[str] = Query(...)
 ):
     """컴플라이언스 알림 설정"""
     try:

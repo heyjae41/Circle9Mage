@@ -21,13 +21,21 @@ async def init_db():
     
     settings = get_settings()
     
-    # PostgreSQL 연결
-    engine = create_async_engine(
-        settings.database_url.replace("postgresql://", "postgresql+asyncpg://"),
-        echo=settings.debug,
-        pool_size=20,
-        max_overflow=30
-    )
+    # 데이터베이스 연결 (SQLite 또는 PostgreSQL)
+    if "sqlite" in settings.database_url:
+        # SQLite 연결 (connection pooling 미지원)
+        engine = create_async_engine(
+            settings.database_url,
+            echo=settings.debug
+        )
+    else:
+        # PostgreSQL 연결 (connection pooling 지원)
+        engine = create_async_engine(
+            settings.database_url.replace("postgresql://", "postgresql+asyncpg://"),
+            echo=settings.debug,
+            pool_size=20,
+            max_overflow=30
+        )
     
     # 세션 메이커
     async_session_maker = async_sessionmaker(
@@ -36,12 +44,19 @@ async def init_db():
         expire_on_commit=False
     )
     
-    # Redis 연결
-    redis_client = redis.from_url(
-        settings.redis_url,
-        encoding="utf-8",
-        decode_responses=True
-    )
+    # Redis 연결 (개발 환경에서는 optional)
+    try:
+        redis_client = redis.from_url(
+            settings.redis_url,
+            encoding="utf-8",
+            decode_responses=True
+        )
+        # Redis 연결 테스트
+        await redis_client.ping()
+        print("✅ Redis 연결 성공")
+    except Exception as e:
+        print(f"⚠️  Redis 연결 실패 (개발 환경에서는 무시): {e}")
+        redis_client = None
     
     # 테이블 생성 (개발 환경에서만)
     if settings.environment == "development":
@@ -61,7 +76,9 @@ async def get_db() -> AsyncSession:
             await session.close()
 
 async def get_redis():
-    """Redis 클라이언트 반환"""
+    """Redis 클라이언트 반환 (None일 수 있음)"""
+    if redis_client is None:
+        print("⚠️  Redis 사용 불가 - 캐싱 기능 비활성화")
     return redis_client
 
 async def close_db():

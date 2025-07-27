@@ -3,6 +3,7 @@
 """
 
 from pydantic_settings import BaseSettings
+from pydantic import ConfigDict
 from typing import List
 import os
 
@@ -18,9 +19,12 @@ class Settings(BaseSettings):
     circle_sandbox_api_key: str = ""
     circle_base_url: str = "https://api.circle.com"
     circle_sandbox_url: str = "https://api-sandbox.circle.com"
+    circle_entity_secret: str = ""
+    circle_environment: str = "sandbox"
     
     # JWT
     secret_key: str = "super-secret-key-change-in-production"
+    jwt_secret_key: str = "super-secret-key-change-in-production"  # 추가된 필드
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
@@ -40,9 +44,11 @@ class Settings(BaseSettings):
     # 로깅
     log_level: str = "INFO"
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"  # 추가 필드를 무시하도록 설정
+    )
 
 # 전역 설정 인스턴스
 _settings = None
