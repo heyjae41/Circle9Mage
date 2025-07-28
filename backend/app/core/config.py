@@ -22,9 +22,9 @@ class Settings(BaseSettings):
     circle_entity_secret: str = ""
     circle_environment: str = "sandbox"
     
-    # JWT
-    secret_key: str = "super-secret-key-change-in-production"
-    jwt_secret_key: str = "super-secret-key-change-in-production"  # 추가된 필드
+    # Security Keys (분리된 보안 키 - 실무 권장 패턴)
+    secret_key: str = "super-secret-key-change-in-production"  # FastAPI 앱, CORS, 세션용
+    jwt_secret_key: str = "super-jwt-secret-key-change-in-production"  # JWT 토큰 전용
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
