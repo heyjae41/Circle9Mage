@@ -363,9 +363,16 @@ python -m pytest test_backend_api.py::TestIntegration -v
 - **Partnerships**: partners@circlepay.global
 - **Media**: press@circlepay.global
 
-## 📄 License
 
-This project is provided under the [MIT License](LICENSE).
+## 📄 Copyright
+Copyright (c) 2025 moneyit777@gmail.com All rights reserved.
+
+This software, including all source code, documentation, and related materials, is the exclusive property of moneyit777@gmail.com.
+
+Any unauthorized reproduction, modification, distribution, commercial or non-commercial use of this project, in whole or in part, is strictly prohibited without the express prior written consent of moneyit777@gmail.com.
+
+All rights, title, and interest in and to this project and its contents are retained by moneyit777@gmail.com.  
+Violation of these terms may result in legal action.
 
 ---
 

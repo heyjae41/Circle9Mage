@@ -7,6 +7,8 @@ from pydantic import ConfigDict
 from typing import List
 import os
 
+load_dotenv()
+
 class Settings(BaseSettings):
     """애플리케이션 설정"""
     
