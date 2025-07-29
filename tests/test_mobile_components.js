@@ -12,9 +12,9 @@ import { NavigationContainer } from '@react-navigation/native';
 const mockAppState = {
   user: {
     id: 'test_user_123',
-    firstName: '홍',
-    lastName: '길동',
-    email: 'test@example.com',
+    firstName: 'LEE',
+    lastName: 'JaeWon',
+    email: 'heyjae41@naver.com',
     countryCode: 'KR',
     preferredCurrency: 'USDC',
     isVerified: true,
@@ -130,7 +130,7 @@ describe('HomeScreen', () => {
   test('홈 화면이 올바르게 렌더링되는지 확인', () => {
     const { getByText } = renderWithNavigation(<HomeScreen />);
     
-    expect(getByText('안녕하세요, 홍님! 👋')).toBeTruthy();
+    expect(getByText('안녕하세요, JaeWon님! 👋')).toBeTruthy();
     expect(getByText('글로벌 크로스체인 결제가 준비되었습니다')).toBeTruthy();
     expect(getByText('총 잔액')).toBeTruthy();
     expect(getByText('$1,500.00')).toBeTruthy(); // 1000 + 500

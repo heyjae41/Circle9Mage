@@ -2,7 +2,7 @@
 사용자 관련 데이터 모델
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, Text
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, Text, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database.connection import Base
@@ -17,7 +17,7 @@ class User(Base):
     first_name = Column(String(100), nullable=False)
     last_name = Column(String(100), nullable=False)
     country_code = Column(String(2), nullable=False)  # KR, TH, US 등
-    preferred_currency = Column(String(3), default="USDC")  # USD, KRW, THB 등
+    preferred_currency = Column(String(10), default="USDC")  # USDC, USD, KRW, THB 등
     
     # Circle Wallet 정보
     circle_wallet_id = Column(String(255), unique=True, index=True)
@@ -46,7 +46,7 @@ class Wallet(Base):
     __tablename__ = "wallets"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     
     # Circle Wallet 정보
     circle_wallet_id = Column(String(255), unique=True, nullable=False)
@@ -73,7 +73,7 @@ class Transaction(Base):
     __tablename__ = "transactions"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     
     # 거래 기본 정보
     transaction_id = Column(String(255), unique=True, nullable=False)  # Circle 거래 ID
@@ -105,7 +105,7 @@ class Transaction(Base):
     qr_code_id = Column(String(255))
     
     # 메타데이터
-    metadata = Column(Text)  # JSON 형태로 추가 정보 저장
+    extra_metadata = Column(Text)  # JSON 형태로 추가 정보 저장
     notes = Column(Text)
     
     # 타임스탬프

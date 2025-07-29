@@ -8,7 +8,9 @@ from typing import Dict, Any, Optional, List
 from app.core.config import get_settings
 import asyncio
 import uuid
+import re
 from datetime import datetime
+from web3 import Web3
 
 class CircleAPIClient:
     """Circle API 클라이언트"""
@@ -53,6 +55,50 @@ class CircleAPIClient:
 class CircleWalletService(CircleAPIClient):
     """Circle Wallet 서비스"""
     
+    def __init__(self, use_sandbox: bool = True):
+        super().__init__(use_sandbox)
+        self.max_retries = 3
+        self.retry_delay = 2  # seconds
+    
+    def is_valid_ethereum_address(self, address: str) -> bool:
+        """이더리움 주소 유효성 검증"""
+        if not address:
+            return False
+        
+        # 기본 형식 검증 (0x로 시작하고 40자리 hex)
+        if not re.match(r'^0x[a-fA-F0-9]{40}$', address):
+            return False
+        
+        try:
+            # Web3 체크섬 검증
+            return Web3.is_address(address)
+        except Exception:
+            return False
+    
+    async def create_wallet_with_retry(self, user_id: str, blockchain: str = "ETH", retry_count: int = 0) -> Dict[str, Any]:
+        """재시도 로직이 포함된 지갑 생성"""
+        try:
+            result = await self.create_wallet(user_id, blockchain)
+            
+            # 개발 환경이 아닌 경우 지갑 주소 검증
+            if self.settings.environment != "development":
+                if result.get("data") and result["data"].get("wallets"):
+                    wallet = result["data"]["wallets"][0]
+                    address = wallet.get("address")
+                    
+                    if not self.is_valid_ethereum_address(address):
+                        raise ValueError(f"Invalid wallet address generated: {address}")
+            
+            return result
+            
+        except Exception as e:
+            if retry_count < self.max_retries:
+                print(f"⚠️ 지갑 생성 실패 (시도 {retry_count + 1}/{self.max_retries + 1}): {str(e)}")
+                await asyncio.sleep(self.retry_delay * (retry_count + 1))  # 지수 백오프
+                return await self.create_wallet_with_retry(user_id, blockchain, retry_count + 1)
+            else:
+                raise Exception(f"지갑 생성 최종 실패 ({self.max_retries + 1}회 시도): {str(e)}")
+    
     async def create_wallet(self, user_id: str, blockchain: str = "ETH") -> Dict[str, Any]:
         """MPC 지갑 생성"""
         data = {
@@ -68,13 +114,20 @@ class CircleWalletService(CircleAPIClient):
         
         # 개발 환경에서는 mock 응답 반환
         if self.settings.environment == "development":
+            # 유효한 이더리움 주소 형식 생성
+            import secrets
+            random_address = "0x" + secrets.token_hex(20)  # 20바이트 = 40자리 hex
+            
             return {
                 "data": {
                     "wallets": [{
                         "id": f"wallet_{uuid.uuid4()}",
-                        "address": f"0x{uuid.uuid4().hex}",
+                        "address": random_address,
                         "blockchain": blockchain,
-                        "state": "LIVE"
+                        "state": "LIVE",
+                        "entityId": f"entity_{uuid.uuid4()}",
+                        "walletSetId": f"walletSet_{uuid.uuid4()}",
+                        "custodyType": "DEVELOPER"
                     }]
                 }
             }

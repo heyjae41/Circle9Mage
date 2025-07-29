@@ -4,13 +4,13 @@
 # ====================================
 # 🔐 환경 변수 및 보안 파일 (최우선)
 # ====================================
-.env
+#.env
 .env.local
 .env.development
 .env.production
 .env.staging
 .env.test
-*.env
+#*.env
 secrets.json
 config.json
 *.key

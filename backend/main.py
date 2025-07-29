@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 
 # 로컬 임포트
-from app.api.routes import payments, wallets, compliance, admin
+from app.api.routes import payments, wallets, compliance, admin, auth
 from app.core.config import get_settings
 from app.database.connection import init_db
 
@@ -51,6 +51,7 @@ app.add_middleware(
 )
 
 # API 라우터 등록
+app.include_router(auth.router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(payments.router, prefix="/api/v1/payments", tags=["payments"])
 app.include_router(wallets.router, prefix="/api/v1/wallets", tags=["wallets"])
 app.include_router(compliance.router, prefix="/api/v1/compliance", tags=["compliance"])

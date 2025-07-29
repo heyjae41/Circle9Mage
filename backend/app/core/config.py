@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     """애플리케이션 설정"""
     
     # 데이터베이스
-    database_url: str = "postgresql://postgres:password@localhost:5432/circlepay_db"
+    database_url: str = "postgresql://postgres:password@localhost:5433/circle9mage"
     redis_url: str = "redis://localhost:6379"
     
     # Circle API

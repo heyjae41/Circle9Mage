@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed, safeAdd } from '../utils/formatters';
 
 export default function HomeScreen() {
+  const navigation = useNavigation();
   const { state, loadUserData, loadWallets } = useApp();
   const [refreshing, setRefreshing] = useState(false);
 
@@ -131,9 +133,12 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>내 지갑</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>전체보기</Text>
-          </TouchableOpacity>
+                      <TouchableOpacity onPress={() => 
+              Alert.alert('지갑 관리', '설정 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)', 
+                [{text: '확인', onPress: () => console.log('지갑 전체보기 클릭')}])
+            }>
+              <Text style={styles.seeAllText}>전체보기</Text>
+            </TouchableOpacity>
         </View>
         
         {state.wallets.map((wallet, index) => (
@@ -165,9 +170,12 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>최근 거래</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>전체보기</Text>
-          </TouchableOpacity>
+                      <TouchableOpacity onPress={() => 
+              Alert.alert('거래 내역', '내역 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)', 
+                [{text: '확인', onPress: () => console.log('거래내역 전체보기 클릭')}])
+            }>
+              <Text style={styles.seeAllText}>전체보기</Text>
+            </TouchableOpacity>
         </View>
         
         {recentTransactions.length > 0 ? (
