@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,12 @@ import {
   RefreshControl,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../contexts/AppContext';
+import { safeToFixed, safeAdd } from '../utils/formatters';
 
 export default function HomeScreen() {
   const { state, loadUserData, loadWallets } = useApp();
@@ -30,8 +32,8 @@ export default function HomeScreen() {
     }
   };
 
-  // 총 잔액 계산
-  const totalBalance = state.wallets.reduce((sum, wallet) => sum + wallet.usdcBalance, 0);
+  // 총 잔액 계산 (안전한 처리)
+  const totalBalance = state.wallets.reduce((sum, wallet) => safeAdd(sum, wallet.usdcBalance), 0);
 
   // 최근 거래 가져오기 (최대 3개)
   const recentTransactions = state.transactions.slice(0, 3);
@@ -66,7 +68,7 @@ export default function HomeScreen() {
           <Ionicons name="eye-outline" size={24} color="white" />
         </View>
         <Text style={styles.balanceAmount}>
-          ${totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+          ${safeToFixed(totalBalance)}
         </Text>
         <Text style={styles.balanceCurrency}>USDC</Text>
         
@@ -134,8 +136,8 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
         
-        {state.wallets.map((wallet) => (
-          <View key={wallet.walletId} style={styles.walletItem}>
+        {state.wallets.map((wallet, index) => (
+          <View key={`wallet-${wallet.walletId}-${index}`} style={styles.walletItem}>
             <View style={styles.walletIcon}>
               <Ionicons 
                 name="wallet" 
@@ -151,7 +153,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.walletBalance}>
               <Text style={styles.walletBalanceAmount}>
-                ${wallet.usdcBalance.toFixed(2)}
+                ${safeToFixed(wallet.usdcBalance)}
               </Text>
               <Text style={styles.walletBalanceCurrency}>USDC</Text>
             </View>
@@ -169,8 +171,8 @@ export default function HomeScreen() {
         </View>
         
         {recentTransactions.length > 0 ? (
-          recentTransactions.map((transaction) => (
-            <View key={transaction.transactionId} style={styles.transactionItem}>
+          recentTransactions.map((transaction, index) => (
+            <View key={`transaction-${transaction.transactionId}-${index}`} style={styles.transactionItem}>
               <View style={styles.transactionIcon}>
                 <Ionicons 
                   name={transaction.type === 'payment' ? 'card' : 'send'} 
@@ -192,7 +194,7 @@ export default function HomeScreen() {
                   styles.transactionAmountText,
                   { color: transaction.type === 'payment' ? '#DC3545' : '#007AFF' }
                 ]}>
-                  {transaction.type === 'payment' ? '-' : '+'}${transaction.amount.toFixed(2)}
+                  {transaction.type === 'payment' ? '-' : '+'}${safeToFixed(transaction.amount)}
                 </Text>
                 <View style={[
                   styles.transactionStatus,

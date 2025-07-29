@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../contexts/AppContext';
+import { safeToFixed, safeAdd } from '../utils/formatters';
 
 export default function SendScreen() {
   const { state, createTransfer } = useApp();
@@ -25,8 +26,8 @@ export default function SendScreen() {
   const [selectedSourceWallet, setSelectedSourceWallet] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 총 잔액 계산
-  const totalBalance = state.wallets.reduce((sum, wallet) => sum + wallet.usdcBalance, 0);
+  // 총 잔액 계산 (안전한 처리)
+  const totalBalance = state.wallets.reduce((sum, wallet) => safeAdd(sum, wallet.usdcBalance), 0);
 
   // 송금 처리
   const handleSend = async () => {
@@ -103,7 +104,7 @@ export default function SendScreen() {
         style={styles.balanceCard}
       >
         <Text style={styles.balanceLabel}>총 사용 가능 금액</Text>
-        <Text style={styles.balanceAmount}>${totalBalance.toFixed(2)} USDC</Text>
+        <Text style={styles.balanceAmount}>${safeToFixed(totalBalance)} USDC</Text>
         <Text style={styles.balanceNote}>모든 체인의 USDC 잔액 합계</Text>
       </LinearGradient>
 
@@ -113,9 +114,9 @@ export default function SendScreen() {
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>출금 지갑 선택</Text>
           <View style={styles.walletSelector}>
-            {state.wallets.map((wallet) => (
+            {state.wallets.map((wallet, index) => (
               <TouchableOpacity
-                key={wallet.walletId}
+                key={`wallet-${wallet.walletId}-${index}`}
                 style={[
                   styles.walletOption,
                   selectedSourceWallet === wallet.walletId && styles.walletOptionSelected
@@ -131,7 +132,7 @@ export default function SendScreen() {
                   </View>
                   <View style={styles.walletOptionBalance}>
                     <Text style={styles.walletOptionBalanceAmount}>
-                      ${wallet.usdcBalance.toFixed(2)}
+                      ${safeToFixed(wallet.usdcBalance)}
                     </Text>
                     <Text style={styles.walletOptionBalanceCurrency}>USDC</Text>
                   </View>
@@ -183,9 +184,9 @@ export default function SendScreen() {
           
           {/* 빠른 금액 선택 */}
           <View style={styles.quickAmounts}>
-            {[10, 50, 100, 500].map((amount) => (
+            {[10, 50, 100, 500].map((amount, index) => (
               <TouchableOpacity
-                key={amount}
+                key={`amount-${amount}-${index}`}
                 style={styles.quickAmountButton}
                 onPress={() => setSendData(prev => ({ ...prev, amount: amount.toString() }))}
               >
@@ -199,9 +200,9 @@ export default function SendScreen() {
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>목적지 체인 (선택사항)</Text>
           <View style={styles.chainSelector}>
-            {state.supportedChains.map((chain) => (
+            {state.supportedChains.map((chain, index) => (
               <TouchableOpacity
-                key={chain.id}
+                key={`chain-${chain.id}-${index}`}
                 style={[
                   styles.chainOption,
                   sendData.targetChain === chain.id && styles.chainOptionSelected
@@ -283,8 +284,8 @@ export default function SendScreen() {
         {/* 최근 송금 내역 */}
         <View style={styles.recentTransfers}>
           <Text style={styles.sectionTitle}>최근 송금</Text>
-          {state.transactions.filter(t => t.type === 'transfer').slice(0, 3).map((transfer) => (
-            <View key={transfer.transactionId} style={styles.transferItem}>
+          {state.transactions.filter(t => t.type === 'transfer').slice(0, 3).map((transfer, index) => (
+            <View key={`transfer-${transfer.transactionId}-${index}`} style={styles.transferItem}>
               <View style={styles.transferIcon}>
                 <Ionicons name="send" size={16} color="#007AFF" />
               </View>
@@ -296,7 +297,7 @@ export default function SendScreen() {
                   {new Date(transfer.createdAt).toLocaleDateString('ko-KR')}
                 </Text>
               </View>
-              <Text style={styles.transferAmount}>${transfer.amount.toFixed(2)}</Text>
+              <Text style={styles.transferAmount}>${safeToFixed(transfer.amount)}</Text>
             </View>
           ))}
         </View>

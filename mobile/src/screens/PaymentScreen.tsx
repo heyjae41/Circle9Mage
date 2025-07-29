@@ -8,11 +8,24 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 import { useApp } from '../contexts/AppContext';
+import { safeToFixed, safeAdd } from '../utils/formatters';
+
+let BarCodeScanner: any = null;
+
+// 네이티브 플랫폼에서만 바코드 스캐너 import
+if (Platform.OS !== 'web') {
+  try {
+    const barcodeModule = require('expo-barcode-scanner');
+    BarCodeScanner = barcodeModule.BarCodeScanner;
+  } catch (error) {
+    console.warn('바코드 스캐너를 로드할 수 없습니다:', error);
+  }
+}
 
 export default function PaymentScreen() {
   const { state, createPayment } = useApp();
@@ -27,11 +40,21 @@ export default function PaymentScreen() {
   });
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // 카메라 권한 요청
+  // 카메라 권한 요청 (모바일에서만)
   useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
-      const { status } = await BarCodeScanner.requestPermissionsAsync();
-      setHasPermission(status === 'granted');
+      if (Platform.OS === 'web' || !BarCodeScanner) {
+        setHasPermission(false);
+        return;
+      }
+      
+      try {
+        const { status } = await BarCodeScanner.requestPermissionsAsync();
+        setHasPermission(status === 'granted');
+      } catch (error) {
+        console.warn('권한 요청 실패:', error);
+        setHasPermission(false);
+      }
     };
 
     getBarCodeScannerPermissions();
@@ -116,7 +139,8 @@ export default function PaymentScreen() {
     );
   }
 
-  if (hasPermission === false) {
+  // 웹에서는 권한 요청 화면을 스킵하고 메인 화면으로
+  if (hasPermission === false && Platform.OS !== 'web') {
     return (
       <View style={styles.container}>
         <View style={styles.permissionContainer}>
@@ -127,7 +151,7 @@ export default function PaymentScreen() {
           </Text>
           <TouchableOpacity 
             style={styles.permissionButton}
-            onPress={() => BarCodeScanner.requestPermissionsAsync()}
+            onPress={() => BarCodeScanner?.requestPermissionsAsync()}
           >
             <Text style={styles.permissionButtonText}>권한 허용</Text>
           </TouchableOpacity>
@@ -152,23 +176,35 @@ export default function PaymentScreen() {
         >
           <Text style={styles.balanceLabel}>사용 가능 잔액</Text>
           <Text style={styles.balanceAmount}>
-            ${state.wallets.reduce((sum, w) => sum + w.usdcBalance, 0).toFixed(2)} USDC
+            ${safeToFixed(state.wallets.reduce((sum, w) => safeAdd(sum, w.usdcBalance), 0), 2)} USDC
           </Text>
         </LinearGradient>
 
         {/* 결제 옵션 버튼들 */}
         <View style={styles.paymentOptions}>
           <TouchableOpacity
-            style={styles.optionButton}
-            onPress={() => setShowQRScanner(true)}
+            style={[styles.optionButton, Platform.OS === 'web' && styles.disabledButton]}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                Alert.alert(
+                  '기능 제한',
+                  'QR 스캔 기능은 모바일 앱에서만 사용할 수 있습니다.\n수동 결제를 이용해주세요.',
+                  [{ text: '확인' }]
+                );
+              } else {
+                setShowQRScanner(true);
+              }
+            }}
           >
             <LinearGradient
-              colors={['#007AFF', '#0051D0']}
+              colors={Platform.OS === 'web' ? ['#999', '#666'] : ['#007AFF', '#0051D0']}
               style={styles.optionGradient}
             >
               <Ionicons name="qr-code-outline" size={48} color="white" />
               <Text style={styles.optionTitle}>QR 스캔</Text>
-              <Text style={styles.optionSubtitle}>매장의 QR 코드를 스캔하세요</Text>
+              <Text style={styles.optionSubtitle}>
+                {Platform.OS === 'web' ? '모바일에서만 사용 가능' : '매장의 QR 코드를 스캔하세요'}
+              </Text>
             </LinearGradient>
           </TouchableOpacity>
 
@@ -190,8 +226,8 @@ export default function PaymentScreen() {
         {/* 최근 결제 내역 */}
         <View style={styles.recentPayments}>
           <Text style={styles.sectionTitle}>최근 결제</Text>
-          {state.transactions.filter(t => t.type === 'payment').slice(0, 3).map((payment) => (
-            <View key={payment.transactionId} style={styles.paymentItem}>
+          {state.transactions.filter(t => t.type === 'payment').slice(0, 3).map((payment, index) => (
+            <View key={`payment-${payment.transactionId}-${index}`} style={styles.paymentItem}>
               <View style={styles.paymentIcon}>
                 <Ionicons name="card" size={20} color="#28A745" />
               </View>
@@ -201,7 +237,7 @@ export default function PaymentScreen() {
                   {new Date(payment.createdAt).toLocaleDateString('ko-KR')}
                 </Text>
               </View>
-              <Text style={styles.paymentAmount}>-${payment.amount.toFixed(2)}</Text>
+              <Text style={styles.paymentAmount}>-${safeToFixed(payment.amount, 2)}</Text>
             </View>
           ))}
         </View>
@@ -225,10 +261,19 @@ export default function PaymentScreen() {
             <Text style={styles.scannerTitle}>QR 코드 스캔</Text>
           </View>
           
-          <BarCodeScanner
-            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-            style={StyleSheet.absoluteFillObject}
-          />
+          {Platform.OS !== 'web' && BarCodeScanner ? (
+            <BarCodeScanner
+              onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+              style={StyleSheet.absoluteFillObject}
+            />
+          ) : (
+            <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000', justifyContent: 'center', alignItems: 'center' }]}>
+              <Ionicons name="camera-outline" size={80} color="#666" />
+              <Text style={{ color: 'white', marginTop: 20, textAlign: 'center' }}>
+                카메라 기능은 모바일 앱에서만{'\n'}사용할 수 있습니다
+              </Text>
+            </View>
+          )}
           
           <View style={styles.scannerOverlay}>
             <View style={styles.scannerFrame} />
@@ -451,6 +496,9 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.6,
   },
   // 스캐너 관련 스타일
   scannerContainer: {

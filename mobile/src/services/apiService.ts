@@ -1,9 +1,27 @@
 import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-// API 기본 설정
-const API_BASE_URL = __DEV__ 
-  ? 'http://localhost:8000/api/v1' 
-  : 'https://your-production-api.com/api/v1';
+// 플랫폼별 API URL 설정
+const getApiBaseUrl = () => {
+  if (__DEV__) {
+    // 개발 환경
+    if (Platform.OS === 'android') {
+      // Android 에뮬레이터에서는 10.0.2.2를 사용
+      return 'http://10.0.2.2:8000/api/v1';
+    } else if (Platform.OS === 'ios') {
+      // iOS 시뮬레이터에서는 localhost 사용 가능
+      return 'http://localhost:8000/api/v1';
+    } else {
+      // 웹에서는 localhost 사용
+      return 'http://localhost:8000/api/v1';
+    }
+  } else {
+    // 프로덕션 환경
+    return 'https://your-production-api.com/api/v1';
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 interface ApiResponse<T> {
   data?: T;
@@ -16,6 +34,7 @@ class ApiService {
 
   constructor() {
     this.baseUrl = API_BASE_URL;
+    console.log(`🌐 API Base URL: ${this.baseUrl}`);
   }
 
   // 공통 HTTP 요청 함수

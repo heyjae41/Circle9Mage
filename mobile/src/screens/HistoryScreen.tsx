@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,8 +9,10 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../contexts/AppContext';
 import { Transaction } from '../types';
+import { safeToFixed } from '../utils/formatters';
 
 export default function HistoryScreen() {
   const { state, loadTransactions } = useApp();
@@ -100,7 +102,7 @@ export default function HistoryScreen() {
               styles.transactionAmount,
               { color: isOutgoing ? '#DC3545' : '#28A745' }
             ]}>
-              {isOutgoing ? '-' : '+'}${item.amount.toFixed(2)}
+              {isOutgoing ? '-' : '+'}${safeToFixed(item.amount, 2)}
             </Text>
           </View>
           
@@ -223,10 +225,9 @@ export default function HistoryScreen() {
             <View style={styles.summaryItem}>
               <Text style={styles.summaryLabel}>이번 달 지출</Text>
               <Text style={styles.summaryValue}>
-                ${filteredTransactions
+                ${safeToFixed(filteredTransactions
                   .filter(t => t.type === 'payment' && new Date(t.createdAt).getMonth() === new Date().getMonth())
-                  .reduce((sum, t) => sum + t.amount, 0)
-                  .toFixed(2)}
+                  .reduce((sum, t) => sum + (t.amount || 0), 0))}
               </Text>
             </View>
             
@@ -235,10 +236,9 @@ export default function HistoryScreen() {
             <View style={styles.summaryItem}>
               <Text style={styles.summaryLabel}>이번 달 송금</Text>
               <Text style={styles.summaryValue}>
-                ${filteredTransactions
+                ${safeToFixed(filteredTransactions
                   .filter(t => t.type === 'transfer' && new Date(t.createdAt).getMonth() === new Date().getMonth())
-                  .reduce((sum, t) => sum + t.amount, 0)
-                  .toFixed(2)}
+                  .reduce((sum, t) => sum + (t.amount || 0), 0))}
               </Text>
             </View>
           </View>

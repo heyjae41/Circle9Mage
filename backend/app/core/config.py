@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 from typing import List
 import os
+from dotenv import load_dotenv
 
 load_dotenv()
 
@@ -36,7 +37,12 @@ class Settings(BaseSettings):
     api_version: str = "v1"
     
     # 블록체인 설정
-    supported_chains: List[str] = ["ethereum", "base", "arbitrum", "avalanche", "linea", "sonic"]
+    supported_chains: str = "ethereum,base,arbitrum,avalanche,linea,sonic"
+    
+    @property
+    def chain_list(self) -> List[str]:
+        """지원되는 체인 리스트 반환"""
+        return [chain.strip() for chain in self.supported_chains.split(",")]
     
     # 결제 설정
     default_currency: str = "USDC"
