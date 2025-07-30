@@ -8,6 +8,7 @@ from typing import Optional, List
 from datetime import datetime
 from app.services.circle_client import circle_wallet_service
 from app.database.connection import get_db
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 
@@ -134,43 +135,50 @@ async def get_wallet_info(wallet_id: str):
         raise HTTPException(status_code=500, detail=f"지갑 정보 조회 실패: {str(e)}")
 
 @router.get("/user/{user_id}/wallets")
-async def get_user_wallets(user_id: str):
+async def get_user_wallets(user_id: int, db: AsyncSession = Depends(get_db)):
     """사용자의 모든 지갑 조회"""
     try:
-        # 실제로는 DB에서 사용자의 지갑 목록 조회
-        # 여기서는 mock 데이터 반환
-        wallets = [
-            {
-                "wallet_id": f"wallet_{user_id}_eth",
-                "address": f"0x{user_id}eth{42:040d}",
-                "blockchain": "ETH",
-                "chain_id": 1,
-                "chain_name": "Ethereum",
-                "usdc_balance": 1000.0,
-                "is_primary": True,
-                "created_at": datetime.utcnow().isoformat()
-            },
-            {
-                "wallet_id": f"wallet_{user_id}_base",
-                "address": f"0x{user_id}base{8453:040d}",
-                "blockchain": "BASE",
-                "chain_id": 8453,
-                "chain_name": "Base",
-                "usdc_balance": 500.0,
-                "is_primary": False,
-                "created_at": datetime.utcnow().isoformat()
-            }
-        ]
+        from sqlalchemy import select
+        from app.models.user import Wallet, User
+        
+        # ✅ 수정: 실제 DB에서 사용자 지갑 조회
+        # 1. 사용자 존재 확인
+        user_query = select(User).where(User.id == user_id)
+        user_result = await db.execute(user_query)
+        user = user_result.scalar_one_or_none()
+        
+        if not user:
+            raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+        
+        # 2. 사용자의 지갑 목록 조회
+        wallet_query = select(Wallet).where(Wallet.user_id == user_id, Wallet.is_active == True)
+        wallet_result = await db.execute(wallet_query)
+        wallets = wallet_result.scalars().all()
+        
+        # 3. 응답 데이터 구성
+        wallet_list = []
+        for wallet in wallets:
+            wallet_list.append({
+                "wallet_id": wallet.circle_wallet_id,
+                "address": wallet.wallet_address,
+                "blockchain": wallet.chain_name.upper(),
+                "chain_id": wallet.chain_id,
+                "chain_name": wallet.chain_name,
+                "usdc_balance": float(wallet.usdc_balance),
+                "is_primary": len(wallet_list) == 0,  # 첫 번째 지갑이 primary
+                "created_at": wallet.created_at.isoformat()
+            })
         
         return {
             "user_id": user_id,
-            "total_wallets": len(wallets),
-            "total_usd_value": sum(w["usdc_balance"] for w in wallets),
-            "wallets": wallets
+            "wallets": wallet_list,
+            "total_wallets": len(wallet_list)
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"사용자 지갑 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"지갑 조회 실패: {str(e)}")
 
 @router.post("/{wallet_id}/backup")
 async def create_wallet_backup(wallet_id: str):

@@ -290,6 +290,13 @@ async def login_user(
             "email": user.email
         })
         
+        # 6. Redis 세션 저장
+        auth_service.store_session(
+            user_id=str(user.id),
+            access_token=access_token,
+            refresh_token=refresh_token
+        )
+        
         return AuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -435,6 +442,13 @@ async def refresh_token(
             "email": payload["email"],
             "role": "user"
         })
+        
+        # Redis 세션 업데이트 (새로운 access_token으로)
+        auth_service.store_session(
+            user_id=payload["user_id"],
+            access_token=access_token,
+            refresh_token=credentials.credentials  # 기존 refresh_token 유지
+        )
         
         return {
             "access_token": access_token,
@@ -622,4 +636,24 @@ async def create_user_wallet(
         raise HTTPException(
             status_code=500,
             detail=f"지갑 생성 중 오류가 발생했습니다: {str(e)}"
+        )
+
+@router.post("/logout")
+async def logout_user(
+    current_user = Depends(auth_service.get_current_user)
+):
+    """사용자 로그아웃 - Redis 세션 무효화"""
+    try:
+        # Redis에서 사용자 세션 무효화
+        auth_service.invalidate_session(current_user["user_id"])
+        
+        return {
+            "message": "로그아웃이 완료되었습니다",
+            "status": "success"
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"로그아웃 처리 중 오류가 발생했습니다: {str(e)}"
         ) 

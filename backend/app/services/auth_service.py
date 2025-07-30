@@ -1,8 +1,10 @@
 """
-인증 서비스 - JWT와 SECRET_KEY 분리 사용 실무 패턴
+인증 서비스 - JWT와 SECRET_KEY 분리 사용 실무 패턴 + Redis 세션 관리
 """
 
 import jwt
+import redis
+import json
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
 from fastapi import HTTPException, status
@@ -16,6 +18,21 @@ class AuthService:
     def __init__(self):
         self.settings = get_settings()
         self.security = HTTPBearer()
+        
+        # Redis 연결 설정
+        try:
+            self.redis_client = redis.Redis(
+                host=self.settings.redis_host,
+                port=self.settings.redis_port,
+                password=self.settings.redis_password,
+                decode_responses=True
+            )
+            # 연결 테스트
+            self.redis_client.ping()
+            print("✅ Redis 세션 저장소 연결 성공")
+        except Exception as e:
+            print(f"⚠️ Redis 연결 실패: {e}")
+            self.redis_client = None
     
     # ====================================
     # 🔑 JWT 토큰 관리 (JWT_SECRET_KEY 사용)
@@ -49,15 +66,132 @@ class AuthService:
         )
         return encoded_jwt
     
-    def verify_token(self, token: str) -> Dict[str, Any]:
-        """JWT 토큰 검증 - JWT_SECRET_KEY 사용"""
+    # ====================================
+    # 🗃️ Redis 세션 관리
+    # ====================================
+    
+    def store_session(self, user_id: str, access_token: str, refresh_token: str) -> None:
+        """Redis에 사용자 세션 저장"""
+        if not self.redis_client:
+            return
+        
         try:
-            # JWT 전용 키로 검증
+            session_data = {
+                "user_id": user_id,
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "created_at": datetime.utcnow().isoformat(),
+                "last_activity": datetime.utcnow().isoformat()
+            }
+            
+            # 사용자별 세션 저장 (30분 TTL)
+            session_key = f"session:{user_id}"
+            self.redis_client.setex(
+                session_key,
+                self.settings.access_token_expire_minutes * 60,  # 30분을 초로 변환
+                json.dumps(session_data)
+            )
+            
+            # 토큰별 인덱스 저장 (빠른 검증용)
+            token_key = f"token:{access_token[:20]}"  # 토큰 앞 20자리만 키로 사용
+            self.redis_client.setex(
+                token_key,
+                self.settings.access_token_expire_minutes * 60,
+                user_id
+            )
+            
+            print(f"✅ 세션 저장 완료: {user_id}")
+        except Exception as e:
+            print(f"⚠️ 세션 저장 실패: {e}")
+    
+    def get_session(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Redis에서 사용자 세션 조회"""
+        if not self.redis_client:
+            return None
+        
+        try:
+            session_key = f"session:{user_id}"
+            session_data = self.redis_client.get(session_key)
+            
+            if session_data:
+                return json.loads(session_data)
+            return None
+        except Exception as e:
+            print(f"⚠️ 세션 조회 실패: {e}")
+            return None
+    
+    def verify_token_session(self, token: str) -> bool:
+        """토큰의 Redis 세션 유효성 검증"""
+        if not self.redis_client:
+            return True  # Redis 없으면 JWT만으로 검증
+        
+        try:
+            token_key = f"token:{token[:20]}"
+            user_id = self.redis_client.get(token_key)
+            
+            if user_id:
+                # 세션 활동 시간 업데이트
+                session_key = f"session:{user_id}"
+                session_data = self.redis_client.get(session_key)
+                
+                if session_data:
+                    session_info = json.loads(session_data)
+                    session_info["last_activity"] = datetime.utcnow().isoformat()
+                    
+                    # TTL 연장
+                    self.redis_client.setex(
+                        session_key,
+                        self.settings.access_token_expire_minutes * 60,
+                        json.dumps(session_info)
+                    )
+                    return True
+            
+            return False
+        except Exception as e:
+            print(f"⚠️ 토큰 세션 검증 실패: {e}")
+            return True  # 에러 시 JWT 검증만 사용
+    
+    def invalidate_session(self, user_id: str) -> None:
+        """사용자 세션 무효화 (로그아웃)"""
+        if not self.redis_client:
+            return
+        
+        try:
+            # 기존 세션 정보 가져오기
+            session_data = self.get_session(user_id)
+            
+            if session_data:
+                # 토큰 인덱스 삭제
+                access_token = session_data.get("access_token", "")
+                if access_token:
+                    token_key = f"token:{access_token[:20]}"
+                    self.redis_client.delete(token_key)
+            
+            # 세션 삭제
+            session_key = f"session:{user_id}"
+            self.redis_client.delete(session_key)
+            
+            print(f"✅ 세션 무효화 완료: {user_id}")
+        except Exception as e:
+            print(f"⚠️ 세션 무효화 실패: {e}")
+    
+    def verify_token(self, token: str) -> Dict[str, Any]:
+        """JWT 토큰 검증 + Redis 세션 검증"""
+        try:
+            # 1. JWT 토큰 검증
             payload = jwt.decode(
                 token,
                 self.settings.jwt_secret_key,  # JWT 전용 키
                 algorithms=[self.settings.algorithm]
             )
+            
+            # 2. Redis 세션 검증 (선택적)
+            if not self.verify_token_session(token):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="세션이 만료되었거나 유효하지 않습니다"
+                )
+            
             return payload
         except jwt.ExpiredSignatureError:
             raise HTTPException(
@@ -175,6 +309,16 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token type"
             )
+        
+        # ✅ 수정: user_id를 정수로 변환하여 타입 불일치 문제 해결
+        if "user_id" in payload:
+            try:
+                payload["user_id"] = int(payload["user_id"])
+            except (ValueError, TypeError):
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Invalid user ID in token"
+                )
         
         return payload
     

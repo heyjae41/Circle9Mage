@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     database_url: str = "postgresql://postgres:password@localhost:5433/circle9mage"
     redis_url: str = "redis://localhost:6379"
     
+    # Redis 개별 설정 (세션 관리용)
+    redis_host: str = "localhost"
+    redis_port: int = 6379
+    redis_password: str = ""  # 로컬 Redis는 비밀번호 없음
+    
     # Circle API
     circle_api_key: str = ""
     circle_sandbox_api_key: str = ""

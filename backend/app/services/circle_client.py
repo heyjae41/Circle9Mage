@@ -281,8 +281,237 @@ class CircleComplianceService(CircleAPIClient):
         
         return await self._make_request("POST", "/v1/compliance/screen", data)
 
+class CircleMintService(CircleAPIClient):
+    """Circle Mint 서비스 - USDC 충전 및 출금"""
+    
+    async def create_wire_bank_account(
+        self,
+        billing_details: Dict[str, Any],
+        bank_address: Dict[str, Any],
+        account_number: str,
+        routing_number: str,
+        idempotency_key: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """은행 계좌 연결"""
+        data = {
+            "billingDetails": billing_details,
+            "bankAddress": bank_address,
+            "accountNumber": account_number,
+            "routingNumber": routing_number,
+            "idempotencyKey": idempotency_key or str(uuid.uuid4())
+        }
+        
+        # 개발 환경에서는 mock 응답 반환
+        if self.settings.environment == "development":
+            return {
+                "data": {
+                    "id": str(uuid.uuid4()),
+                    "status": "pending",
+                    "description": f"MOCK BANK ****{account_number[-4:]}",
+                    "trackingRef": f"CIR{uuid.uuid4().hex[:8].upper()}",
+                    "fingerprint": str(uuid.uuid4()),
+                    "virtualAccountEnabled": True,
+                    "billingDetails": billing_details,
+                    "bankAddress": bank_address,
+                    "createDate": datetime.utcnow().isoformat(),
+                    "updateDate": datetime.utcnow().isoformat()
+                }
+            }
+        
+        return await self._make_request("POST", "/v1/businessAccount/banks/wires", data)
+    
+    async def get_wire_instructions(
+        self,
+        bank_account_id: str,
+        currency: str = "USD"
+    ) -> Dict[str, Any]:
+        """은행 송금 지침 조회"""
+        params = {"currency": currency}
+        
+        # 개발 환경에서는 mock 응답 반환
+        if self.settings.environment == "development":
+            return {
+                "data": {
+                    "trackingRef": f"CIR{uuid.uuid4().hex[:8].upper()}",
+                    "beneficiary": {
+                        "name": "CIRCLE INTERNET FINANCIAL INC",
+                        "address1": "1 MAIN STREET",
+                        "address2": "SUITE 1"
+                    },
+                    "virtualAccountEnabled": True,
+                    "beneficiaryBank": {
+                        "name": "CIRCLE DEVELOPMENT BANK",
+                        "address": "1 MONEY STREET",
+                        "city": "NEW YORK",
+                        "postalCode": "10001",
+                        "country": "US",
+                        "swiftCode": "CIRCDEV1",
+                        "routingNumber": "999999999",
+                        "accountNumber": f"12345{uuid.uuid4().hex[:8]}",
+                        "currency": currency
+                    }
+                }
+            }
+        
+        return await self._make_request("GET", f"/v1/businessAccount/banks/wires/{bank_account_id}/instructions", params=params)
+    
+    async def create_deposit_address(
+        self,
+        currency: str = "USD",
+        chain: str = "ETH"
+    ) -> Dict[str, Any]:
+        """블록체인 입금 주소 생성"""
+        data = {
+            "currency": currency,
+            "chain": chain
+        }
+        
+        # 개발 환경에서는 mock 응답 반환
+        if self.settings.environment == "development":
+            # 유효한 이더리움 주소 생성
+            mock_address = f"0x{uuid.uuid4().hex[:40]}"
+            return {
+                "data": {
+                    "id": str(uuid.uuid4()),
+                    "address": mock_address,
+                    "currency": currency,
+                    "chain": chain
+                }
+            }
+        
+        return await self._make_request("POST", "/v1/businessAccount/wallets/addresses/deposit", data)
+    
+    async def list_deposit_addresses(self) -> Dict[str, Any]:
+        """모든 입금 주소 조회"""
+        # 개발 환경에서는 mock 응답 반환
+        if self.settings.environment == "development":
+            chains = ["ETH", "BASE", "ARB", "MATIC", "AVAX"]
+            addresses = []
+            for chain in chains:
+                addresses.append({
+                    "id": str(uuid.uuid4()),
+                    "address": f"0x{uuid.uuid4().hex[:40]}",
+                    "currency": "USD",
+                    "chain": chain
+                })
+            
+            return {"data": addresses}
+        
+        return await self._make_request("GET", "/v1/businessAccount/wallets/addresses/deposit")
+    
+    async def get_account_balances(self) -> Dict[str, Any]:
+        """계정 잔액 조회"""
+        # 개발 환경에서는 mock 응답 반환
+        if self.settings.environment == "development":
+            return {
+                "data": {
+                    "available": [
+                        {
+                            "amount": "1000.00",
+                            "currency": "USD"
+                        }
+                    ],
+                    "unsettled": []
+                }
+            }
+        
+        return await self._make_request("GET", "/v1/businessAccount/balances")
+    
+    async def create_mock_wire_deposit(
+        self,
+        amount: str,
+        currency: str,
+        beneficiary_account_number: str
+    ) -> Dict[str, Any]:
+        """모의 은행 송금 (개발 환경용)"""
+        data = {
+            "amount": {
+                "amount": amount,
+                "currency": currency
+            },
+            "beneficiaryBank": {
+                "accountNumber": beneficiary_account_number
+            }
+        }
+        
+        # 개발 환경에서만 사용 가능
+        if self.settings.environment == "development":
+            return {
+                "data": {
+                    "trackingRef": f"CIR{uuid.uuid4().hex[:8].upper()}",
+                    "amount": {
+                        "amount": amount,
+                        "currency": currency
+                    },
+                    "beneficiaryBank": {
+                        "accountNumber": beneficiary_account_number
+                    },
+                    "status": "pending"
+                }
+            }
+        
+        return await self._make_request("POST", "/v1/mocks/payments/wire", data)
+    
+    async def create_payout(
+        self,
+        destination_id: str,
+        amount: str,
+        currency: str = "USD",
+        idempotency_key: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """외부 송금 (출금)"""
+        data = {
+            "destination": {
+                "type": "wire",
+                "id": destination_id
+            },
+            "amount": {
+                "currency": currency,
+                "amount": amount
+            },
+            "idempotencyKey": idempotency_key or str(uuid.uuid4())
+        }
+        
+        # 개발 환경에서는 mock 응답 반환
+        if self.settings.environment == "development":
+            return {
+                "data": {
+                    "id": str(uuid.uuid4()),
+                    "amount": {
+                        "amount": amount,
+                        "currency": currency
+                    },
+                    "status": "pending",
+                    "sourceWalletId": "1000000001",
+                    "destination": {
+                        "type": "wire",
+                        "id": destination_id,
+                        "name": "MOCK BANK ****0001"
+                    },
+                    "createDate": datetime.utcnow().isoformat(),
+                    "updateDate": datetime.utcnow().isoformat()
+                }
+            }
+        
+        return await self._make_request("POST", "/v1/businessAccount/payouts", data)
+    
+    async def get_payout_status(self, payout_id: str) -> Dict[str, Any]:
+        """송금 상태 조회"""
+        # 개발 환경에서는 mock 응답 반환
+        if self.settings.environment == "development":
+            return {
+                "data": {
+                    "id": payout_id,
+                    "status": "complete",
+                    "updateDate": datetime.utcnow().isoformat()
+                }
+            }
+        
+        return await self._make_request("GET", f"/v1/businessAccount/payouts/{payout_id}")
+
 # 서비스 인스턴스들
 circle_wallet_service = CircleWalletService()
 circle_cctp_service = CircleCCTPService()
 circle_paymaster_service = CirclePaymasterService()
-circle_compliance_service = CircleComplianceService() 
+circle_compliance_service = CircleComplianceService()
+circle_mint_service = CircleMintService() 

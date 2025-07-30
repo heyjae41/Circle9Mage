@@ -40,6 +40,7 @@ class User(Base):
     # 관계
     transactions = relationship("Transaction", back_populates="user")
     wallets = relationship("Wallet", back_populates="user")
+    kyc_documents = relationship("KYCDocument", back_populates="user")
 
 class Wallet(Base):
     """지갑 모델"""
@@ -113,4 +114,60 @@ class Transaction(Base):
     completed_at = Column(DateTime(timezone=True))
     
     # 관계
-    user = relationship("User", back_populates="transactions") 
+    user = relationship("User", back_populates="transactions")
+
+class KYCDocument(Base):
+    """KYC 문서 모델"""
+    __tablename__ = "kyc_documents"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
+    
+    # 문서 타입
+    document_type = Column(String(50), nullable=False)  # passport, driver_license, national_id, utility_bill
+    document_number = Column(String(100))
+    
+    # 개인 정보 (KYC Level 1)
+    full_name = Column(String(200))
+    date_of_birth = Column(String(10))  # YYYY-MM-DD
+    nationality = Column(String(2))  # ISO 국가 코드
+    gender = Column(String(10))
+    
+    # 주소 정보 (KYC Level 2)
+    address_line1 = Column(String(255))
+    address_line2 = Column(String(255))
+    city = Column(String(100))
+    state_province = Column(String(100))
+    postal_code = Column(String(20))
+    country = Column(String(2))  # ISO 국가 코드
+    
+    # 직업 정보 (KYC Level 2)
+    occupation = Column(String(100))
+    employer = Column(String(200))
+    income_range = Column(String(50))  # "0-25000", "25000-50000", etc.
+    source_of_funds = Column(String(100))  # salary, business, investment, etc.
+    
+    # 문서 파일 정보
+    file_url = Column(String(500))  # 문서 파일 저장 경로
+    file_type = Column(String(20))  # image/jpeg, image/png, application/pdf
+    file_size = Column(Integer)  # 바이트 단위
+    
+    # 검증 정보
+    verification_status = Column(String(20), default="pending")  # pending, verified, rejected
+    verification_method = Column(String(50))  # manual, ocr, third_party
+    verification_notes = Column(Text)
+    verified_by = Column(String(100))  # 검증자 정보
+    verified_at = Column(DateTime(timezone=True))
+    
+    # 컴플라이언스 검사
+    compliance_check_id = Column(String(255))  # Circle Compliance Engine ID
+    risk_score = Column(Numeric(3, 2))  # 0.00 - 1.00
+    risk_factors = Column(Text)  # JSON 형태로 위험 요소 저장
+    
+    # 타임스탬프
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    expires_at = Column(DateTime(timezone=True))  # 문서 만료일
+    
+    # 관계
+    user = relationship("User", back_populates="kyc_documents") 

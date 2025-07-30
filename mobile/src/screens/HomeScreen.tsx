@@ -17,8 +17,31 @@ import { safeToFixed, safeAdd } from '../utils/formatters';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
-  const { state, loadUserData, loadWallets } = useApp();
+  const { state, loadUserData, loadWallets, loadTransactions } = useApp();
   const [refreshing, setRefreshing] = useState(false);
+
+  // 컴포넌트 마운트 시 데이터 로드
+  useEffect(() => {
+    loadInitialData();
+  }, []);
+
+  const loadInitialData = async () => {
+    try {
+      if (state.isAuthenticated && state.user) {
+        await loadUserData();
+        await loadWallets(state.user.id);
+        
+        // 모든 지갑의 거래 내역 로드
+        if (state.wallets.length > 0) {
+          for (const wallet of state.wallets) {
+            await loadTransactions(wallet.walletId);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('초기 데이터 로드 실패:', error);
+    }
+  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -26,6 +49,13 @@ export default function HomeScreen() {
       await loadUserData();
       if (state.user) {
         await loadWallets(state.user.id);
+        
+        // 지갑별 거래 내역도 새로고침
+        if (state.wallets.length > 0) {
+          for (const wallet of state.wallets) {
+            await loadTransactions(wallet.walletId);
+          }
+        }
       }
     } catch (error) {
       Alert.alert('오류', '데이터를 새로고침할 수 없습니다.');
@@ -42,6 +72,66 @@ export default function HomeScreen() {
 
   // 가장 큰 잔액을 가진 지갑 (주 지갑)
   const primaryWallet = state.wallets.find(w => w.isPrimary) || state.wallets[0];
+
+  // 인증되지 않은 사용자 안내 화면
+  if (!state.isAuthenticated) {
+    return (
+      <ScrollView style={styles.container}>
+        <View style={styles.unauthenticatedContainer}>
+          <LinearGradient
+            colors={['#007AFF', '#0051D0']}
+            style={styles.welcomeGradient}
+          >
+            <Ionicons name="globe" size={64} color="white" />
+            <Text style={styles.welcomeTitle}>CirclePay Global</Text>
+            <Text style={styles.welcomeSubtitle}>
+              글로벌 크로스체인 USDC 결제 플랫폼
+            </Text>
+          </LinearGradient>
+          
+          <View style={styles.featuresContainer}>
+            <Text style={styles.featuresTitle}>주요 기능</Text>
+            
+            <View style={styles.featureItem}>
+              <Ionicons name="flash" size={24} color="#28A745" />
+              <Text style={styles.featureText}>빠른 크로스체인 송금</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <Ionicons name="shield-checkmark" size={24} color="#007AFF" />
+              <Text style={styles.featureText}>안전한 USDC 거래</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <Ionicons name="card" size={24} color="#FF6B35" />
+              <Text style={styles.featureText}>QR 코드 결제</Text>
+            </View>
+            
+            <View style={styles.featureItem}>
+              <Ionicons name="person-add" size={24} color="#6F42C1" />
+              <Text style={styles.featureText}>간편 KYC 인증</Text>
+            </View>
+          </View>
+          
+          <View style={styles.authButtons}>
+            <TouchableOpacity 
+              style={styles.primaryAuthButton}
+              onPress={() => Alert.alert('회원가입', '회원가입 화면으로 이동합니다.')}
+            >
+              <Text style={styles.primaryAuthButtonText}>시작하기</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.secondaryAuthButton}
+              onPress={() => Alert.alert('로그인', '로그인 화면으로 이동합니다.')}
+            >
+              <Text style={styles.secondaryAuthButtonText}>이미 계정이 있으신가요?</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -88,7 +178,10 @@ export default function HomeScreen() {
 
       {/* 빠른 액션 버튼들 */}
       <View style={styles.quickActions}>
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Payment' as never)}
+        >
           <LinearGradient
             colors={['#28A745', '#20C997']}
             style={styles.actionGradient}
@@ -98,7 +191,10 @@ export default function HomeScreen() {
           <Text style={styles.actionText}>QR 결제</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Send' as never)}
+        >
           <LinearGradient
             colors={['#FD7E14', '#FF6B35']}
             style={styles.actionGradient}
@@ -108,7 +204,10 @@ export default function HomeScreen() {
           <Text style={styles.actionText}>송금</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Send' as never)}
+        >
           <LinearGradient
             colors={['#6F42C1', '#8A2BE2']}
             style={styles.actionGradient}
@@ -118,7 +217,10 @@ export default function HomeScreen() {
           <Text style={styles.actionText}>크로스체인</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
+        <TouchableOpacity 
+          style={styles.actionButton}
+          onPress={() => navigation.navigate('Deposit' as never)}
+        >
           <LinearGradient
             colors={['#DC3545', '#C82333']}
             style={styles.actionGradient}
@@ -170,10 +272,7 @@ export default function HomeScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>최근 거래</Text>
-                      <TouchableOpacity onPress={() => 
-              Alert.alert('거래 내역', '내역 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)', 
-                [{text: '확인', onPress: () => console.log('거래내역 전체보기 클릭')}])
-            }>
+                      <TouchableOpacity onPress={() => navigation.navigate('History' as never)}>
               <Text style={styles.seeAllText}>전체보기</Text>
             </TouchableOpacity>
         </View>
@@ -231,6 +330,83 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8F9FA',
+  },
+  // 인증되지 않은 사용자 스타일
+  unauthenticatedContainer: {
+    flex: 1,
+    padding: 20,
+  },
+  welcomeGradient: {
+    padding: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  welcomeSubtitle: {
+    fontSize: 16,
+    color: 'rgba(255, 255, 255, 0.9)',
+    textAlign: 'center',
+  },
+  featuresContainer: {
+    marginBottom: 30,
+  },
+  featuresTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+    marginBottom: 20,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  featureText: {
+    fontSize: 16,
+    color: '#1A1A1A',
+    marginLeft: 12,
+    fontWeight: '500',
+  },
+  authButtons: {
+    gap: 12,
+  },
+  primaryAuthButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  primaryAuthButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  secondaryAuthButton: {
+    borderWidth: 1,
+    borderColor: '#007AFF',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  secondaryAuthButtonText: {
+    color: '#007AFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   welcomeSection: {
     padding: 20,

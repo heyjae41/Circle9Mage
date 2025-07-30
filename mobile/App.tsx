@@ -9,21 +9,25 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeScreen from './src/screens/HomeScreen';
 import PaymentScreen from './src/screens/PaymentScreen';
 import SendScreen from './src/screens/SendScreen';
+import DepositScreen from './src/screens/DepositScreen';
 import HistoryScreen from './src/screens/HistoryScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
+import SignUpScreen from './src/screens/SignUpScreen';
+import LoginScreen from './src/screens/LoginScreen';
+
+// 컴포넌트 임포트
+import TokenExpiredModal from './src/components/TokenExpiredModal';
+import { OfflineModal } from './src/components/NetworkStatus';
 
 // 컨텍스트 임포트
-import { AppProvider } from './src/contexts/AppContext';
+import { AppProvider, useApp } from './src/contexts/AppContext';
 
 const Tab = createBottomTabNavigator();
 
-export default function App() {
+// 인증된 사용자를 위한 메인 앱
+function AuthenticatedApp() {
   return (
-    <SafeAreaProvider>
-      <AppProvider>
-        <NavigationContainer>
-          <StatusBar style="dark" />
-          <Tab.Navigator
+    <Tab.Navigator
             screenOptions={({ route }) => ({
               tabBarIcon: ({ focused, color, size }) => {
                 let iconName: keyof typeof Ionicons.glyphMap;
@@ -34,10 +38,14 @@ export default function App() {
                   iconName = focused ? 'qr-code' : 'qr-code-outline';
                 } else if (route.name === 'Send') {
                   iconName = focused ? 'send' : 'send-outline';
+                } else if (route.name === 'Deposit') {
+                  iconName = focused ? 'add-circle' : 'add-circle-outline';
                 } else if (route.name === 'History') {
                   iconName = focused ? 'list' : 'list-outline';
-                } else if (route.name === 'Settings') {
-                  iconName = focused ? 'settings' : 'settings-outline';
+                } else if (route.name === 'Profile') {
+                  iconName = focused ? 'person' : 'person-outline';
+                } else if (route.name === 'SignUp') {
+                  iconName = focused ? 'person-add' : 'person-add-outline';
                 } else {
                   iconName = 'help-outline';
                 }
@@ -80,6 +88,14 @@ export default function App() {
               }}
             />
             <Tab.Screen 
+              name="Deposit" 
+              component={DepositScreen} 
+              options={{
+                title: '충전',
+                headerTitle: 'USDC 충전'
+              }}
+            />
+            <Tab.Screen 
               name="History" 
               component={HistoryScreen} 
               options={{
@@ -87,15 +103,107 @@ export default function App() {
                 headerTitle: '거래 내역'
               }}
             />
-            <Tab.Screen 
-              name="Settings" 
-              component={SettingsScreen} 
+                        <Tab.Screen 
+              name="Profile" 
+              component={ProfileScreen} 
               options={{
-                title: '설정',
-                headerTitle: '설정'
+                title: '프로필',
+                headerTitle: '프로필 & KYC'
               }}
             />
           </Tab.Navigator>
+  );
+}
+
+// 인증되지 않은 사용자를 위한 앱 (로그인/회원가입)
+function UnauthenticatedApp() {
+  const UnauthTab = createBottomTabNavigator();
+  
+  return (
+    <UnauthTab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap;
+
+          if (route.name === 'Login') {
+            iconName = focused ? 'log-in' : 'log-in-outline';
+          } else if (route.name === 'SignUp') {
+            iconName = focused ? 'person-add' : 'person-add-outline';
+          } else {
+            iconName = 'help-outline';
+          }
+
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: 'gray',
+        headerStyle: {
+          backgroundColor: '#007AFF',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      })}
+    >
+      <UnauthTab.Screen 
+        name="Login" 
+        component={LoginScreen} 
+        options={{
+          title: '로그인',
+          headerTitle: '로그인'
+        }}
+      />
+      <UnauthTab.Screen 
+        name="SignUp" 
+        component={SignUpScreen} 
+        options={{
+          title: '회원가입',
+          headerTitle: '회원가입'
+        }}
+      />
+    </UnauthTab.Navigator>
+  );
+}
+
+// 앱 내비게이션 관리자
+function AppNavigator() {
+  const { state, hideTokenExpiredModal, hideOfflineModal } = useApp();
+  
+  return (
+    <>
+      {/* 인증 상태에 따라 다른 네비게이션 표시 */}
+      {state.isAuthenticated && state.user ? (
+        <AuthenticatedApp />
+      ) : (
+        <UnauthenticatedApp />
+      )}
+      
+      {/* 토큰 만료 모달 */}
+      <TokenExpiredModal
+        visible={state.tokenExpiredModal.visible}
+        onClose={hideTokenExpiredModal}
+        reason={state.tokenExpiredModal.reason}
+        autoRetryCount={state.tokenExpiredModal.autoRetryCount}
+      />
+      
+      {/* 오프라인 모달 */}
+      <OfflineModal
+        visible={state.offlineModal.visible}
+        onClose={hideOfflineModal}
+      />
+    </>
+  );
+}
+
+// 메인 App 컴포넌트
+export default function App() {
+  return (
+    <SafeAreaProvider>
+      <AppProvider>
+        <NavigationContainer>
+          <StatusBar style="dark" />
+          <AppNavigator />
         </NavigationContainer>
       </AppProvider>
     </SafeAreaProvider>

@@ -92,4 +92,21 @@ export interface AppState {
   supportedChains: SupportedChain[];
   isLoading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
+  accessToken: string | null;
+  
+  // 토큰 만료 모달 상태
+  tokenExpiredModal: {
+    visible: boolean;
+    reason: 'expired' | 'invalid' | 'network' | 'unknown';
+    autoRetryCount: number;
+  };
+  
+  // 네트워크 상태
+  networkState: any | null; // NetworkState 타입은 서비스에서 정의됨
+  isOffline: boolean;
+  offlineModal: {
+    visible: boolean;
+    hasShownOnce: boolean;
+  };
 } 

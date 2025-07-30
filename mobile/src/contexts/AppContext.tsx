@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, User, Wallet, Transaction, SupportedChain } from '../types';
 import { apiService } from '../services/apiService';
+import { tokenManager } from '../utils/tokenManager';
+import { backgroundTokenService } from '../services/backgroundTokenService';
+import { biometricAuthManager } from '../utils/biometricAuth';
+import { networkService, NetworkState } from '../services/networkService';
+import { offlineStorage } from '../services/offlineStorage';
+import { syncService, SyncResult } from '../services/syncService';
 
 // 액션 타입 정의
 type AppAction =
@@ -11,7 +18,14 @@ type AppAction =
   | { type: 'SET_TRANSACTIONS'; payload: Transaction[] }
   | { type: 'SET_SUPPORTED_CHAINS'; payload: SupportedChain[] }
   | { type: 'ADD_TRANSACTION'; payload: Transaction }
-  | { type: 'UPDATE_WALLET_BALANCE'; payload: { walletId: string; balance: number } };
+  | { type: 'UPDATE_WALLET_BALANCE'; payload: { walletId: string; balance: number } }
+  | { type: 'SET_AUTHENTICATED'; payload: boolean }
+  | { type: 'SET_ACCESS_TOKEN'; payload: string | null }
+  | { type: 'SHOW_TOKEN_EXPIRED_MODAL'; payload: { reason: 'expired' | 'invalid' | 'network' | 'unknown'; autoRetryCount: number } }
+  | { type: 'HIDE_TOKEN_EXPIRED_MODAL' }
+  | { type: 'SET_NETWORK_STATE'; payload: NetworkState }
+  | { type: 'SHOW_OFFLINE_MODAL' }
+  | { type: 'HIDE_OFFLINE_MODAL' };
 
 // 초기 상태
 const initialState: AppState = {
@@ -21,6 +35,19 @@ const initialState: AppState = {
   supportedChains: [],
   isLoading: false,
   error: null,
+  isAuthenticated: false,
+  accessToken: null,
+  tokenExpiredModal: {
+    visible: false,
+    reason: 'expired',
+    autoRetryCount: 0,
+  },
+  networkState: null,
+  isOffline: false,
+  offlineModal: {
+    visible: false,
+    hasShownOnce: false,
+  },
 };
 
 // 리듀서 함수
@@ -52,6 +79,49 @@ function appReducer(state: AppState, action: AppAction): AppState {
             : wallet
         ),
       };
+    case 'SET_AUTHENTICATED':
+      return { ...state, isAuthenticated: action.payload };
+    case 'SET_ACCESS_TOKEN':
+      return { ...state, accessToken: action.payload };
+    case 'SHOW_TOKEN_EXPIRED_MODAL':
+      return {
+        ...state,
+        tokenExpiredModal: {
+          visible: true,
+          reason: action.payload.reason,
+          autoRetryCount: action.payload.autoRetryCount,
+        },
+      };
+    case 'HIDE_TOKEN_EXPIRED_MODAL':
+      return {
+        ...state,
+        tokenExpiredModal: {
+          ...state.tokenExpiredModal,
+          visible: false,
+        },
+      };
+    case 'SET_NETWORK_STATE':
+      return {
+        ...state,
+        networkState: action.payload,
+        isOffline: !action.payload.isConnected || !action.payload.isReachable,
+      };
+    case 'SHOW_OFFLINE_MODAL':
+      return {
+        ...state,
+        offlineModal: {
+          visible: true,
+          hasShownOnce: true,
+        },
+      };
+    case 'HIDE_OFFLINE_MODAL':
+      return {
+        ...state,
+        offlineModal: {
+          ...state.offlineModal,
+          visible: false,
+        },
+      };
     default:
       return state;
   }
@@ -67,6 +137,35 @@ interface AppContextType {
   loadTransactions: (walletId: string) => Promise<void>;
   createPayment: (request: any) => Promise<any>;
   createTransfer: (request: any) => Promise<any>;
+  // 인증 관련 함수들
+  checkAuthStatus: () => Promise<void>;
+  logout: () => Promise<void>;
+  setAuthToken: (token: string, refreshToken?: string) => Promise<void>;
+  
+  // USDC 충전 관련 함수들
+  createWireDeposit: (walletId: number, request: any) => Promise<any>;
+  createCryptoDeposit: (walletId: number, request: any) => Promise<any>;
+  getDepositAddresses: (walletId: number) => Promise<any>;
+  getDepositStatus: (depositId: string) => Promise<any>;
+  getDepositHistory: (options?: any) => Promise<any>;
+  
+  // 사용자 프로필 및 KYC 관련 함수들
+  getUserProfile: () => Promise<any>;
+  updateUserProfile: (profileData: any) => Promise<any>;
+  submitKYCDocument: (kycData: any, documentFile?: File) => Promise<any>;
+  getKYCStatus: () => Promise<any>;
+  resubmitKYCDocument: (documentId: number, kycData: any, documentFile?: File) => Promise<any>;
+  
+  // 토큰 만료 모달 관련
+  showTokenExpiredModal: (reason?: 'expired' | 'invalid' | 'network' | 'unknown', autoRetryCount?: number) => void;
+  hideTokenExpiredModal: () => void;
+  
+  // 네트워크 상태 관련
+  showOfflineModal: () => void;
+  hideOfflineModal: () => void;
+  
+  // 동기화 관련
+  requestSync: () => Promise<void>;
 }
 
 // 컨텍스트 생성
@@ -79,29 +178,89 @@ interface AppProviderProps {
 
 export function AppProvider({ children }: AppProviderProps) {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  
+  // TokenManager 콜백 설정
+  useEffect(() => {
+    // 토큰 자동 갱신 시 콜백
+    const handleTokenUpdated = async (newToken: string, refreshToken?: string) => {
+      console.log('🔄 토큰 자동 갱신됨, 상태 업데이트');
+      dispatch({ type: 'SET_ACCESS_TOKEN', payload: newToken });
+      
+      // 사용자 데이터 다시 로드 (토큰이 바뀌었으므로)
+      try {
+        await loadUserData();
+      } catch (error) {
+        console.error('토큰 갱신 후 사용자 데이터 로드 실패:', error);
+      }
+    };
 
-  // 사용자 데이터 로드
+    // 토큰 만료 시 콜백 (사용자 친화적 처리)
+    const handleTokenExpired = () => {
+      console.log('🚨 토큰 만료, 사용자 친화적 처리');
+      
+      // 상태 초기화
+      dispatch({ type: 'SET_ACCESS_TOKEN', payload: null });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+      dispatch({ type: 'SET_USER', payload: null });
+      dispatch({ type: 'SET_WALLETS', payload: [] });
+      dispatch({ type: 'SET_TRANSACTIONS', payload: [] });
+      
+      // 토큰 만료 모달 표시
+      showTokenExpiredModal('expired', 0);
+    };
+
+    // TokenManager에 콜백 설정
+    tokenManager.onTokenUpdated = handleTokenUpdated;
+    tokenManager.onTokenExpired = handleTokenExpired;
+
+    // 백그라운드 토큰 서비스 시작
+    backgroundTokenService.start();
+
+    // 컴포넌트 언마운트 시 정리
+    return () => {
+      tokenManager.cleanup();
+      backgroundTokenService.stop();
+    };
+  }, []);
+
+  // 사용자 데이터 로드 (실제 API 사용)
   const loadUserData = async () => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      // Mock 사용자 데이터 (실제로는 API에서 가져옴)
-      const mockUser: User = {
-        id: 'user_123',
-        email: 'user@example.com',
-        firstName: '홍',
-        lastName: '길동',
-        countryCode: 'KR',
-        preferredCurrency: 'USDC',
-        isVerified: true,
-        kycStatus: 'approved',
+      // 저장된 토큰 확인
+      const token = state.accessToken;
+      if (!token) {
+        dispatch({ type: 'SET_ERROR', payload: '인증 토큰이 없습니다' });
+        return;
+      }
+      
+      // 실제 API 호출로 사용자 정보 가져오기 (토큰은 자동으로 AsyncStorage에서 가져옴)
+      const userResponse = await apiService.getCurrentUser();
+      
+      // 사용자 데이터 변환
+      const user: User = {
+        id: userResponse.id?.toString() || 'unknown',
+        email: userResponse.email || '',
+        firstName: userResponse.first_name || '',
+        lastName: userResponse.last_name || '',
+        countryCode: userResponse.country_code || 'KR',
+        preferredCurrency: userResponse.preferred_currency || 'USDC',
+        isVerified: userResponse.is_verified || false,
+        kycStatus: userResponse.kyc_status || 'pending',
       };
       
-      dispatch({ type: 'SET_USER', payload: mockUser });
-      await loadWallets(mockUser.id);
+      dispatch({ type: 'SET_USER', payload: user });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: true });
       
-    } catch (error) {
+      // 사용자 지갑 정보 로드
+      await loadWallets(user.id);
+      
+    } catch (error: any) {
+      console.error('사용자 데이터 로드 실패:', error);
       dispatch({ type: 'SET_ERROR', payload: '사용자 데이터 로드 실패' });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+      dispatch({ type: 'SET_USER', payload: null });
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -187,9 +346,451 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
 
+  // ===================
+  // USDC 충전 관련 함수들
+  // ===================
+
+  // 은행 송금 충전
+  const createWireDeposit = async (walletId: number, request: any) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await apiService.createWireDeposit(walletId, request, state.accessToken || undefined);
+      
+      // 새 거래를 상태에 추가 (deposit 타입)
+      const newTransaction: Transaction = {
+        transactionId: response.deposit_id,
+        type: 'transfer', // deposit은 transfer의 하위 타입으로 처리
+        amount: parseFloat(request.amount),
+        currency: request.currency || 'USD',
+        status: 'pending',
+        fromAddress: 'bank_account',
+        toAddress: walletId.toString(),
+        createdAt: new Date().toISOString(),
+        notes: `은행 송금 충전 - ${request.bank_account.bank_name}`,
+      };
+      
+      dispatch({ type: 'ADD_TRANSACTION', payload: newTransaction });
+      return response;
+      
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '은행 충전 요청 실패' });
+      throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  // 암호화폐 충전
+  const createCryptoDeposit = async (walletId: number, request: any) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await apiService.createCryptoDeposit(walletId, request, state.accessToken || undefined);
+      
+      // 새 거래를 상태에 추가
+      const newTransaction: Transaction = {
+        transactionId: response.deposit_id,
+        type: 'transfer',
+        amount: parseFloat(request.amount),
+        currency: request.currency || 'USD',
+        status: 'pending',
+        fromAddress: 'external_wallet',
+        toAddress: response.deposit_address || walletId.toString(),
+        createdAt: new Date().toISOString(),
+        notes: `암호화폐 충전 - ${request.chain} 체인`,
+      };
+      
+      dispatch({ type: 'ADD_TRANSACTION', payload: newTransaction });
+      return response;
+      
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '암호화폐 충전 요청 실패' });
+      throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  // 충전 주소 목록 조회
+  const getDepositAddresses = async (walletId: number) => {
+    try {
+      const response = await apiService.getDepositAddresses(walletId, state.accessToken || undefined);
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '충전 주소 조회 실패' });
+      throw error;
+    }
+  };
+
+  // 충전 상태 조회
+  const getDepositStatus = async (depositId: string) => {
+    try {
+      const response = await apiService.getDepositStatus(depositId, state.accessToken || undefined);
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '충전 상태 조회 실패' });
+      throw error;
+    }
+  };
+
+  // 충전 내역 조회
+  const getDepositHistory = async (options: any = {}) => {
+    try {
+      const response = await apiService.getDepositHistory(options, state.accessToken || undefined);
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '충전 내역 조회 실패' });
+      throw error;
+    }
+  };
+
+  // ===================
+  // 사용자 프로필 및 KYC 관련 함수들
+  // ===================
+
+  // 사용자 프로필 조회
+  const getUserProfile = async () => {
+    try {
+      const response = await apiService.getUserProfile(state.accessToken || undefined);
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '프로필 조회 실패' });
+      throw error;
+    }
+  };
+
+  // 사용자 프로필 업데이트
+  const updateUserProfile = async (profileData: any) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await apiService.updateUserProfile(profileData, state.accessToken || undefined);
+      
+      // 사용자 정보 업데이트
+      if (state.user) {
+        dispatch({ 
+          type: 'SET_USER', 
+          payload: {
+            ...state.user,
+            firstName: response.first_name,
+            lastName: response.last_name,
+            preferredCurrency: response.preferred_currency
+          }
+        });
+      }
+      
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '프로필 업데이트 실패' });
+      throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  // KYC 문서 제출
+  const submitKYCDocument = async (kycData: any, documentFile?: File) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await apiService.submitKYCDocument(kycData, documentFile, state.accessToken || undefined);
+      
+      // 사용자 KYC 상태 업데이트
+      if (state.user) {
+        dispatch({ 
+          type: 'SET_USER', 
+          payload: {
+            ...state.user,
+            kycStatus: response.status as 'pending' | 'approved' | 'rejected'
+          }
+        });
+      }
+      
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'KYC 문서 제출 실패' });
+      throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  // KYC 상태 조회
+  const getKYCStatus = async () => {
+    try {
+      const response = await apiService.getKYCStatus(state.accessToken || undefined);
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'KYC 상태 조회 실패' });
+      throw error;
+    }
+  };
+
+  // KYC 문서 재제출
+  const resubmitKYCDocument = async (documentId: number, kycData: any, documentFile?: File) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      const response = await apiService.resubmitKYCDocument(documentId, kycData, documentFile, state.accessToken || undefined);
+      
+      // 사용자 KYC 상태를 pending으로 업데이트
+      if (state.user) {
+        dispatch({ 
+          type: 'SET_USER', 
+          payload: {
+            ...state.user,
+            kycStatus: 'pending'
+          }
+        });
+      }
+      
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: 'KYC 문서 재제출 실패' });
+      throw error;
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  // 인증 상태 확인 및 자동 로그인
+  const checkAuthStatus = async () => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      
+      // AsyncStorage에서 저장된 토큰 가져오기
+      const savedToken = await AsyncStorage.getItem('access_token');
+      const refreshToken = await AsyncStorage.getItem('refresh_token');
+      
+      if (savedToken) {
+        dispatch({ type: 'SET_ACCESS_TOKEN', payload: savedToken });
+        
+        // 토큰 자동 갱신 스케줄링
+        tokenManager.scheduleTokenRefresh(savedToken);
+        
+        // 토큰으로 사용자 정보 로드 시도
+        try {
+          await loadUserData();
+        } catch (userError: any) {
+          console.log('저장된 토큰으로 로그인 실패, 토큰 갱신 시도');
+          
+          // 토큰이 만료된 경우 refresh 시도
+          if (refreshToken) {
+            try {
+              const refreshResponse = await apiService.refreshToken(refreshToken);
+              
+              // 새 토큰 저장
+              await AsyncStorage.setItem('access_token', refreshResponse.access_token);
+              await AsyncStorage.setItem('refresh_token', refreshResponse.refresh_token);
+              
+              dispatch({ type: 'SET_ACCESS_TOKEN', payload: refreshResponse.access_token });
+              
+              // 새 토큰으로 자동 갱신 스케줄링
+              tokenManager.scheduleTokenRefresh(refreshResponse.access_token);
+              
+              await loadUserData();
+              
+              console.log('토큰 갱신 성공, 자동 로그인 완료');
+            } catch (refreshError) {
+              console.log('토큰 갱신 실패, 로그아웃 처리');
+              await clearAuthData();
+            }
+          } else {
+            await clearAuthData();
+          }
+        }
+      } else {
+        // 토큰이 없는 경우 생체 인증 자동 로그인 시도
+        await attemptBiometricAutoLogin();
+      }
+    } catch (error) {
+      console.error('인증 상태 확인 실패:', error);
+      dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+    } finally {
+      dispatch({ type: 'SET_LOADING', payload: false });
+    }
+  };
+
+  // 인증 데이터 완전 정리 (내부 함수)
+  const clearAuthData = async () => {
+    try {
+      // 토큰 자동 갱신 타이머 정리
+      tokenManager.clearRefreshTimer();
+      
+      // AsyncStorage에서 모든 인증 관련 데이터 삭제
+      await AsyncStorage.multiRemove([
+        'access_token',
+        'refresh_token', 
+        'saved_email',
+        'user_data'
+      ]);
+      
+      // 상태 초기화
+      dispatch({ type: 'SET_ACCESS_TOKEN', payload: null });
+      dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+      dispatch({ type: 'SET_USER', payload: null });
+      dispatch({ type: 'SET_WALLETS', payload: [] });
+      dispatch({ type: 'SET_TRANSACTIONS', payload: [] });
+      dispatch({ type: 'SET_ERROR', payload: null });
+    } catch (error) {
+      console.error('인증 데이터 정리 실패:', error);
+    }
+  };
+
+  // 로그아웃
+  const logout = async () => {
+    try {
+      await clearAuthData();
+      console.log('로그아웃 완료');
+    } catch (error) {
+      console.error('로그아웃 실패:', error);
+    }
+  };
+
+  // 인증 토큰 설정 및 저장
+  const setAuthToken = async (token: string, refreshToken?: string) => {
+    try {
+      // AsyncStorage에 토큰 저장
+      await AsyncStorage.setItem('access_token', token);
+      if (refreshToken) {
+        await AsyncStorage.setItem('refresh_token', refreshToken);
+      }
+      
+      // 상태 업데이트
+      dispatch({ type: 'SET_ACCESS_TOKEN', payload: token });
+      
+      // 토큰 자동 갱신 스케줄링
+      tokenManager.scheduleTokenRefresh(token);
+      
+      console.log('토큰 저장 및 자동 갱신 스케줄링 완료');
+    } catch (error) {
+      console.error('토큰 저장 실패:', error);
+      // 저장 실패해도 일단 상태는 업데이트
+      dispatch({ type: 'SET_ACCESS_TOKEN', payload: token });
+    }
+  };
+
+  // 생체 인증 자동 로그인 시도
+  const attemptBiometricAutoLogin = async () => {
+    try {
+      // 생체 인증 사용 가능 여부 확인
+      const isAvailableAndEnabled = await biometricAuthManager.isAvailableAndEnabled();
+      
+      if (!isAvailableAndEnabled) {
+        dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+        return;
+      }
+
+      // 마지막 생체 인증 시간 확인 (24시간 이내)
+      const lastAuthTime = await biometricAuthManager.getLastAuthTime();
+      const now = Date.now();
+      const dayInMs = 24 * 60 * 60 * 1000; // 24시간
+
+      if (!lastAuthTime || (now - lastAuthTime) > dayInMs) {
+        console.log('생체 인증이 너무 오래되었거나 기록이 없음, 수동 로그인 필요');
+        dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+        return;
+      }
+
+      console.log('🔐 앱 시작 시 생체 인증 자동 로그인 시도...');
+
+      // 생체 인증 수행 (자동 로그인용 메시지)
+      const authResult = await biometricAuthManager.authenticate(
+        'CirclePay에 빠르게 접근하려면 생체 인증을 사용해주세요'
+      );
+
+      if (authResult.success) {
+        // 저장된 이메일로 자동 로그인 시도
+        const savedEmail = await AsyncStorage.getItem('saved_email');
+        
+        if (savedEmail) {
+          console.log('✅ 생체 인증 성공, 자동 로그인 완료');
+          // 실제로는 생체 인증만으로는 완전한 로그인이 어려우므로
+          // 사용자에게 PIN 입력을 요청하거나 다른 방법을 사용해야 함
+          // 여기서는 생체 인증이 성공했다는 것만 표시
+          dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+        } else {
+          console.log('저장된 이메일이 없음');
+          dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+        }
+      } else {
+        console.log('생체 인증 실패 또는 취소됨');
+        dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+      }
+    } catch (error) {
+      console.error('생체 인증 자동 로그인 실패:', error);
+      dispatch({ type: 'SET_AUTHENTICATED', payload: false });
+    }
+  };
+
+  // 토큰 만료 모달 표시
+  const showTokenExpiredModal = (reason: 'expired' | 'invalid' | 'network' | 'unknown' = 'expired', autoRetryCount: number = 0) => {
+    dispatch({ 
+      type: 'SHOW_TOKEN_EXPIRED_MODAL', 
+      payload: { reason, autoRetryCount } 
+    });
+  };
+
+  // 토큰 만료 모달 숨기기
+  const hideTokenExpiredModal = () => {
+    dispatch({ type: 'HIDE_TOKEN_EXPIRED_MODAL' });
+  };
+
+  // 오프라인 모달 표시
+  const showOfflineModal = () => {
+    dispatch({ type: 'SHOW_OFFLINE_MODAL' });
+  };
+
+  // 오프라인 모달 숨기기
+  const hideOfflineModal = () => {
+    dispatch({ type: 'HIDE_OFFLINE_MODAL' });
+  };
+
+  // 수동 동기화 요청
+  const requestSync = async (): Promise<void> => {
+    if (!state.user) {
+      console.log('사용자가 로그인되어 있지 않아 동기화를 건너뜁니다');
+      return;
+    }
+
+    try {
+      console.log('🔄 수동 동기화 시작');
+      const result: SyncResult = await syncService.requestManualSync(state.user.id.toString());
+      
+      if (result.success) {
+        console.log('✅ 동기화 성공:', result.syncedItems);
+        
+        // 동기화된 데이터로 상태 업데이트
+        if (result.syncedItems.users > 0 || result.syncedItems.wallets > 0 || result.syncedItems.transactions > 0) {
+          await loadUserData();
+        }
+      } else {
+        console.error('❌ 동기화 실패:', result.errors);
+      }
+    } catch (error) {
+      console.error('동기화 요청 실패:', error);
+    }
+  };
+
+  // 네트워크 상태 모니터링
+  useEffect(() => {
+    const unsubscribe = networkService.addListener((networkState: NetworkState) => {
+      dispatch({ type: 'SET_NETWORK_STATE', payload: networkState });
+      
+      // 오프라인 상태로 전환되고 아직 모달을 보여주지 않았다면 표시
+      const isOffline = !networkState.isConnected || !networkState.isReachable;
+      if (isOffline && !state.offlineModal.hasShownOnce) {
+        setTimeout(() => showOfflineModal(), 1000); // 1초 지연 후 표시
+      }
+      
+      // 온라인으로 복귀했을 때 모달 숨기기
+      if (!isOffline && state.offlineModal.visible) {
+        hideOfflineModal();
+      }
+    });
+
+    return unsubscribe;
+  }, [state.offlineModal.hasShownOnce, state.offlineModal.visible]);
+
   // 앱 시작 시 초기 데이터 로드
   useEffect(() => {
-    loadUserData();
+    checkAuthStatus();
     
     // 지원 체인 로드
     const loadSupportedChains = async () => {
@@ -212,6 +813,27 @@ export function AppProvider({ children }: AppProviderProps) {
     loadTransactions,
     createPayment,
     createTransfer,
+    // USDC 충전 관련 함수들
+    createWireDeposit,
+    createCryptoDeposit,
+    getDepositAddresses,
+    getDepositStatus,
+    getDepositHistory,
+    // 사용자 프로필 및 KYC 관련 함수들
+    getUserProfile,
+    updateUserProfile,
+    submitKYCDocument,
+    getKYCStatus,
+    resubmitKYCDocument,
+    // 인증 및 기타 함수들
+    checkAuthStatus,
+    logout,
+    setAuthToken,
+    showTokenExpiredModal,
+    hideTokenExpiredModal,
+    showOfflineModal,
+    hideOfflineModal,
+    requestSync,
   };
 
   return (

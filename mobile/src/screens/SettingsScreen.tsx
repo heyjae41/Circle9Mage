@@ -11,12 +11,174 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useApp } from '../contexts/AppContext';
+import { biometricAuthManager } from '../utils/biometricAuth';
 
 export default function SettingsScreen() {
-  const { state } = useApp();
+  const { state, logout, requestSync } = useApp();
   const [notifications, setNotifications] = React.useState(true);
   const [biometric, setBiometric] = React.useState(false);
   const [autoConvert, setAutoConvert] = React.useState(true);
+  
+  // 생체 인증 관련 상태
+  const [biometricStatus, setBiometricStatus] = React.useState<{
+    isAvailable: boolean;
+    isEnabled: boolean;
+    statusMessage: string;
+    supportedTypes: string[];
+  }>({
+    isAvailable: false,
+    isEnabled: false,
+    statusMessage: '확인 중...',
+    supportedTypes: []
+  });
+  const [biometricLoading, setBiometricLoading] = React.useState(false);
+
+  // 생체 인증 상태 로드
+  const loadBiometricStatus = async () => {
+    try {
+      const status = await biometricAuthManager.getStatus();
+      
+      setBiometricStatus({
+        isAvailable: status.capabilities.isAvailable,
+        isEnabled: status.settings.isEnabled,
+        statusMessage: status.statusMessage,
+        supportedTypes: status.capabilities.supportedTypeNames
+      });
+      
+      setBiometric(status.settings.isEnabled);
+      
+    } catch (error) {
+      console.error('생체 인증 상태 로드 실패:', error);
+      setBiometricStatus(prev => ({
+        ...prev,
+        statusMessage: '상태 확인 실패'
+      }));
+    }
+  };
+
+  // 생체 인증 토글
+  const handleBiometricToggle = async (enabled: boolean) => {
+    if (biometricLoading) return;
+    
+    setBiometricLoading(true);
+    
+    try {
+      if (enabled) {
+        // 생체 인증 활성화
+        const result = await biometricAuthManager.enableBiometric();
+        
+        if (result.success) {
+          setBiometric(true);
+          Alert.alert('✅ 성공', '생체 인증이 활성화되었습니다.');
+          await loadBiometricStatus(); // 상태 새로고침
+        } else {
+          Alert.alert('❌ 오류', result.error || '생체 인증 활성화에 실패했습니다.');
+        }
+      } else {
+        // 생체 인증 비활성화 확인
+        Alert.alert(
+          '생체 인증 비활성화',
+          '생체 인증을 비활성화하면 매번 PIN을 입력해야 합니다.\n정말 비활성화하시겠습니까?',
+          [
+            { text: '취소', style: 'cancel' },
+            { 
+              text: '비활성화', 
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  await biometricAuthManager.disableBiometric();
+                  setBiometric(false);
+                  Alert.alert('✅ 완료', '생체 인증이 비활성화되었습니다.');
+                  await loadBiometricStatus(); // 상태 새로고침
+                } catch (error) {
+                  Alert.alert('❌ 오류', '비활성화 중 오류가 발생했습니다.');
+                }
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('생체 인증 토글 실패:', error);
+      Alert.alert('❌ 오류', '설정 변경 중 오류가 발생했습니다.');
+    } finally {
+      setBiometricLoading(false);
+    }
+  };
+
+  // 생체 인증 상세 정보 표시
+  const showBiometricInfo = () => {
+    const { isAvailable, statusMessage, supportedTypes } = biometricStatus;
+    
+    let message = `상태: ${statusMessage}`;
+    
+    if (isAvailable && supportedTypes.length > 0) {
+      message += `\n\n지원되는 인증 방식:\n${supportedTypes.map(type => `• ${type}`).join('\n')}`;
+      message += '\n\n보안 기능:\n• 24시간마다 PIN 확인\n• 실패 시 자동 PIN 입력 전환\n• 앱 재시작 시 빠른 로그인';
+    }
+    
+    if (!isAvailable) {
+      if (statusMessage.includes('등록')) {
+        message += '\n\n기기 설정 > 생체 인증에서 지문이나 얼굴을 등록해주세요.';
+      } else if (statusMessage.includes('지원하지 않는')) {
+        message += '\n\n이 기기는 생체 인증을 지원하지 않습니다.';
+      }
+    }
+    
+    const buttons = isAvailable && biometricStatus.isEnabled 
+      ? [
+          { text: '고급 설정', onPress: showAdvancedBiometricSettings },
+          { text: '확인' }
+        ]
+      : [{ text: '확인' }];
+    
+    Alert.alert('생체 인증 정보', message, buttons);
+  };
+
+  // 고급 생체 인증 설정
+  const showAdvancedBiometricSettings = () => {
+    Alert.alert(
+      '고급 생체 인증 설정',
+      '생체 인증 실패 시 어떻게 하시겠습니까?',
+      [
+        {
+          text: 'PIN 입력 허용',
+          onPress: async () => {
+            try {
+              const settings = await biometricAuthManager.getSettings();
+              settings.requirePinFallback = true;
+              settings.fallbackLabel = 'PIN 사용';
+              await biometricAuthManager.saveSettings(settings);
+              Alert.alert('설정 완료', 'PIN 입력 fallback이 활성화되었습니다.');
+              await loadBiometricStatus();
+            } catch (error) {
+              Alert.alert('오류', '설정 저장에 실패했습니다.');
+            }
+          }
+        },
+        {
+          text: '생체 인증만 허용',
+          onPress: async () => {
+            try {
+              const settings = await biometricAuthManager.getSettings();
+              settings.requirePinFallback = false;
+              await biometricAuthManager.saveSettings(settings);
+              Alert.alert('설정 완료', '생체 인증만 허용됩니다.');
+              await loadBiometricStatus();
+            } catch (error) {
+              Alert.alert('오류', '설정 저장에 실패했습니다.');
+            }
+          }
+        },
+        { text: '취소', style: 'cancel' }
+      ]
+    );
+  };
+
+  // 컴포넌트 마운트 시 생체 인증 상태 로드
+  React.useEffect(() => {
+    loadBiometricStatus();
+  }, []);
 
   const handleLogout = () => {
     Alert.alert(
@@ -24,9 +186,13 @@ export default function SettingsScreen() {
       '정말 로그아웃하시겠습니까?',
       [
         { text: '취소', style: 'cancel' },
-        { text: '로그아웃', style: 'destructive', onPress: () => {
-          // 로그아웃 로직
-          console.log('로그아웃');
+        { text: '로그아웃', style: 'destructive', onPress: async () => {
+          try {
+            await logout();
+            Alert.alert('로그아웃 완료', '성공적으로 로그아웃되었습니다.');
+          } catch (error) {
+            Alert.alert('오류', '로그아웃 중 오류가 발생했습니다.');
+          }
         }}
       ]
     );
@@ -147,16 +313,32 @@ export default function SettingsScreen() {
         <SettingItem
           icon="finger-print"
           title="생체인증"
-          subtitle="지문, Face ID로 빠른 인증"
+          subtitle={biometricStatus.statusMessage}
+          onPress={showBiometricInfo}
           rightComponent={
             <Switch
               value={biometric}
-              onValueChange={setBiometric}
+              onValueChange={handleBiometricToggle}
               trackColor={{ false: '#E9ECEF', true: '#007AFF' }}
               thumbColor="white"
+              disabled={!biometricStatus.isAvailable || biometricLoading}
             />
           }
-          showArrow={false}
+          showArrow={true}
+        />
+        
+        <SettingItem
+          icon="sync"
+          title="데이터 동기화"
+          subtitle="서버와 로컬 데이터 동기화"
+          onPress={async () => {
+            try {
+              await requestSync();
+              Alert.alert('동기화 완료', '데이터 동기화가 완료되었습니다.');
+            } catch (error) {
+              Alert.alert('동기화 실패', '데이터 동기화 중 오류가 발생했습니다.');
+            }
+          }}
         />
         
         <SettingItem

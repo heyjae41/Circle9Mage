@@ -20,23 +20,31 @@ CirclePay Global is an innovative global payment platform that **integrates all 
 ## 🌟 Core Features
 
 ### 📱 Mobile App (React Native + Expo)
-- **🏠 Home Dashboard**: Total balance view, multi-chain wallet management
-- **💳 QR Payments**: Camera scan + manual input payments
-- **🔄 Cross-Chain Remittance**: 8-20 second instant transfers between 6 chains
-- **📊 Transaction History**: Filtering, search, monthly statistics
-- **⚙️ Settings**: Security, notifications, theme management
+- **🏠 Home Dashboard**: Real-time balance inquiry, multi-chain wallet management, recent transaction history
+- **💳 QR Payments**: Camera scan + manual input, offline payment queue
+- **🔄 Cross-Chain Remittance**: 8-20 second instant transfers between 6 chains, real-time status tracking
+- **💰 USDC Top-up**: Bank wire + cryptocurrency top-up, deposit address generation
+- **👤 User Profile**: KYC document submission, identity verification, level-based limit management
+- **📊 Transaction History**: Filtering, search, monthly statistics, export functionality
+- **🔐 Biometric Authentication**: Face ID/fingerprint recognition, PIN backup, quick login
+- **🌐 Offline Mode**: Auto queue during network disconnection, sync on reconnection
+- **⚙️ Settings**: Security, notifications, theme, token management
 
 ### 🖥️ Backend API (FastAPI)
 - **Payment Processing**: QR generation, cross-chain transfers, status tracking
 - **Wallet Management**: MPC wallet creation, balance inquiry, transaction history
-- **Compliance**: Real-time transaction screening, watchlist verification
+- **USDC Top-up**: Bank wire/cryptocurrency deposits, address generation, status tracking
+- **User Management**: Profile CRUD, KYC document processing, identity verification
+- **Compliance**: Real-time transaction screening, watchlist verification, risk scoring
+- **Authentication System**: JWT tokens, auto renewal, session management
 - **Admin**: System monitoring, dashboard, statistics
 
 ### 🔵 Circle SDK Integration
 - **CCTP V2**: Ethereum ↔ Base ↔ Arbitrum ↔ Avalanche ↔ Linea ↔ Sonic
-- **Circle Paymaster**: Complete gasless USDC payment experience
+- **Circle Paymaster**: Complete gasless USDC payment experience  
 - **Circle Wallets**: MPC-based secure wallet creation and management
-- **Compliance Engine**: Real-time AML/KYC transaction monitoring
+- **Circle Mint**: USDC top-up/withdrawal, deposit address generation, balance inquiry
+- **Compliance Engine**: Real-time AML/KYC transaction monitoring, auto approval/rejection
 
 ## 🎯 Target Scenarios
 
@@ -387,6 +395,421 @@ Violation of these terms may result in legal action.
 
 ---
 
+## 🛠️ Technology Stack
+
+### 📱 Mobile App (Frontend)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **React Native** | 0.75+ | Cross-platform mobile app development |
+| **Expo** | SDK 52+ | Development tools and deployment platform |
+| **TypeScript** | 5.x | Type safety and development productivity |
+| **React Navigation** | 6.x | Screen navigation management |
+| **Expo Camera** | Latest | QR code scanning and barcode recognition |
+| **@react-native-netinfo** | 11.x | Network status monitoring |
+| **@react-native-async-storage** | 2.x | Local data storage |
+| **expo-local-authentication** | Latest | Biometric authentication (Face ID/Fingerprint) |
+
+### 🖥️ Backend (Backend)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **FastAPI** | 0.115+ | High-performance Python web API framework |
+| **Python** | 3.11+ | Backend server language |
+| **PostgreSQL** | 15+ | Relational database |
+| **Redis** | 7+ | Session management and caching |
+| **SQLAlchemy** | 2.x | ORM and database abstraction |
+| **Pydantic** | 2.x | Data validation and serialization |
+| **PyJWT** | 2.x | JWT token management |
+| **Uvicorn** | 0.30+ | ASGI server |
+
+### 🔵 Circle SDK
+| SDK | Purpose |
+|-----|---------|
+| **Circle Web3 Services** | Wallet creation, balance inquiry, transaction sending |
+| **Circle CCTP V2** | Cross-chain USDC transfers |
+| **Circle Paymaster** | Gasless transaction processing |
+| **Circle Compliance** | Real-time AML/KYC verification |
+| **Circle Mint** | USDC top-up/withdrawal services |
+
+### 🧪 Development Tools
+| Tool | Version | Purpose |
+|------|---------|---------|
+| **Docker** | 24+ | Development environment containerization |
+| **Git** | 2.40+ | Version control |
+| **pytest** | 8.x | Python backend testing |
+| **Jest** | 29.x | React Native testing |
+
+---
+
+## 📁 Project Structure
+
+```
+circle9mage/
+├── 📱 mobile/                          # React Native mobile app
+│   ├── src/
+│   │   ├── components/                 # Reusable UI components
+│   │   ├── screens/                    # Screen components
+│   │   │   ├── HomeScreen.tsx         # Dashboard home screen
+│   │   │   ├── PaymentScreen.tsx      # QR payment screen
+│   │   │   ├── SendScreen.tsx         # Cross-chain send screen
+│   │   │   ├── DepositScreen.tsx      # USDC top-up screen
+│   │   │   ├── ProfileScreen.tsx      # Profile and KYC screen
+│   │   │   ├── HistoryScreen.tsx      # Transaction history screen
+│   │   │   ├── SettingsScreen.tsx     # Settings screen
+│   │   │   └── LoginScreen.tsx        # Login screen
+│   │   ├── contexts/
+│   │   │   └── AppContext.tsx         # Global state management
+│   │   ├── services/                   # Business logic and external services
+│   │   │   ├── apiService.ts          # Backend API communication
+│   │   │   ├── networkService.ts      # Network status management
+│   │   │   ├── offlineStorage.ts      # Offline data caching
+│   │   │   ├── retryManager.ts        # Intelligent retry logic
+│   │   │   ├── syncService.ts         # Data synchronization
+│   │   │   └── backgroundTokenService.ts # Auto token renewal
+│   │   ├── utils/                      # Utility functions
+│   │   │   ├── formatters.ts          # Data formatting
+│   │   │   ├── tokenManager.ts        # JWT token management
+│   │   │   └── biometricAuth.ts       # Biometric authentication management
+│   │   └── types/
+│   │       └── index.ts               # TypeScript type definitions
+│   ├── App.tsx                         # App entry point
+│   └── package.json                    # Dependencies and scripts
+│
+├── 🖥️ backend/                         # FastAPI backend server
+│   ├── app/
+│   │   ├── api/routes/                 # API endpoints
+│   │   │   ├── auth.py                # Authentication (login/registration)
+│   │   │   ├── payments.py            # Payment and QR processing
+│   │   │   ├── wallets.py             # Wallet management
+│   │   │   ├── deposits.py            # USDC top-up
+│   │   │   ├── users.py               # User profile and KYC
+│   │   │   ├── compliance.py          # Compliance verification
+│   │   │   └── admin.py               # Admin functionality
+│   │   ├── core/
+│   │   │   └── config.py              # Environment configuration management
+│   │   ├── models/
+│   │   │   └── user.py                # Database models
+│   │   ├── services/
+│   │   │   ├── circle_client.py       # Circle SDK integration
+│   │   │   └── auth_service.py        # Authentication service
+│   │   └── database/
+│   │       └── connection.py          # DB connection management
+│   ├── main.py                         # FastAPI app entry point
+│   └── requirements.txt                # Python dependencies
+│
+├── 🧪 tests/                           # Test files
+│   ├── integration_test.py             # Integration test (12 steps)
+│   ├── test_backend_api.py            # Backend API test
+│   ├── test_mobile_components.js      # Mobile component test
+│   └── run_tests.sh                   # Test execution script
+│
+├── 📄 docs/                            # Project documentation
+├── 🐳 docker-compose.yml               # Docker configuration (PostgreSQL + Redis)
+├── 📋 README.md                        # Main project documentation
+├── 📝 DEVELOPMENT_HISTORY.md           # Development history
+├── 🏆 HACKATHON_REVIEW.md              # Hackathon requirement review
+└── 🔧 .env                             # Environment variables (Circle API keys, etc.)
+```
+
+---
+
+## ⚡ Commands
+
+### 🚀 Development Environment Setup
+
+#### Backend Server Start
+```bash
+# Start PostgreSQL + Redis (Docker)
+docker-compose up -d
+
+# Activate Python virtual environment
+cd backend
+source venv/bin/activate  # Linux/Mac
+# or venv\Scripts\activate  # Windows
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run backend server
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+#### Mobile App Start
+```bash
+# Navigate to mobile directory
+cd mobile
+
+# Install dependencies
+npm install
+
+# Start development server
+npx expo start
+
+# Platform-specific execution
+npx expo start --android    # Android emulator
+npx expo start --ios        # iOS simulator  
+npx expo start --web        # Web browser
+```
+
+### 🧪 Test Execution
+
+#### Integration Test (Full System)
+```bash
+cd tests
+python integration_test.py
+```
+
+#### Backend API Test
+```bash
+cd tests
+python test_backend_api.py
+```
+
+#### Mobile Component Test
+```bash
+cd mobile
+npm test
+```
+
+#### Full Test Execution
+```bash
+./tests/run_tests.sh
+```
+
+### 📦 Build and Deployment
+
+#### Mobile App Build
+```bash
+# Android APK
+cd mobile
+npx expo build:android
+
+# iOS IPA  
+npx expo build:ios
+
+# Web deployment build
+npx expo export:web
+```
+
+#### Backend Docker Build
+```bash
+cd backend
+docker build -t circlepay-backend .
+docker run -p 8000:8000 circlepay-backend
+```
+
+### 🔧 Development Tools
+
+#### Cache Clear
+```bash
+# Clear Metro cache
+cd mobile
+npx expo start --clear
+
+# Reinstall Node modules
+rm -rf node_modules
+npm install
+```
+
+#### Database Management
+```bash
+# Connect to PostgreSQL
+docker exec -it circle9mage-postgres-1 psql -U postgres -d circle9mage
+
+# Connect to Redis
+docker exec -it circle9mage-redis-1 redis-cli
+```
+
+---
+
+## 🎨 Code Style
+
+### 📱 Mobile App (TypeScript/React Native)
+
+#### Naming Conventions
+```typescript
+// ✅ Good examples
+// Components: PascalCase
+const PaymentScreen = () => { /* ... */ };
+const UserProfileCard = () => { /* ... */ };
+
+// Functions/variables: camelCase
+const handlePayment = async () => { /* ... */ };
+const userBalance = 1000.50;
+
+// Constants: SCREAMING_SNAKE_CASE
+const API_BASE_URL = 'https://api.example.com';
+const MAX_RETRY_ATTEMPTS = 3;
+
+// Types/interfaces: PascalCase
+interface UserData {
+  id: string;
+  email: string;
+}
+```
+
+#### Import/Export Order
+```typescript
+// 1. React and React Native
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
+
+// 2. Third-party libraries
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+
+// 3. Internal components and services
+import { apiService } from '../services/apiService';
+import { useAppContext } from '../contexts/AppContext';
+
+// 4. Type definitions
+import { UserData, PaymentRequest } from '../types';
+```
+
+### 🖥️ Backend (Python/FastAPI)
+
+#### Naming Conventions
+```python
+# ✅ Good examples
+# Functions/variables: snake_case
+def create_payment_request(user_id: str, amount: float) -> PaymentResponse:
+    pass
+
+user_wallet_balance = 1000.50
+
+# Classes: PascalCase
+class PaymentService:
+    def __init__(self):
+        pass
+
+# Constants: SCREAMING_SNAKE_CASE
+API_VERSION = "v1"
+MAX_PAYMENT_AMOUNT = 10000.0
+```
+
+---
+
+## 🔄 Repository Rules
+
+### 🌿 Branch Naming
+```bash
+# Feature development
+feature/payment-qr-scanner
+feature/biometric-auth
+feature/offline-mode
+
+# Bug fixes
+bugfix/ios-network-connection
+bugfix/token-refresh-loop
+
+# Hotfixes
+hotfix/security-patch-jwt
+hotfix/circle-api-update
+
+# Releases
+release/v2.1.0
+release/v3.0.0-beta
+```
+
+### 📝 Commit Message Format
+```bash
+# Format: type(scope): description
+
+# Feature additions
+feat(auth): implement JWT auto-renewal mechanism
+feat(payment): add QR code scan functionality
+feat(profile): implement KYC document upload
+
+# Bug fixes
+fix(ios): resolve simulator network connection issue
+fix(api): fix infinite loop on token expiration
+
+# Documentation updates
+docs(readme): add tech stack and commands section
+docs(api): update Swagger documentation
+
+# Style changes
+style(mobile): apply code formatting
+
+# Refactoring
+refactor(auth): modularize authentication service
+
+# Testing
+test(integration): add 12-step integration test
+
+# Performance improvements
+perf(api): optimize database queries
+```
+
+### 🔀 Merge Policy
+- **Default Strategy**: `Squash and Merge` (clean commit history)
+- **Hotfixes**: `Merge Commit` (emergency patch traceability)
+- **Releases**: `Merge Commit` (preserve version history)
+
+---
+
+## 🎯 Core Files
+
+### 🔥 Most Important Files (Use Caution When Modifying!)
+
+#### 📱 Mobile Core Files
+| File | Role | Importance |
+|------|------|------------|
+| `mobile/src/contexts/AppContext.tsx` | Global state management, all business logic | 🔴 **Critical** |
+| `mobile/src/services/apiService.ts` | Backend API communication, HTTP interceptors | 🔴 **Critical** |
+| `mobile/App.tsx` | App entry point, navigation setup | 🟡 **Important** |
+| `mobile/src/utils/tokenManager.ts` | JWT token management, auto renewal | 🟡 **Important** |
+| `mobile/src/services/networkService.ts` | Network status monitoring | 🟡 **Important** |
+
+#### 🖥️ Backend Core Files
+| File | Role | Importance |
+|------|------|------------|
+| `backend/main.py` | FastAPI app entry point | 🔴 **Critical** |
+| `backend/app/core/config.py` | Environment configuration, Circle API key management | 🔴 **Critical** |
+| `backend/app/services/circle_client.py` | Circle SDK integration | 🔴 **Critical** |
+| `backend/app/services/auth_service.py` | Authentication service, JWT processing | 🟡 **Important** |
+| `backend/app/models/user.py` | Database models | 🟡 **Important** |
+
+---
+
+## 🚫 Prohibited Actions
+
+### ❌ Never Modify These
+
+#### 🔐 Security Related
+```bash
+❌ Hardcode Circle API keys in code
+❌ Change JWT SECRET_KEY (invalidates existing tokens)
+❌ Arbitrarily modify authentication middleware logic
+❌ Commit sensitive environment variables to Git
+```
+
+#### 🗄️ Database
+```bash
+❌ DROP existing database schemas
+❌ Directly modify user data tables
+❌ Delete transaction logs
+❌ Manually manipulate Redis session data
+```
+
+#### 📱 Production Settings
+```bash
+❌ Enable DEBUG mode in production
+❌ Test with Circle production API keys
+❌ Change CORS settings to "*"
+❌ Fix backend URL to localhost
+```
+
+---
+
+## 📞 Support and Contact
+
+- **Developer**: Circle Developer Bounties Team
+- **Email**: dev@circlepay.global  
+- **GitHub**: [circle9mage](https://github.com/yourusername/circle9mage)
+- **Documentation**: [Developer Documentation](./docs/)
+
+---
+
 <div align="center">
 
 ### 🌟 Building the Future of Global Payments Together
@@ -394,5 +817,7 @@ Violation of these terms may result in legal action.
 **CirclePay Global** - *Circle Technology Powered*
 
 [🚀 View Demo](https://demo.circlepay.global) | [📖 API Docs](https://docs.circlepay.global) | [💬 Community](https://discord.gg/circlepay)
+
+**🎉 CirclePay Global - Circle Developer Bounties Hackathon Project** 🚀
 
 </div> 
