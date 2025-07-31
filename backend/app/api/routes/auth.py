@@ -196,8 +196,52 @@ async def register_user(
         phone_code = generate_verification_code()
         
         # Redis에 인증 코드 저장 (5분 만료)
-        await redis.setex(f"email_verify:{request.email}", 300, email_code)
-        await redis.setex(f"phone_verify:{request.phone}", 300, phone_code)
+        print(f"🔍 Redis 저장 시작 - Redis 객체: {type(redis)}")
+        print(f"🔍 이메일 코드: {email_code}, 전화 코드: {phone_code}")
+        print(f"🔍 이메일: {request.email}, 전화: {request.phone}")
+        
+        if redis is None:
+            print("❌ Redis 클라이언트가 None입니다")
+            raise HTTPException(
+                status_code=500,
+                detail="Redis 연결 실패 - 인증 코드 저장 불가"
+            )
+        
+        try:
+            print(f"🔍 Redis 연결 확인 중...")
+            # Redis 연결 테스트
+            await redis.ping()
+            print(f"✅ Redis 연결 확인 완료")
+            
+            print(f"🔍 이메일 코드 저장 시작...")
+            email_key = f"email_verify:{request.email}"
+            await redis.setex(email_key, 300, email_code)
+            print(f"✅ 이메일 코드 저장 완료: {email_key} = {email_code}")
+            
+            print(f"🔍 전화 코드 저장 시작...")
+            phone_key = f"phone_verify:{request.phone}"
+            await redis.setex(phone_key, 300, phone_code)
+            print(f"✅ 전화 코드 저장 완료: {phone_key} = {phone_code}")
+            
+            print(f"✅ Redis 저장 성공: email={email_code}, phone={phone_code}")
+            print(f"📧 이메일 키: {email_key}")
+            print(f"📱 전화 키: {phone_key}")
+            
+            # 저장 확인
+            print(f"🔍 저장 확인 중...")
+            stored_email = await redis.get(email_key)
+            stored_phone = await redis.get(phone_key)
+            print(f"✅ 저장 확인 완료: email={stored_email}, phone={stored_phone}")
+            
+        except Exception as e:
+            print(f"❌ Redis 저장 실패: {str(e)}")
+            print(f"❌ 에러 타입: {type(e)}")
+            import traceback
+            print(f"❌ 상세 에러: {traceback.format_exc()}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"인증 코드 저장 실패: {str(e)}"
+            )
         
         # 백그라운드에서 인증 코드 발송
         background_tasks.add_task(send_email_verification, request.email, email_code)
@@ -328,35 +372,62 @@ async def verify_email(
 ):
     """이메일 인증"""
     try:
-        # 1. Redis에서 인증 코드 확인
-        stored_code = await redis.get(f"email_verify:{request.email}")
+        # 1. Redis 연결 확인
+        if redis is None:
+            print("❌ 이메일 인증: Redis 클라이언트가 None입니다")
+            raise HTTPException(
+                status_code=500,
+                detail="Redis 연결 실패 - 인증 불가"
+            )
         
-        if not stored_code or stored_code.decode() != request.verification_code:
+        # 2. Redis에서 인증 코드 확인
+        stored_code = await redis.get(f"email_verify:{request.email}")
+        print(f"📧 이메일 인증 시도: {request.email}, 코드: {request.verification_code}")
+        print(f"📦 Redis에서 조회된 코드: {stored_code}")
+        print(f"🔍 저장된 코드 타입: {type(stored_code)}")
+        
+        # Redis 응답이 문자열인지 바이트인지 확인하여 처리
+        stored_code_str = stored_code.decode() if isinstance(stored_code, bytes) else stored_code
+        print(f"🔍 변환된 코드: {stored_code_str}")
+        
+        if not stored_code or stored_code_str != request.verification_code:
             raise HTTPException(
                 status_code=400,
                 detail="인증 코드가 올바르지 않거나 만료되었습니다"
             )
         
         # 2. 사용자 이메일 인증 상태 업데이트
+        print(f"🔍 데이터베이스에서 사용자 조회 중: {request.email}")
         result = await db.execute(
             select(User).where(User.email == request.email)
         )
         user = result.scalar_one_or_none()
+        print(f"📋 조회된 사용자: {user.id if user else 'None'}")
         
         if user:
+            print(f"🔍 인증 코드 삭제 중...")
             # 인증 코드 삭제
             await redis.delete(f"email_verify:{request.email}")
+            print(f"✅ 인증 코드 삭제 완료")
             
+            print(f"🔍 전화번호 인증 상태 확인 중: {user.phone}")
             # 이메일과 전화번호가 모두 인증되었는지 확인
             phone_verified = await redis.get(f"phone_verified:{user.phone}")
+            print(f"📱 전화 인증 상태: {phone_verified}")
+            
             if phone_verified:
+                print(f"🔍 사용자 인증 상태 업데이트 중...")
                 user.is_verified = True
+                print(f"🔍 데이터베이스 커밋 중...")
                 await db.commit()
+                print(f"✅ 모든 인증 완료")
                 
                 return {"message": "이메일 인증이 완료되었습니다", "verified": True}
             else:
+                print(f"🔍 이메일 인증 상태만 저장 중...")
                 # 이메일만 인증된 상태 표시
                 await redis.setex(f"email_verified:{request.email}", 3600, "true")
+                print(f"✅ 이메일 인증 완료, SMS 인증 대기")
                 return {"message": "이메일 인증이 완료되었습니다. SMS 인증을 진행해주세요", "verified": False}
         
         return {"message": "이메일 인증이 완료되었습니다", "verified": False}
@@ -364,6 +435,10 @@ async def verify_email(
     except HTTPException:
         raise
     except Exception as e:
+        print(f"❌ 이메일 인증 중 예상치 못한 에러 발생: {str(e)}")
+        print(f"❌ 에러 타입: {type(e)}")
+        import traceback
+        print(f"❌ 상세 에러: {traceback.format_exc()}")
         raise HTTPException(
             status_code=500,
             detail=f"이메일 인증 처리 중 오류가 발생했습니다: {str(e)}"
@@ -377,10 +452,25 @@ async def verify_phone(
 ):
     """SMS 인증"""
     try:
-        # 1. Redis에서 인증 코드 확인
-        stored_code = await redis.get(f"phone_verify:{request.phone}")
+        # 1. Redis 연결 확인
+        if redis is None:
+            print("❌ SMS 인증: Redis 클라이언트가 None입니다")
+            raise HTTPException(
+                status_code=500,
+                detail="Redis 연결 실패 - 인증 불가"
+            )
         
-        if not stored_code or stored_code.decode() != request.verification_code:
+        # 2. Redis에서 인증 코드 확인
+        stored_code = await redis.get(f"phone_verify:{request.phone}")
+        print(f"📱 SMS 인증 시도: {request.phone}, 코드: {request.verification_code}")
+        print(f"📦 Redis에서 조회된 코드: {stored_code}")
+        print(f"🔍 저장된 코드 타입: {type(stored_code)}")
+        
+        # Redis 응답이 문자열인지 바이트인지 확인하여 처리
+        stored_code_str = stored_code.decode() if isinstance(stored_code, bytes) else stored_code
+        print(f"🔍 변환된 코드: {stored_code_str}")
+        
+        if not stored_code or stored_code_str != request.verification_code:
             raise HTTPException(
                 status_code=400,
                 detail="인증 코드가 올바르지 않거나 만료되었습니다"
@@ -400,12 +490,39 @@ async def verify_phone(
             email_verified = await redis.get(f"email_verified:{user.email}")
             if email_verified:
                 user.is_verified = True
+                user.is_active = True  # 계정 활성화
                 await db.commit()
                 
                 # 인증 완료 표시 삭제
                 await redis.delete(f"email_verified:{user.email}")
                 
-                return {"message": "SMS 인증이 완료되었습니다", "verified": True}
+                print(f"🎉 모든 인증 완료! 자동 로그인 토큰 발급: {user.email}")
+                
+                # JWT 토큰 자동 발급 (자동 로그인)
+                access_token = auth_service.create_access_token(data={"sub": str(user.id)})
+                refresh_token = auth_service.create_refresh_token(data={"sub": str(user.id)})
+                
+                # 마지막 로그인 시간 업데이트
+                user.last_login_at = datetime.utcnow()
+                await db.commit()
+                
+                return {
+                    "message": "인증이 완료되었습니다! 자동으로 로그인됩니다.",
+                    "verified": True,
+                    "auto_login": True,
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                    "token_type": "bearer",
+                    "user": {
+                        "id": user.id,
+                        "email": user.email,
+                        "first_name": user.first_name,
+                        "last_name": user.last_name,
+                        "phone": user.phone,
+                        "country_code": user.country_code,
+                        "is_verified": user.is_verified
+                    }
+                }
             else:
                 # 전화번호만 인증된 상태 표시
                 await redis.setex(f"phone_verified:{request.phone}", 3600, "true")

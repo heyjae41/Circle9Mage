@@ -115,6 +115,19 @@ class ApiService {
         
         // 401 에러 (인증 실패) 처리
         if (response.status === 401 && !isRetry) {
+          // 로그인 관련 API에서는 토큰 갱신을 시도하지 않음 (사용자 정보 오류임)
+          const isAuthEndpoint = endpoint.includes('/auth/login') || 
+                                 endpoint.includes('/auth/register') ||
+                                 endpoint.includes('/auth/verify');
+          
+          if (isAuthEndpoint) {
+            console.log('🚫 인증 API에서 401 에러 - 사용자 정보 오류');
+            const errorData = await response.json().catch(() => ({}));
+            const error = new Error(errorData.detail || errorData.message || '로그인 정보가 올바르지 않습니다');
+            (error as any).response = { status: response.status };
+            throw error;
+          }
+          
           console.log('🔒 401 에러 감지, 토큰 갱신 시도...');
           
           // 이미 토큰 갱신 중인 경우, 큐에 추가

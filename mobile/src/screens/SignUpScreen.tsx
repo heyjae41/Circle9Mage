@@ -17,6 +17,15 @@ import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import apiService from '../services/apiService';
 import { useApp } from '../contexts/AppContext';
+import CountryCodePicker from '../components/CountryCodePicker';
+import { 
+  COUNTRY_CODES, 
+  CountryCode, 
+  getCountryByCode, 
+  cleanPhoneNumber, 
+  validatePhoneNumber, 
+  formatInternationalPhone 
+} from '../utils/countryCodes';
 
 interface SignUpData {
   email: string;
@@ -24,6 +33,7 @@ interface SignUpData {
   firstName: string;
   lastName: string;
   countryCode: string;
+  selectedCountry: CountryCode;
   pin: string;
   confirmPin: string;
 }
@@ -48,6 +58,7 @@ export default function SignUpScreen() {
     firstName: '',
     lastName: '',
     countryCode: 'KR',
+    selectedCountry: getCountryByCode('KR') || COUNTRY_CODES[0],
     pin: '',
     confirmPin: '',
   });
@@ -67,10 +78,10 @@ export default function SignUpScreen() {
     return emailRegex.test(email);
   };
 
-  // 전화번호 유효성 검사 (한국 형식)
-  const isValidPhone = (phone: string) => {
-    const phoneRegex = /^01[0-9]{8,9}$/;
-    return phoneRegex.test(phone.replace(/[^0-9]/g, ''));
+  // 국가별 전화번호 유효성 검사
+  const isValidPhone = (phone: string, countryCode: string) => {
+    const cleanPhone = cleanPhoneNumber(phone);
+    return validatePhoneNumber(cleanPhone, countryCode);
   };
 
   // 폼 유효성 검사
@@ -80,8 +91,9 @@ export default function SignUpScreen() {
       return false;
     }
     
-    if (!formData.phone || !isValidPhone(formData.phone)) {
-      Alert.alert('오류', '올바른 전화번호를 입력해주세요. (예: 01012345678)');
+    if (!formData.phone || !isValidPhone(formData.phone, formData.countryCode)) {
+      const country = formData.selectedCountry;
+      Alert.alert('오류', `올바른 전화번호를 입력해주세요.\n예시: ${country.placeholder}`);
       return false;
     }
     
@@ -115,8 +127,8 @@ export default function SignUpScreen() {
     setLoading(true);
     
     try {
-      // 전화번호를 국제 형식으로 변환
-      const formattedPhone = `+82${formData.phone.slice(1)}`;
+      // 전화번호를 국제 형식으로 변환 (숫자만 남기고 특수문자 제거)
+      const formattedPhone = formatInternationalPhone(formData.phone, formData.countryCode);
       
       const response = await apiService.register({
         email: formData.email,
@@ -161,19 +173,39 @@ export default function SignUpScreen() {
       });
       
       // SMS 인증
-      const formattedPhone = `+82${formData.phone.slice(1)}`;
-      await apiService.verifyPhone({
+      const formattedPhone = formatInternationalPhone(formData.phone, formData.countryCode);
+      const smsVerifyResponse = await apiService.verifyPhone({
         phone: formattedPhone,
         verification_code: verificationData.phoneCode,
       });
       
-      setCurrentStep('complete');
-      
-      Alert.alert(
-        '인증 완료!',
-        '회원가입이 완료되었습니다. 로그인을 진행합니다.',
-        [{ text: '확인', onPress: handleAutoLogin }]
-      );
+      // 자동 로그인 처리 확인
+      if (smsVerifyResponse.auto_login && smsVerifyResponse.access_token) {
+        console.log('🎉 자동 로그인 토큰 수신:', smsVerifyResponse);
+        
+        // AppContext에 토큰 설정 및 AsyncStorage에 저장
+        await setAuthToken(smsVerifyResponse.access_token, smsVerifyResponse.refresh_token);
+        
+        setCurrentStep('complete');
+        
+        Alert.alert(
+          '회원가입 완료!',
+          '인증이 완료되었습니다! 환영합니다! 🎉',
+          [{ text: '확인', onPress: () => {
+            // 인증 상태가 변경되면 자동으로 홈화면으로 이동됩니다
+            console.log('✅ 자동 로그인 완료, 홈 화면으로 이동 중...');
+          }}]
+        );
+      } else {
+        // 백엔드가 아직 자동 로그인을 지원하지 않는 경우 (fallback)
+        setCurrentStep('complete');
+        
+        Alert.alert(
+          '인증 완료!',
+          '회원가입이 완료되었습니다. 로그인을 진행합니다.',
+          [{ text: '확인', onPress: handleAutoLogin }]
+        );
+      }
       
     } catch (error: any) {
       Alert.alert('인증 실패', error.message || '인증 중 오류가 발생했습니다.');
@@ -216,7 +248,8 @@ export default function SignUpScreen() {
     
     try {
       const emailCodeResult = await apiService.getDevVerificationCode(formData.email);
-      const phoneCodeResult = await apiService.getDevVerificationCode(`+82${formData.phone.slice(1)}`);
+      const formattedPhone = formatInternationalPhone(formData.phone, formData.countryCode);
+      const phoneCodeResult = await apiService.getDevVerificationCode(formattedPhone);
       
       setVerificationData({
         emailCode: emailCodeResult.code,
@@ -271,15 +304,36 @@ export default function SignUpScreen() {
 
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>전화번호</Text>
-          <View style={styles.inputContainer}>
-            <Ionicons name="call-outline" size={20} color="#666" style={styles.inputIcon} />
-            <TextInput
-              style={styles.textInput}
-              placeholder="01012345678"
-              value={formData.phone}
-              onChangeText={(text) => setFormData({...formData, phone: text})}
-              keyboardType="phone-pad"
+          <View style={styles.phoneInputContainer}>
+            {/* 국가코드 선택 */}
+            <CountryCodePicker
+              selectedCountry={formData.selectedCountry}
+              onCountrySelect={(country) => {
+                setFormData({
+                  ...formData,
+                  selectedCountry: country,
+                  countryCode: country.code,
+                  phone: '' // 국가 변경 시 전화번호 초기화
+                });
+              }}
+              style={styles.countryPicker}
             />
+            
+            {/* 전화번호 입력 */}
+            <View style={styles.phoneInputWrapper}>
+              <Ionicons name="call-outline" size={20} color="#666" style={styles.inputIcon} />
+              <TextInput
+                style={styles.phoneTextInput}
+                placeholder={formData.selectedCountry.placeholder}
+                value={formData.phone}
+                onChangeText={(text) => {
+                  // 숫자, 하이픈, 공백만 허용
+                  const filteredText = text.replace(/[^0-9\-\s]/g, '');
+                  setFormData({...formData, phone: filteredText});
+                }}
+                keyboardType="phone-pad"
+              />
+            </View>
           </View>
         </View>
 
@@ -546,6 +600,38 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   textInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1A1A1A',
+    paddingVertical: 12,
+  },
+  
+  // 전화번호 입력 전용 스타일
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  countryPicker: {
+    minWidth: 120,
+    maxWidth: 140,
+    flex: 0,
+  },
+  phoneInputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  phoneTextInput: {
     flex: 1,
     fontSize: 16,
     color: '#1A1A1A',
