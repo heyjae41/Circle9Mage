@@ -1,0 +1,220 @@
+{
+  "summary": {
+    "total_tests": 12,
+    "passed": 12,
+    "failed": 0,
+    "success_rate": "100.0%",
+    "test_email": "test_7f62e0da@example.com",
+    "timestamp": "2025-07-30T15:34:16.478102"
+  },
+  "results": [
+    {
+      "test": "Health Check",
+      "success": true,
+      "message": "서버가 정상 작동 중입니다",
+      "timestamp": "2025-07-30T15:34:04.004823",
+      "data": null
+    },
+    {
+      "test": "사용자 회원가입",
+      "success": true,
+      "message": "회원가입 성공 - User ID: 11",
+      "timestamp": "2025-07-30T15:34:05.201296",
+      "data": {
+        "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTEiLCJlbWFpbCI6InRlc3RfN2Y2MmUwZGFAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImV4cCI6MTc1Mzg1OTA0NSwidHlwZSI6ImFjY2VzcyJ9.taGmxMAL1sP2vZ18IfE8nap2vUbDn8Ym0V7-VkRKEus",
+        "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiMTEiLCJlbWFpbCI6InRlc3RfN2Y2MmUwZGFAZXhhbXBsZS5jb20iLCJleHAiOjE3NTQ0NjIwNDUsInR5cGUiOiJyZWZyZXNoIn0.dq1dqholawLdFgbhxdLo0n368rJewlQiVR33RQtt5Hw",
+        "token_type": "bearer",
+        "expires_in": 1800,
+        "user": {
+          "id": 11,
+          "email": "test_7f62e0da@example.com",
+          "first_name": "CirclePay",
+          "last_name": "Tester",
+          "country_code": "KR",
+          "is_verified": false,
+          "kyc_status": "pending",
+          "wallet_creation_status": "success",
+          "wallet_error": null
+        }
+      }
+    },
+    {
+      "test": "사용자 로그인",
+      "success": true,
+      "message": "로그인 성공",
+      "timestamp": "2025-07-30T15:34:06.219408",
+      "data": {
+        "token_type": "bearer"
+      }
+    },
+    {
+      "test": "프로필 조회",
+      "success": true,
+      "message": "프로필 조회 성공 - KYC 상태: pending",
+      "timestamp": "2025-07-30T15:34:07.243461",
+      "data": {
+        "id": 11,
+        "email": "test_7f62e0da@example.com",
+        "first_name": "CirclePay",
+        "last_name": "Tester",
+        "country_code": "KR",
+        "preferred_currency": "USDC",
+        "phone": "+82-10-2457-5938",
+        "is_verified": false,
+        "kyc_status": "pending",
+        "kyc_level": 1,
+        "created_at": "2025-07-30T06:34:05.130140+00:00",
+        "last_login_at": "2025-07-29T21:34:06.207475+00:00"
+      }
+    },
+    {
+      "test": "지갑 조회",
+      "success": true,
+      "message": "지갑 조회 성공 - 1개 지갑 발견",
+      "timestamp": "2025-07-30T15:34:08.254922",
+      "data": {
+        "wallet_count": 1,
+        "primary_wallet": "wallet_c90ca43d-40dd-42bc-aea9-012c37fe1661"
+      }
+    },
+    {
+      "test": "KYC 문서 제출",
+      "success": true,
+      "message": "KYC 제출 성공 - 상태: approved, 위험점수: 0.1",
+      "timestamp": "2025-07-30T15:34:09.304905",
+      "data": {
+        "kyc_document_id": 2,
+        "status": "approved",
+        "kyc_level": 2,
+        "risk_score": 0.1,
+        "message": "KYC 문서가 성공적으로 제출되었습니다. 현재 상태: approved",
+        "estimated_review_time": "즉시 처리됨"
+      }
+    },
+    {
+      "test": "KYC 상태 확인",
+      "success": true,
+      "message": "KYC 상태: approved, 레벨: 2",
+      "timestamp": "2025-07-30T15:34:10.322628",
+      "data": {
+        "user_id": 11,
+        "kyc_status": "approved",
+        "kyc_level": 2,
+        "documents": [
+          {
+            "id": 2,
+            "document_type": "national_id",
+            "verification_status": "verified",
+            "risk_score": 0.1,
+            "created_at": "2025-07-30T06:34:09.272475+00:00",
+            "verified_at": "2025-07-29T21:34:09.274473+00:00",
+            "expires_at": "2026-07-29T21:34:09.274298+00:00"
+          }
+        ],
+        "last_updated": null,
+        "next_steps": [
+          "KYC 인증이 완료되었습니다"
+        ]
+      }
+    },
+    {
+      "test": "은행 송금 충전",
+      "success": true,
+      "message": "충전 요청 성공 - 상태: pending, 추적번호: CIR2DE38E4B",
+      "timestamp": "2025-07-30T15:34:11.372427",
+      "data": {
+        "deposit_id": "ee9eb52a-8e61-4a6d-b8bf-0869b23a3d9b",
+        "status": "pending",
+        "message": "은행 송금 충전 요청이 성공적으로 처리되었습니다. 송금 지침에 따라 은행에서 송금을 진행해주세요.",
+        "tracking_ref": "CIR2DE38E4B",
+        "deposit_address": null,
+        "wire_instructions": {
+          "trackingRef": "CIRF6CCB1F3",
+          "beneficiary": {
+            "name": "CIRCLE INTERNET FINANCIAL INC",
+            "address1": "1 MAIN STREET",
+            "address2": "SUITE 1"
+          },
+          "virtualAccountEnabled": true,
+          "beneficiaryBank": {
+            "name": "CIRCLE DEVELOPMENT BANK",
+            "address": "1 MONEY STREET",
+            "city": "NEW YORK",
+            "postalCode": "10001",
+            "country": "US",
+            "swiftCode": "CIRCDEV1",
+            "routingNumber": "999999999",
+            "accountNumber": "123451e6dc1d2",
+            "currency": "USD"
+          }
+        },
+        "estimated_completion": "1-3 영업일"
+      }
+    },
+    {
+      "test": "암호화폐 충전",
+      "success": true,
+      "message": "충전 주소 생성 성공 - 주소: 0xfcfd0a5f173d4a3e8da959349be33abf",
+      "timestamp": "2025-07-30T15:34:12.396016",
+      "data": {
+        "deposit_id": "3187ea79-f771-4b3a-913b-43e101084142",
+        "status": "pending",
+        "message": "암호화폐 충전 주소가 생성되었습니다. ETH 네트워크에서 50.00 USD를 아래 주소로 송금해주세요.",
+        "tracking_ref": null,
+        "deposit_address": "0xfcfd0a5f173d4a3e8da959349be33abf",
+        "wire_instructions": null,
+        "estimated_completion": "10-30분 (블록 확인 시간에 따라)"
+      }
+    },
+    {
+      "test": "QR 결제 생성",
+      "success": true,
+      "message": "QR 생성 성공 - QR ID: 7e5950d8-b39a-4006-b218-367af31d3629",
+      "timestamp": "2025-07-30T15:34:13.466466",
+      "data": {
+        "qr_code_id": "7e5950d8-b39a-4006-b218-367af31d3629",
+        "qr_code_data": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAiYAAAImAQAAAABPtXzrAAAFIklEQVR4nO1dbWrrMBBc2Yb+VG7Qo7g3K+9I7wbJUXqAQvKzYKPH7urLQXZK3Szp6wzFtWR7sGFZRquR4gLtx9x9AwkRWNoASxtgaQMsbYClDbC0AZY2wNIGWNoASxtgaQMsmywnF0F0Gbg5kHMHuTDw9dk5d5gdnaTvwE3B4WG/aCe6vQQCsNyThYLg6OXfROHIfdyk8dxzEaIPpRkC94183+KxR/qiDiy/hGVIJ/NA5N+JD4MjGiYiP+klJ3+nAx+pj/efXojCI35RB5Zfy3J5CkVHSC4m4rzLB8nKKhxM3uUrAMuvZRnPrCPOctaHpIE5is+zcy/+w9m9y5fQfe2xK4DlB7H0LGbjuXPPHy4cvRyirE0JOd03Bu67z7vsQrfv8Qiw/ByWi2RYLjFI2FbSYOZEyyUGvRCLDVpmeLnLu+xDt/N5BVh+zFhtLDmU0+v49hTc+DaQI8/FhstTcOTLU1KA+PZ36cDSBFg+XSPrY/PoY8lMISUzUQqVJNanUSNbAViMYpdyYFIRs1LLzQEcyw5aAk5FXsTuKsBiELtBCwuxSTGAOTrzGSdkrfmWeEbe3QZYTPLuRIsiwpSqulTPpsUib1IU2kTsrgIsdpphUlkbVBCkIm8pnpXwTmkYsbsFsFhohlCGaVO+FqMzCuFF3i1GB8TuOsBipHeDDslSdSH2aZzmDJw0MPTuZwAWC81AEqxZ1jJkwKaGHIlnybE5nnXAhry7CbBYaYagSbXXcsLV1G/V1EpvKvcidtcBFquxGlWZdcpFhKR3YzynEVoUGIjdLYDFRO/2MTrjPESvuTgKhzxqKzWybI5E7K4DLAYsp0O2MuSIjV6cFMVs16HxzNacZNzJxbMH/KKd6PYSCMBiNDcRcsol1Qd51CZ9WeVW90HvbgMsJmO1UAuCo16rXTk6Y1xUbhQOiN0tgMVEM8zRnCtrgl+TU8y9SJ/Yzn0IciF6elk4wL+7DbAYsIxlSMZQqZs8DqUv/HnOrpy7vctOdHsJBGD5YTWyhJClQewoExQlbNNkMTTDOsBiwjK7yr9b9yWjg0iIVx2/cfNtoPAHe4tsAixWeXdUldunszyIu7ogyTd71JF31wEWMz9DiNNnFG3ny9U/6YJGLPy7nwBYLPbF8e+DbHVD41/uuugmOI54hSVvk6N3BRm6nVw/OSJef/mt79KBpQmwfMYDmY3lvjKJ1UsrKi8O5oRvAyzGPjKq3ZAqcKt5iNqVAw/kDYDFRO/2uhRiseCyr9f36LaQZUyXlS9idxVgMaszhDwZ4fOAbWl/zBWHyg2J2F0FWCxYLjJCe4rq4ZjSsMz6huNFtpKWGWOGn3TLslwMfsQv2odu5/MKsBh5cUIuhYXj1QK1RQZOwgE+spsAi1GdgZYbMgQdtRUjZAnb60EcYncFYDHzM/i8CNgvNosunt5qBTw8kLcBFivNICjROWozzbrFw8LTi7HaNsBi+js/Y8m76tDlEVryjMWmHqoNcx7wi3ai20sgAIsFi9cEyqc9h63sIh3lry5V475YGUt98J7fAFhM9O4UHbrXWzwRXW+yt1jeDs2wBbDYxu556XLMBYgiJnIAo85wA2Ax+X21BUYWBqfnQE5W+minn/SH18Lp8C4us8f8og4sv3XP/rBw7Zbl7VFHLIq80Aw3ABYTL05Etase6RZPaV/TsniisjcgdjcBlnuyuKsVv1/C/Ehf1IGlCbC0AZY2wNIGWNoASxtgaQMsbYClDbC0AZY2/j+Wf+6Vc8FqRp4jAAAAAElFTkSuQmCC",
+        "payment_url": "circlepay://pay?id=7e5950d8-b39a-4006-b218-367af31d3629&amount=25.99&currency=USDC&merchant=test_merchant_001",
+        "expires_at": "2025-07-30T07:34:13.465608",
+        "amount": 25.99,
+        "currency": "USDC",
+        "merchant_name": "CirclePay 테스트 매장"
+      }
+    },
+    {
+      "test": "크로스체인 전송",
+      "success": true,
+      "message": "전송 요청 성공 - 예상 완료: 8-20 seconds",
+      "timestamp": "2025-07-30T15:34:14.469312",
+      "data": {
+        "payment_id": "transfer_1134e7c0-4540-46b0-a19f-028be87d768e",
+        "status": "processing",
+        "transaction_hash": null,
+        "amount": 10.0,
+        "currency": "USDC",
+        "estimated_completion_time": "8-20 seconds",
+        "fees": {
+          "gas_fee": "2.50",
+          "bridge_fee": "0.50",
+          "total_fee": "3.00"
+        }
+      }
+    },
+    {
+      "test": "컴플라이언스 스크리닝",
+      "success": true,
+      "message": "스크리닝 완료 - 위험점수: 0.1",
+      "timestamp": "2025-07-30T15:34:15.476987",
+      "data": {
+        "screening_id": "screen_1753824855",
+        "result": "approved",
+        "risk_score": 0.1,
+        "risk_level": "low",
+        "reasons": [],
+        "sanctions_match": false,
+        "screening_date": "2025-07-30T06:34:15.476180",
+        "recommendations": []
+      }
+    }
+  ]
+}

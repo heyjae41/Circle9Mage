@@ -140,10 +140,10 @@ async def register_user(
         try:
             print(f"🔄 사용자 {new_user.id}의 ETH 지갑 생성 시작...")
             
-            # 재시도 로직이 포함된 지갑 생성 호출
+            # 재시도 로직이 포함된 지갑 생성 호출 (Sepolia 테스트넷)
             wallet_response = await circle_wallet_service.create_wallet_with_retry(
                 user_id=str(new_user.id),
-                blockchain="ETH"
+                blockchain="ethereum"  # → ETH-SEPOLIA로 매핑됨
             )
             
             # 지갑 정보 저장
@@ -159,12 +159,17 @@ async def register_user(
                 new_user.circle_wallet_id = wallet_data["id"]
                 new_user.circle_entity_id = wallet_data.get("entityId", "")
                 
+                # 체인 ID 동적 설정
+                wallet_blockchain = wallet_data.get("blockchain", "ETH-SEPOLIA")
+                chain_id = circle_wallet_service.get_chain_id_from_blockchain(wallet_blockchain)
+                print(f"🔗 회원가입 지갑 체인 ID: {wallet_blockchain} → {chain_id}")
+                
                 # Wallet 모델에 지갑 정보 저장
                 new_wallet = Wallet(
                     user_id=new_user.id,
                     circle_wallet_id=wallet_data["id"],
                     wallet_address=wallet_address,
-                    chain_id=1,  # Ethereum mainnet
+                    chain_id=chain_id,  # 동적 체인 ID
                     chain_name="ethereum",
                     usdc_balance=0.0
                 )
@@ -696,7 +701,7 @@ async def create_user_wallet(
         
         wallet_response = await circle_wallet_service.create_wallet_with_retry(
             user_id=str(user_id),
-            blockchain="ETH"
+            blockchain="ethereum"  # → ETH-SEPOLIA로 매핑됨
         )
         
         if wallet_response.get("data") and wallet_response["data"].get("wallets"):
@@ -710,13 +715,18 @@ async def create_user_wallet(
             # 기존 지갑이 있으면 비활성화
             if existing_wallet:
                 existing_wallet.is_active = False
+            
+            # 체인 ID 동적 설정
+            wallet_blockchain = wallet_data.get("blockchain", "ETH-SEPOLIA")
+            chain_id = circle_wallet_service.get_chain_id_from_blockchain(wallet_blockchain)
+            print(f"🔗 지갑 재생성 체인 ID: {wallet_blockchain} → {chain_id}")
                 
             # 새 지갑 정보 저장
             new_wallet = Wallet(
                 user_id=user_id,
                 circle_wallet_id=wallet_data["id"],
                 wallet_address=wallet_address,
-                chain_id=1,  # Ethereum mainnet
+                chain_id=chain_id,  # 동적 체인 ID
                 chain_name="ethereum",
                 usdc_balance=0.0,
                 is_active=True

@@ -25,9 +25,9 @@ interface LoginData {
   pin: string;
 }
 
-export default function LoginScreen() {
+export default function LoginScreen({ route }: any) {
   const navigation = useNavigation();
-  const { loadUserData, setAuthToken } = useApp();
+  const { loadUserData, setAuthToken, hideTokenExpiredModal } = useApp();
   
   const [loading, setLoading] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
@@ -41,11 +41,84 @@ export default function LoginScreen() {
     pin: '',
   });
 
+  // loginData 변경 감지 (디버깅용)
+  useEffect(() => {
+    console.log('🔄 LoginScreen - loginData 상태 변경:', {
+      email: loginData.email || 'empty',
+      pin: loginData.pin ? '***' : 'empty',
+      emailLength: loginData.email.length,
+      pinLength: loginData.pin.length
+    });
+  }, [loginData]);
+
   // 생체 인증 가능 여부 확인 및 저장된 정보 로드
   useEffect(() => {
     checkBiometricAvailability();
     loadSavedCredentials();
+    loadLoginInformation();
   }, []);
+
+  // route params 변경시 로그인 정보 업데이트
+  useEffect(() => {
+    console.log('📥 LoginScreen - route params 변경 감지:', route?.params);
+    
+    if (route?.params) {
+      const { prefillEmail, prefillPin } = route.params;
+      
+      console.log('🔍 LoginScreen - 받은 route params:', { 
+        prefillEmail: prefillEmail || 'none', 
+        prefillPin: prefillPin ? '***' : 'none',
+        hasPrefillEmail: !!prefillEmail,
+        hasPrefillPin: !!prefillPin
+      });
+      
+      if (prefillEmail || prefillPin) {
+        // 함수형 업데이트로 안전하게 처리
+        setLoginData(prevData => {
+          const newData = {
+            email: prefillEmail || prevData.email,
+            pin: prefillPin || prevData.pin,
+          };
+          
+          console.log('✅ LoginScreen - loginData 업데이트:', {
+            이전: { email: prevData.email ? '***' : 'none', pin: prevData.pin ? '***' : 'none' },
+            새로운: { email: newData.email ? '***' : 'none', pin: newData.pin ? '***' : 'none' }
+          });
+          
+          return newData;
+        });
+      }
+    }
+  }, [route?.params]);
+
+  // 저장된 로그인 정보 로드
+  const loadLoginInformation = async () => {
+    try {
+      // route params가 우선순위가 높음
+      if (route?.params?.prefillEmail || route?.params?.prefillPin) {
+        console.log('📋 Route params가 있어서 저장된 정보 로드 건너뜀');
+        return;
+      }
+      
+      const savedEmail = await AsyncStorage.getItem('saved_email');
+      const savedPin = await AsyncStorage.getItem('saved_pin');
+      
+      if (savedEmail || savedPin) {
+        console.log('📱 저장된 로그인 정보 로드:', { 
+          email: savedEmail || 'none', 
+          pin: savedPin ? '***' : 'none' 
+        });
+        
+        // 함수형 업데이트로 안전하게 처리
+        setLoginData(prevData => ({
+          email: savedEmail || prevData.email,
+          pin: savedPin || prevData.pin,
+        }));
+      }
+    } catch (error) {
+      console.error('로그인 정보 로드 실패:', error);
+    }
+  };
 
   const checkBiometricAvailability = async () => {
     try {
@@ -118,18 +191,27 @@ export default function LoginScreen() {
       // JWT 토큰 설정 및 AsyncStorage에 저장
       await setAuthToken(response.access_token, response.refresh_token);
       
-      // 저장된 이메일도 AsyncStorage에 저장
+      // 로그인 정보 저장 (편의성을 위해)
       await AsyncStorage.setItem('saved_email', loginData.email);
+      await AsyncStorage.setItem('saved_pin', loginData.pin);
+      
+      console.log('💾 로그인 정보 저장 완료:', { 
+        email: '***', 
+        pin: '***' 
+      });
       
       // 사용자 데이터 로드
       await loadUserData();
       
-      Alert.alert('로그인 성공!', '환영합니다!', [
-        { 
-          text: '확인', 
-          onPress: () => navigation.navigate('Home' as never) 
-        }
-      ]);
+      // 토큰 만료 모달 닫기 (중요!)
+      hideTokenExpiredModal();
+      
+      console.log('🎉 로그인 성공, 토큰 만료 모달 닫기 완료');
+      
+      // Alert 대신 간단한 메시지로 변경하여 UI 블록 방지
+      setTimeout(() => {
+        Alert.alert('로그인 성공!', '환영합니다!');
+      }, 200); // 상태 업데이트 후 알림 표시
       
     } catch (error: any) {
       Alert.alert('로그인 실패', error.message || '로그인 중 오류가 발생했습니다.');
@@ -267,7 +349,10 @@ export default function LoginScreen() {
                   style={styles.textInput}
                   placeholder="example@email.com"
                   value={loginData.email}
-                  onChangeText={(text) => setLoginData({...loginData, email: text})}
+                  onChangeText={(text) => {
+                    console.log('📝 이메일 입력 변경:', text ? '***' : 'empty');
+                    setLoginData({...loginData, email: text});
+                  }}
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -283,7 +368,10 @@ export default function LoginScreen() {
                   style={styles.textInput}
                   placeholder="••••••"
                   value={loginData.pin}
-                  onChangeText={(text) => setLoginData({...loginData, pin: text})}
+                  onChangeText={(text) => {
+                    console.log('📝 PIN 입력 변경:', text ? '***' : 'empty');
+                    setLoginData({...loginData, pin: text});
+                  }}
                   secureTextEntry
                   maxLength={20}
                 />

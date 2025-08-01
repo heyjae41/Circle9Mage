@@ -170,10 +170,27 @@ function UnauthenticatedApp() {
 function AppNavigator() {
   const { state, hideTokenExpiredModal, hideOfflineModal } = useApp();
   
+  // 상태 변경 로깅 (디버깅용)
+  React.useEffect(() => {
+    console.log('🔄 AppNavigator 상태 업데이트:', {
+      isAuthenticated: state.isAuthenticated,
+      hasUser: !!state.user,
+      userName: state.user?.email || 'none',
+      tokenExpiredModalVisible: state.tokenExpiredModal.visible
+    });
+  }, [state.isAuthenticated, state.user, state.tokenExpiredModal.visible]);
+  
+  const shouldShowAuthenticatedApp = state.isAuthenticated && state.user;
+  
+  console.log('🎯 AppNavigator 렌더링:', {
+    shouldShowAuthenticatedApp,
+    currentScreen: shouldShowAuthenticatedApp ? 'AuthenticatedApp' : 'UnauthenticatedApp'
+  });
+  
   return (
     <>
       {/* 인증 상태에 따라 다른 네비게이션 표시 */}
-      {state.isAuthenticated && state.user ? (
+      {shouldShowAuthenticatedApp ? (
         <AuthenticatedApp />
       ) : (
         <UnauthenticatedApp />

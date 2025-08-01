@@ -37,7 +37,10 @@ class CircleAPIClient:
         """HTTP 요청 실행"""
         url = f"{self.base_url}{endpoint}"
         
-        async with httpx.AsyncClient() as client:
+        # 개발 환경에서는 SSL 검증 비활성화
+        verify_ssl = self.settings.environment == "production"
+        
+        async with httpx.AsyncClient(verify=verify_ssl) as client:
             response = await client.request(
                 method=method,
                 url=url,
@@ -55,10 +58,21 @@ class CircleAPIClient:
 class CircleWalletService(CircleAPIClient):
     """Circle Wallet 서비스"""
     
-    def __init__(self, use_sandbox: bool = True):
+    def __init__(self, use_sandbox: bool = None):
+        # 환경에 따라 자동으로 sandbox 결정
+        if use_sandbox is None:
+            settings = get_settings()
+            use_sandbox = settings.environment == "development"
+        
         super().__init__(use_sandbox)
         self.max_retries = 3
         self.retry_delay = 2  # seconds
+        
+        print(f"🔧 Circle API 설정: {'Sandbox' if use_sandbox else 'Production'} 환경")
+        print(f"🌍 환경모드: {settings.environment}")
+        print(f"🌐 선택된 API URL: {self.base_url}")
+        print(f"🌐 사용가능한 URLs - Sandbox: {self.settings.circle_sandbox_url}, Production: {self.settings.circle_base_url}")
+        print(f"🔑 선택된 API Key: {self.api_key[:20]}..." if self.api_key else "❌ API Key 없음")
     
     def is_valid_ethereum_address(self, address: str) -> bool:
         """이더리움 주소 유효성 검증"""
@@ -74,6 +88,37 @@ class CircleWalletService(CircleAPIClient):
             return Web3.is_address(address)
         except Exception:
             return False
+    
+    def get_chain_id_from_blockchain(self, blockchain: str) -> int:
+        """블록체인 이름에서 체인 ID 매핑"""
+        # 메인넷 체인 ID 매핑
+        mainnet_chain_ids = {
+            "ETH": 1,              # Ethereum Mainnet
+            "BASE": 8453,          # Base Mainnet
+            "ARB": 42161,          # Arbitrum One
+            "AVAX": 43114,         # Avalanche C-Chain
+            "MATIC": 137,          # Polygon Mainnet
+            "OP": 10               # Optimism Mainnet
+        }
+        
+        # 테스트넷 체인 ID 매핑
+        testnet_chain_ids = {
+            "ETH-SEPOLIA": 11155111,   # Ethereum Sepolia
+            "BASE-SEPOLIA": 84532,     # Base Sepolia
+            "ARB-SEPOLIA": 421614,     # Arbitrum Sepolia
+            "AVAX-FUJI": 43113,        # Avalanche Fuji
+            "MATIC-AMOY": 80002,       # Polygon Amoy (최신 테스트넷)
+            "MATIC-MUMBAI": 80001,     # Polygon Mumbai (구 테스트넷)
+            "OP-SEPOLIA": 11155420     # Optimism Sepolia
+        }
+        
+        # 통합 매핑
+        all_chain_ids = {**mainnet_chain_ids, **testnet_chain_ids}
+        
+        # 개발 환경 기본값: Sepolia, 프로덕션 환경 기본값: Ethereum Mainnet
+        default_chain_id = 11155111 if self.settings.environment == "development" else 1
+        
+        return all_chain_ids.get(blockchain, default_chain_id)
     
     async def create_wallet_with_retry(self, user_id: str, blockchain: str = "ETH", retry_count: int = 0) -> Dict[str, Any]:
         """재시도 로직이 포함된 지갑 생성"""
@@ -99,12 +144,59 @@ class CircleWalletService(CircleAPIClient):
             else:
                 raise Exception(f"지갑 생성 최종 실패 ({self.max_retries + 1}회 시도): {str(e)}")
     
-    async def create_wallet(self, user_id: str, blockchain: str = "ETH") -> Dict[str, Any]:
+    async def create_wallet(self, user_id: str, blockchain: str = "ETH-SEPOLIA") -> Dict[str, Any]:
         """MPC 지갑 생성"""
+        # 블록체인 매핑 (백엔드 → Circle API)
+        # 개발 환경에서는 모든 체인이 테스트넷을 사용
+        if self.settings.environment == "development":
+            blockchain_mapping = {
+                "ETH": "ETH-SEPOLIA",
+                "ETH-SEPOLIA": "ETH-SEPOLIA", 
+                "ethereum": "ETH-SEPOLIA",
+                "BASE": "BASE-SEPOLIA",
+                "base": "BASE-SEPOLIA",
+                "ARBITRUM": "ARB-SEPOLIA", 
+                "ARB": "ARB-SEPOLIA",
+                "arbitrum": "ARB-SEPOLIA",
+                "AVALANCHE": "AVAX-FUJI",
+                "AVAX": "AVAX-FUJI", 
+                "avalanche": "AVAX-FUJI",
+                "POLYGON": "MATIC-AMOY",
+                "MATIC": "MATIC-AMOY",
+                "polygon": "MATIC-AMOY",
+                "OPTIMISM": "OP-SEPOLIA",
+                "OP": "OP-SEPOLIA",
+                "optimism": "OP-SEPOLIA"
+            }
+        else:
+            # 프로덕션 환경에서는 메인넷 사용
+            blockchain_mapping = {
+                "ETH": "ETH",
+                "ETH-SEPOLIA": "ETH-SEPOLIA", 
+                "ethereum": "ETH",
+                "BASE": "BASE",
+                "base": "BASE",
+                "ARBITRUM": "ARB",
+                "ARB": "ARB",
+                "arbitrum": "ARB",
+                "AVALANCHE": "AVAX",
+                "AVAX": "AVAX",
+                "avalanche": "AVAX",
+                "POLYGON": "MATIC",
+                "MATIC": "MATIC",
+                "polygon": "MATIC",
+                "OPTIMISM": "OP",
+                "OP": "OP",
+                "optimism": "OP"
+            }
+        
+        circle_blockchain = blockchain_mapping.get(blockchain, "ETH-SEPOLIA")
+        print(f"🔄 지갑 생성: {blockchain} → {circle_blockchain}")
+        
         data = {
             "idempotencyKey": str(uuid.uuid4()),
             "count": 1,
-            "blockchains": [blockchain],
+            "blockchains": [circle_blockchain],
             "entitySecretCipherText": "",  # 실제 구현에서는 암호화 필요
             "metadata": {
                 "userId": user_id,
@@ -123,7 +215,7 @@ class CircleWalletService(CircleAPIClient):
                     "wallets": [{
                         "id": f"wallet_{uuid.uuid4()}",
                         "address": random_address,
-                        "blockchain": blockchain,
+                        "blockchain": circle_blockchain,  # 매핑된 블록체인 사용
                         "state": "LIVE",
                         "entityId": f"entity_{uuid.uuid4()}",
                         "walletSetId": f"walletSet_{uuid.uuid4()}",
@@ -135,19 +227,23 @@ class CircleWalletService(CircleAPIClient):
         return await self._make_request("POST", "/v1/w3s/wallets", data)
     
     async def get_wallet_balance(self, wallet_id: str) -> Dict[str, Any]:
-        """지갑 잔액 조회"""
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
+        """지갑 잔액 조회 (실제 Circle API 호출)"""
+        try:
+            print(f"🔍 Circle API 지갑 잔액 조회: {wallet_id}")
+            response = await self._make_request("GET", f"/v1/w3s/wallets/{wallet_id}/balances")
+            print(f"✅ Circle API 잔액 응답: {response}")
+            return response
+        except Exception as e:
+            print(f"❌ Circle API 잔액 조회 실패: {e}")
+            # API 호출 실패시 기본값 반환
             return {
                 "data": {
                     "tokenBalances": [{
                         "token": {"symbol": "USDC"},
-                        "amount": "1000.000000"
+                        "amount": "0.000000"
                     }]
                 }
             }
-        
-        return await self._make_request("GET", f"/v1/w3s/wallets/{wallet_id}/balances")
 
 class CircleCCTPService(CircleAPIClient):
     """Circle Cross-Chain Transfer Protocol 서비스"""

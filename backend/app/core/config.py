@@ -22,11 +22,11 @@ class Settings(BaseSettings):
     redis_port: int = 6379
     redis_password: str = ""  # 로컬 Redis는 비밀번호 없음
     
-    # Circle API
+    # Circle API (환경변수 우선, 기본값 제공)
     circle_api_key: str = ""
     circle_sandbox_api_key: str = ""
-    circle_base_url: str = "https://api.circle.com"
-    circle_sandbox_url: str = "https://api-sandbox.circle.com"
+    circle_base_url: str = "https://api.circle.com"  # CIRCLE_BASE_URL 환경변수로 오버라이드 가능
+    circle_sandbox_url: str = "https://api-sandbox.circle.com"  # CIRCLE_SANDBOX_URL 환경변수로 오버라이드 가능
     circle_entity_secret: str = ""
     circle_environment: str = "sandbox"
     
@@ -71,4 +71,7 @@ def get_settings() -> Settings:
     global _settings
     if _settings is None:
         _settings = Settings()
-    return _settings 
+    return _settings
+
+# 직접 접근용 인스턴스 (호환성을 위해)
+settings = Settings() 

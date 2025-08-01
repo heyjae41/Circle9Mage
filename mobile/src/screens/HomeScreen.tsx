@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import * as Clipboard from 'expo-clipboard';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed, safeAdd } from '../utils/formatters';
 
@@ -19,11 +20,27 @@ export default function HomeScreen() {
   const navigation = useNavigation();
   const { state, loadUserData, loadWallets, loadTransactions } = useApp();
   const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
     loadInitialData();
   }, []);
+
+  // 화면 포커스 시 자동 새로고침 (이더스캔 잔액 반영을 위해)
+  useFocusEffect(
+    useCallback(() => {
+      console.log('🔍 HomeScreen 포커스됨 - 자동 잔액 새로고침 시작');
+      if (state.isAuthenticated && state.user) {
+        loadWallets(state.user.id).then(() => {
+          setLastUpdated(new Date());
+          console.log('✅ 자동 잔액 새로고침 완료');
+        }).catch((error) => {
+          console.error('❌ 자동 잔액 새로고침 실패:', error);
+        });
+      }
+    }, [state.isAuthenticated, state.user])
+  );
 
   const loadInitialData = async () => {
     try {
@@ -37,6 +54,7 @@ export default function HomeScreen() {
             await loadTransactions(wallet.walletId);
           }
         }
+        setLastUpdated(new Date());
       }
     } catch (error) {
       console.error('초기 데이터 로드 실패:', error);
@@ -46,19 +64,30 @@ export default function HomeScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
+      console.log('🔄 수동 새로고침 시작...');
       await loadUserData();
       if (state.user) {
+        console.log('💰 지갑 잔액 새로고침 중...');
         await loadWallets(state.user.id);
         
         // 지갑별 거래 내역도 새로고침
         if (state.wallets.length > 0) {
+          console.log('📊 거래 내역 새로고침 중...');
           for (const wallet of state.wallets) {
             await loadTransactions(wallet.walletId);
           }
         }
+        
+        setLastUpdated(new Date());
+        Alert.alert(
+          '새로고침 완료! ✅', 
+          '최신 지갑 잔액과 거래내역을 불러왔습니다.',
+          [{ text: '확인' }]
+        );
       }
     } catch (error) {
-      Alert.alert('오류', '데이터를 새로고침할 수 없습니다.');
+      console.error('새로고침 실패:', error);
+      Alert.alert('오류', '데이터를 새로고침할 수 없습니다.\n네트워크 연결을 확인해주세요.');
     } finally {
       setRefreshing(false);
     }
@@ -66,6 +95,26 @@ export default function HomeScreen() {
 
   // 총 잔액 계산 (안전한 처리)
   const totalBalance = state.wallets.reduce((sum, wallet) => safeAdd(sum, wallet.usdcBalance), 0);
+
+  // 지갑 주소 복사 함수
+  const copyWalletAddress = async (address: string, walletName: string) => {
+    try {
+      await Clipboard.setStringAsync(address);
+      
+      // 지갑명이 undefined인 경우 기본값 사용
+      const displayName = walletName || '지갑';
+      
+      Alert.alert(
+        '복사 완료!',
+        `${displayName} 주소가 클립보드에 복사되었습니다.`,
+        [{ text: '확인' }]
+      );
+      console.log('📋 지갑 주소 복사 완료:', { address, walletName: displayName });
+    } catch (error) {
+      console.error('지갑 주소 복사 실패:', error);
+      Alert.alert('오류', '주소 복사에 실패했습니다.');
+    }
+  };
 
   // 최근 거래 가져오기 (최대 3개)
   const recentTransactions = state.transactions.slice(0, 3);
@@ -157,21 +206,49 @@ export default function HomeScreen() {
       >
         <View style={styles.balanceHeader}>
           <Text style={styles.balanceLabel}>총 잔액</Text>
-          <Ionicons name="eye-outline" size={24} color="white" />
+          <View style={styles.balanceActions}>
+            <TouchableOpacity 
+              onPress={onRefresh}
+              style={styles.refreshButton}
+              disabled={refreshing}
+            >
+              <Ionicons 
+                name={refreshing ? "hourglass-outline" : "refresh-outline"} 
+                size={20} 
+                color="white" 
+              />
+            </TouchableOpacity>
+            <Ionicons name="eye-outline" size={24} color="white" />
+          </View>
         </View>
         <Text style={styles.balanceAmount}>
           ${safeToFixed(totalBalance)}
         </Text>
         <Text style={styles.balanceCurrency}>USDC</Text>
         
+        {lastUpdated && (
+          <Text style={styles.lastUpdatedText}>
+            마지막 업데이트: {lastUpdated.toLocaleTimeString('ko-KR', { 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}
+          </Text>
+        )}
+        
         {primaryWallet && (
           <View style={styles.primaryWalletInfo}>
             <Text style={styles.primaryWalletText}>
               주 지갑: {primaryWallet.chainName}
             </Text>
-            <Text style={styles.primaryWalletAddress}>
-              {primaryWallet.address.slice(0, 6)}...{primaryWallet.address.slice(-4)}
-            </Text>
+            <TouchableOpacity 
+              onPress={() => copyWalletAddress(primaryWallet.address, primaryWallet.chainName)}
+              style={styles.addressContainer}
+            >
+              <Text style={styles.primaryWalletAddress}>
+                {primaryWallet.address.slice(0, 6)}...{primaryWallet.address.slice(-4)}
+              </Text>
+              <Ionicons name="copy-outline" size={16} color="rgba(255,255,255,0.8)" style={styles.copyIcon} />
+            </TouchableOpacity>
           </View>
         )}
       </LinearGradient>
@@ -254,9 +331,15 @@ export default function HomeScreen() {
             </View>
             <View style={styles.walletInfo}>
               <Text style={styles.walletName}>{wallet.chainName}</Text>
-              <Text style={styles.walletAddress}>
-                {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-              </Text>
+              <TouchableOpacity 
+                onPress={() => copyWalletAddress(wallet.address, wallet.chainName)}
+                style={styles.walletAddressContainer}
+              >
+                <Text style={styles.walletAddress}>
+                  {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
+                </Text>
+                <Ionicons name="copy-outline" size={14} color="#666" style={styles.copyIconSmall} />
+              </TouchableOpacity>
             </View>
             <View style={styles.walletBalance}>
               <Text style={styles.walletBalanceAmount}>
@@ -438,6 +521,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
+  balanceActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  refreshButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   balanceLabel: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.8)',
@@ -451,7 +547,13 @@ const styles = StyleSheet.create({
   balanceCurrency: {
     fontSize: 18,
     color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 8,
+  },
+  lastUpdatedText: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.6)',
     marginBottom: 16,
+    textAlign: 'center',
   },
   primaryWalletInfo: {
     borderTopWidth: 1,
@@ -462,10 +564,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.8)',
   },
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginTop: 4,
+  },
   primaryWalletAddress: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.6)',
     fontFamily: 'monospace',
+    flex: 1,
+  },
+  copyIcon: {
+    marginLeft: 6,
   },
   quickActions: {
     flexDirection: 'row',
@@ -540,10 +655,23 @@ const styles = StyleSheet.create({
     color: '#1A1A1A',
     marginBottom: 2,
   },
+  walletAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F5F5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 2,
+  },
   walletAddress: {
     fontSize: 12,
     color: '#666',
     fontFamily: 'monospace',
+    flex: 1,
+  },
+  copyIconSmall: {
+    marginLeft: 4,
   },
   walletBalance: {
     alignItems: 'flex-end',

@@ -225,18 +225,37 @@ export function AppProvider({ children }: AppProviderProps) {
 
   // 사용자 데이터 로드 (실제 API 사용)
   const loadUserData = async () => {
+    console.log('🚀 loadUserData 시작');
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      // 저장된 토큰 확인
-      const token = state.accessToken;
+      // 저장된 토큰 확인 (state 대신 AsyncStorage에서 직접 읽기)
+      let token = state.accessToken;
+      console.log('🔑 State 토큰 확인:', token ? '토큰 있음' : '토큰 없음');
+      
+      // state에 토큰이 없으면 AsyncStorage에서 확인 (타이밍 이슈 방지)
       if (!token) {
+        console.log('📱 AsyncStorage에서 토큰 재확인...');
+        token = await AsyncStorage.getItem('access_token');
+        console.log('🔑 AsyncStorage 토큰 확인:', token ? '토큰 있음' : '토큰 없음');
+        
+        // AsyncStorage에서 토큰을 찾았으면 state에도 설정
+        if (token) {
+          console.log('✅ AsyncStorage에서 토큰 발견, state 업데이트');
+          dispatch({ type: 'SET_ACCESS_TOKEN', payload: token });
+        }
+      }
+      
+      if (!token) {
+        console.error('❌ 토큰이 없어서 loadUserData 중단');
         dispatch({ type: 'SET_ERROR', payload: '인증 토큰이 없습니다' });
         return;
       }
       
+      console.log('📡 API 호출 시작: getCurrentUser');
       // 실제 API 호출로 사용자 정보 가져오기 (토큰은 자동으로 AsyncStorage에서 가져옴)
       const userResponse = await apiService.getCurrentUser();
+      console.log('✅ API 응답 받음:', { id: userResponse.id, email: userResponse.email });
       
       // 사용자 데이터 변환
       const user: User = {
@@ -250,14 +269,18 @@ export function AppProvider({ children }: AppProviderProps) {
         kycStatus: userResponse.kyc_status || 'pending',
       };
       
+      console.log('👤 사용자 상태 업데이트 시작');
       dispatch({ type: 'SET_USER', payload: user });
       dispatch({ type: 'SET_AUTHENTICATED', payload: true });
+      console.log('✅ 인증 상태 업데이트 완료:', { isAuthenticated: true, user: user.email });
       
       // 사용자 지갑 정보 로드
+      console.log('💼 지갑 정보 로드 시작');
       await loadWallets(user.id);
+      console.log('🎉 loadUserData 완전히 완료');
       
     } catch (error: any) {
-      console.error('사용자 데이터 로드 실패:', error);
+      console.error('❌ 사용자 데이터 로드 실패:', error);
       dispatch({ type: 'SET_ERROR', payload: '사용자 데이터 로드 실패' });
       dispatch({ type: 'SET_AUTHENTICATED', payload: false });
       dispatch({ type: 'SET_USER', payload: null });
@@ -270,8 +293,28 @@ export function AppProvider({ children }: AppProviderProps) {
   const loadWallets = async (userId: string) => {
     try {
       const response = await apiService.getUserWallets(userId);
-      dispatch({ type: 'SET_WALLETS', payload: response.wallets });
+      
+      // 백엔드 snake_case 응답을 프론트엔드 camelCase로 변환
+      const transformedWallets = response.wallets.map((wallet: any) => ({
+        walletId: wallet.wallet_id,
+        address: wallet.address,
+        blockchain: wallet.blockchain,
+        chainId: wallet.chain_id,
+        chainName: wallet.chain_name || wallet.blockchain, // fallback to blockchain
+        usdcBalance: wallet.usdc_balance || 0,
+        isPrimary: wallet.is_primary || false,
+        createdAt: wallet.created_at
+      }));
+      
+      console.log('🔄 지갑 데이터 변환 완료:', transformedWallets.map(w => ({
+        walletId: w.walletId,
+        chainName: w.chainName,
+        blockchain: w.blockchain
+      })));
+      
+      dispatch({ type: 'SET_WALLETS', payload: transformedWallets });
     } catch (error) {
+      console.error('지갑 데이터 로드 실패:', error);
       dispatch({ type: 'SET_ERROR', payload: '지갑 데이터 로드 실패' });
     }
   };
@@ -589,10 +632,10 @@ export function AppProvider({ children }: AppProviderProps) {
               console.log('토큰 갱신 성공, 자동 로그인 완료');
             } catch (refreshError) {
               console.log('토큰 갱신 실패, 로그아웃 처리');
-              await clearAuthData();
+              await clearAuthData(); // 기본값 true로 로그인 정보 보존
             }
           } else {
-            await clearAuthData();
+            await clearAuthData(); // 기본값 true로 로그인 정보 보존
           }
         }
       } else {
@@ -608,18 +651,28 @@ export function AppProvider({ children }: AppProviderProps) {
   };
 
   // 인증 데이터 완전 정리 (내부 함수)
-  const clearAuthData = async () => {
+  const clearAuthData = async (preserveLoginInfo: boolean = true) => {
     try {
       // 토큰 자동 갱신 타이머 정리
       tokenManager.clearRefreshTimer();
       
-      // AsyncStorage에서 모든 인증 관련 데이터 삭제
-      await AsyncStorage.multiRemove([
+      // 기본 삭제 대상 (토큰과 사용자 데이터)
+      const keysToRemove = [
         'access_token',
         'refresh_token', 
-        'saved_email',
         'user_data'
-      ]);
+      ];
+      
+      // 완전 로그아웃시에만 로그인 정보도 삭제
+      if (!preserveLoginInfo) {
+        keysToRemove.push('saved_email', 'saved_pin');
+        console.log('🗑️ 로그인 정보까지 완전 삭제');
+      } else {
+        console.log('💾 로그인 정보는 보존 (토큰 만료)');
+      }
+      
+      // AsyncStorage에서 인증 관련 데이터 삭제
+      await AsyncStorage.multiRemove(keysToRemove);
       
       // 상태 초기화
       dispatch({ type: 'SET_ACCESS_TOKEN', payload: null });
@@ -633,10 +686,10 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
 
-  // 로그아웃
+  // 로그아웃 (사용자가 명시적으로 로그아웃 선택)
   const logout = async () => {
     try {
-      await clearAuthData();
+      await clearAuthData(false); // 로그인 정보도 완전 삭제
       console.log('로그아웃 완료');
     } catch (error) {
       console.error('로그아웃 실패:', error);
