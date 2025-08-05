@@ -21,6 +21,7 @@ export default function HomeScreen() {
   const { state, loadUserData, loadWallets, loadTransactions } = useApp();
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [isBalanceHidden, setIsBalanceHidden] = useState(false);
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -218,11 +219,20 @@ export default function HomeScreen() {
                 color="white" 
               />
             </TouchableOpacity>
-            <Ionicons name="eye-outline" size={24} color="white" />
+            <TouchableOpacity 
+              onPress={() => setIsBalanceHidden(!isBalanceHidden)}
+              style={styles.eyeButton}
+            >
+              <Ionicons 
+                name={isBalanceHidden ? "eye-off-outline" : "eye-outline"} 
+                size={24} 
+                color="white" 
+              />
+            </TouchableOpacity>
           </View>
         </View>
         <Text style={styles.balanceAmount}>
-          ${safeToFixed(totalBalance)}
+          {isBalanceHidden ? '****' : `$${safeToFixed(totalBalance)}`}
         </Text>
         <Text style={styles.balanceCurrency}>USDC</Text>
         
@@ -343,7 +353,7 @@ export default function HomeScreen() {
             </View>
             <View style={styles.walletBalance}>
               <Text style={styles.walletBalanceAmount}>
-                ${safeToFixed(wallet.usdcBalance)}
+                {isBalanceHidden ? '****' : `$${safeToFixed(wallet.usdcBalance)}`}
               </Text>
               <Text style={styles.walletBalanceCurrency}>USDC</Text>
             </View>
@@ -533,6 +543,15 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  eyeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
   },
   balanceLabel: {
     fontSize: 16,

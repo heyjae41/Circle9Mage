@@ -73,7 +73,7 @@ export default function DepositScreen() {
         setSelectedWallet(state.wallets[0].walletId);
         
         // 충전 주소 목록 로드
-        const addresses = await getDepositAddresses(parseInt(state.wallets[0].walletId));
+        const addresses = await getDepositAddresses(state.wallets[0].walletId);
         setDepositAddresses(addresses.deposit_addresses || []);
       }
       
@@ -113,7 +113,7 @@ export default function DepositScreen() {
     try {
       setIsProcessing(true);
       
-      const result = await createWireDeposit(parseInt(selectedWallet), wireData);
+      const result = await createWireDeposit(selectedWallet, wireData);
       
       Alert.alert(
         '충전 요청 완료!',
@@ -160,7 +160,7 @@ export default function DepositScreen() {
     try {
       setIsProcessing(true);
       
-      const result = await createCryptoDeposit(parseInt(selectedWallet), cryptoData);
+      const result = await createCryptoDeposit(selectedWallet, cryptoData);
       
       Alert.alert(
         '충전 주소 생성 완료!',

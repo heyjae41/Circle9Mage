@@ -145,7 +145,7 @@ export default function SignUpScreen() {
       
       Alert.alert(
         '회원가입 성공!',
-        `이메일과 SMS로 인증 코드를 발송했습니다.\n지갑 생성 상태: ${response.wallet_creation_status}`,
+        `이메일과 SMS로 인증 코드를 발송했습니다.\n지갑 생성 상태: ${response.user?.wallet_creation_status || 'unknown'}`,
         [{ text: '확인' }]
       );
       
@@ -514,10 +514,15 @@ export default function SignUpScreen() {
             환영합니다! 이제 CirclePay Global을 사용할 수 있습니다.
           </Text>
           
-          {signUpResult?.wallet_creation_status === 'success' && (
+          {signUpResult?.user?.wallet_creation_status === 'success' && (
             <View style={styles.walletInfo}>
               <Ionicons name="wallet" size={24} color="white" />
               <Text style={styles.walletText}>ETH 지갑이 자동으로 생성되었습니다</Text>
+              {signUpResult?.user?.wallet_info && (
+                <Text style={styles.walletText}>
+                  주소: {signUpResult.user.wallet_info.address}
+                </Text>
+              )}
             </View>
           )}
         </LinearGradient>

@@ -554,7 +554,7 @@ class ApiService {
   // ===================
 
   // 은행 송금 충전
-  async createWireDeposit(walletId: number, request: {
+  async createWireDeposit(walletId: string, request: {
     bank_account: {
       account_holder_name: string;
       bank_name: string;
@@ -581,7 +581,7 @@ class ApiService {
   }
 
   // 암호화폐 충전
-  async createCryptoDeposit(walletId: number, request: {
+  async createCryptoDeposit(walletId: string, request: {
     chain: string;
     amount: string;
     currency?: string;
@@ -596,9 +596,9 @@ class ApiService {
   }
 
   // 충전 주소 목록 조회
-  async getDepositAddresses(walletId: number, accessToken?: string) {
+  async getDepositAddresses(walletId: string, accessToken?: string) {
     return this.get<{
-      wallet_id: number;
+      wallet_id: string;
       deposit_addresses: Array<{
         id: string;
         address: string;

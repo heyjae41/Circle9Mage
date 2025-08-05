@@ -326,16 +326,16 @@ async def create_crypto_deposit(
     description="사용자 지갑의 모든 체인별 충전 주소를 조회합니다."
 )
 async def get_deposit_addresses(
-    wallet_id: int = Path(..., description="지갑 ID"),
+    wallet_id: str = Path(..., description="Circle 지갑 ID"),
     db: AsyncSession = Depends(get_db),
     current_user: Dict[str, Any] = Depends(auth_service.get_current_user)
 ):
     """모든 체인의 충전 주소 조회"""
     
     try:
-        # 지갑 소유권 확인
+        # 지갑 소유권 확인 (Circle wallet ID로 조회)
         wallet_query = select(Wallet).where(
-            Wallet.id == wallet_id,
+            Wallet.circle_wallet_id == wallet_id,
             Wallet.user_id == current_user["user_id"]
         )
         wallet_result = await db.execute(wallet_query)

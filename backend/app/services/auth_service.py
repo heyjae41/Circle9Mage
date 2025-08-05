@@ -1,8 +1,8 @@
 """
 인증 서비스 - JWT와 SECRET_KEY 분리 사용 실무 패턴 + Redis 세션 관리
 """
-
 import jwt
+# import PyJWT as jwt
 import redis
 import json
 from datetime import datetime, timedelta
@@ -198,10 +198,17 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Token expired"
             )
-        except jwt.JWTError:
+        except (jwt.InvalidTokenError, jwt.DecodeError, jwt.InvalidSignatureError):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid token"
+            )
+        except Exception as e:
+            # JWT 관련 기타 오류 처리
+            print(f"⚠️ JWT 토큰 검증 오류: {str(e)}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token validation failed"
             )
     
     # ====================================

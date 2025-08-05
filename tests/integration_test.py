@@ -134,26 +134,50 @@ class CirclePayTester:
             return False
     
     def test_5_get_wallets(self):
-        """5. 사용자 지갑 조회"""
+        """5. 사용자 지갑 조회 및 자동 생성"""
         try:
-            # ✅ 수정: 올바른 API 엔드포인트 사용
+            # 1단계: 기존 지갑 조회
             response = self.session.get(f"{self.base_url}/wallets/user/{self.user_id}/wallets")
             
             if response.status_code == 200:
                 data = response.json()
                 wallets = data.get("wallets", [])
+                
                 if wallets:
+                    # 기존 지갑이 있으면 사용
                     self.wallet_id = wallets[0].get("wallet_id")
                     self.log_test("지갑 조회", True, f"지갑 조회 성공 - {len(wallets)}개 지갑 발견", 
                                 {"wallet_count": len(wallets), "primary_wallet": self.wallet_id})
+                    return True
                 else:
-                    self.log_test("지갑 조회", False, "생성된 지갑이 없습니다", data)
-                return len(wallets) > 0
+                    # 지갑이 없으면 자동 생성
+                    self.log_test("지갑 조회", True, "지갑이 없어서 자동 생성 시작", data)
+                    
+                    # 2단계: 지갑 생성
+                    wallet_data = {
+                        "user_id": str(self.user_id),
+                        "blockchain": "ethereum"
+                    }
+                    
+                    create_response = self.session.post(
+                        f"{self.base_url}/wallets/create",
+                        json=wallet_data
+                    )
+                    
+                    if create_response.status_code == 200:
+                        wallet_result = create_response.json()
+                        self.wallet_id = wallet_result.get("wallet_id")
+                        self.log_test("지갑 생성", True, f"지갑 자동 생성 성공 - Wallet ID: {self.wallet_id}", wallet_result)
+                        return True
+                    else:
+                        self.log_test("지갑 생성", False, f"지갑 생성 실패: {create_response.status_code}", create_response.json())
+                        return False
+
             else:
                 self.log_test("지갑 조회", False, f"지갑 조회 실패: {response.status_code}", response.json())
                 return False
         except Exception as e:
-            self.log_test("지갑 조회", False, f"지갑 조회 오류: {str(e)}")
+            self.log_test("지갑 조회", False, f"지갑 조회/생성 오류: {str(e)}")
             return False
     
     def test_6_kyc_submission(self):

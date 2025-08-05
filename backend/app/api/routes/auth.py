@@ -140,9 +140,13 @@ async def register_user(
         try:
             print(f"🔄 사용자 {new_user.id}의 ETH 지갑 생성 시작...")
             
-            # 재시도 로직이 포함된 지갑 생성 호출 (Sepolia 테스트넷)
+            # 1. 먼저 WalletSet 생성 또는 조회
+            wallet_set_id = await circle_wallet_service.get_or_create_wallet_set(str(new_user.id))
+            print(f"✅ WalletSet 준비 완료: {wallet_set_id}")
+            
+            # 2. 재시도 로직이 포함된 지갑 생성 호출 (Sepolia 테스트넷)
             wallet_response = await circle_wallet_service.create_wallet_with_retry(
-                user_id=str(new_user.id),
+                wallet_set_id=wallet_set_id,
                 blockchain="ethereum"  # → ETH-SEPOLIA로 매핑됨
             )
             
@@ -157,7 +161,9 @@ async def register_user(
                 
                 # User 모델에 Circle 정보 업데이트
                 new_user.circle_wallet_id = wallet_data["id"]
-                new_user.circle_entity_id = wallet_data.get("entityId", "")
+                # circle_entity_id가 빈 문자열이면 NULL로 저장
+                entity_id = wallet_data.get("entityId", "")
+                new_user.circle_entity_id = entity_id if entity_id else None
                 
                 # 체인 ID 동적 설정
                 wallet_blockchain = wallet_data.get("blockchain", "ETH-SEPOLIA")
@@ -264,6 +270,25 @@ async def register_user(
             "email": new_user.email
         })
         
+        # 지갑 정보 조회
+        wallet_info = None
+        if wallet_creation_success and new_user.circle_wallet_id:
+            try:
+                result = await db.execute(
+                    select(Wallet).where(Wallet.circle_wallet_id == new_user.circle_wallet_id)
+                )
+                wallet = result.scalar_one_or_none()
+                if wallet:
+                    wallet_info = {
+                        "wallet_id": wallet.circle_wallet_id,
+                        "address": wallet.wallet_address,
+                        "chain_id": wallet.chain_id,
+                        "chain_name": wallet.chain_name,
+                        "usdc_balance": wallet.usdc_balance
+                    }
+            except Exception as e:
+                print(f"⚠️ 지갑 정보 조회 실패: {e}")
+        
         return AuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,
@@ -277,7 +302,10 @@ async def register_user(
                 "is_verified": new_user.is_verified,
                 "kyc_status": new_user.kyc_status,
                 "wallet_creation_status": "success" if wallet_creation_success else "failed",
-                "wallet_error": wallet_error_msg if not wallet_creation_success else None
+                "wallet_error": wallet_error_msg if not wallet_creation_success else None,
+                "wallet_info": wallet_info,
+                "circle_wallet_id": new_user.circle_wallet_id,
+                "circle_entity_id": new_user.circle_entity_id
             }
         )
         
@@ -696,12 +724,28 @@ async def create_user_wallet(
                 }
             }
         
-        # 지갑 생성 시도
-        print(f"🔄 사용자 {user_id}의 지갑 재생성 시작...")
+        # WalletSet 생성 또는 조회
+        print(f"🔄 사용자 {user_id}의 지갑 생성 시작...")
         
+        # 사용자의 기존 WalletSet ID 확인
+        wallet_set_id = user.circle_wallet_set_id
+        
+        if not wallet_set_id:
+            print(f"📦 사용자 {user_id}의 WalletSet 생성 중...")
+            wallet_set_id = await circle_wallet_service.get_or_create_wallet_set(str(user_id))
+            
+            # User 모델에 WalletSet ID 저장
+            user.circle_wallet_set_id = wallet_set_id
+            await db.commit()
+            print(f"✅ WalletSet ID 저장됨: {wallet_set_id}")
+        else:
+            print(f"📋 기존 WalletSet 사용: {wallet_set_id}")
+        
+        # WalletSet을 사용해서 지갑 생성
         wallet_response = await circle_wallet_service.create_wallet_with_retry(
-            user_id=str(user_id),
-            blockchain="ethereum"  # → ETH-SEPOLIA로 매핑됨
+            wallet_set_id=wallet_set_id,
+            blockchain="ethereum",  # → ETH-SEPOLIA로 매핑됨
+            count=1
         )
         
         if wallet_response.get("data") and wallet_response["data"].get("wallets"):

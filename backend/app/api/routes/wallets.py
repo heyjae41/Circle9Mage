@@ -190,12 +190,15 @@ async def debug_circle_config():
     }
 
 @router.post("/create", response_model=WalletResponse)
-async def create_wallet(request: CreateWalletRequest):
+async def create_wallet(request: CreateWalletRequest, db: AsyncSession = Depends(get_db)):
     """새 MPC 지갑 생성"""
     try:
+        # 사용자의 WalletSet 생성 또는 조회
+        wallet_set_id = await circle_wallet_service.get_or_create_wallet_set(request.user_id)
+        
         # Circle Wallet 서비스를 통해 지갑 생성
         wallet_result = await circle_wallet_service.create_wallet(
-            user_id=request.user_id,
+            wallet_set_id=wallet_set_id,
             blockchain=request.blockchain
         )
         
@@ -209,6 +212,25 @@ async def create_wallet(request: CreateWalletRequest):
         # 잔액 조회
         balance_result = await circle_wallet_service.get_wallet_balance(wallet_data["id"])
         balances = balance_result["data"]["tokenBalances"]
+        
+        # ✅ 수정: 데이터베이스에 지갑 정보 저장
+        from app.models.user import Wallet
+        
+        new_wallet = Wallet(
+            user_id=int(request.user_id),
+            circle_wallet_id=wallet_data["id"],
+            wallet_address=wallet_data["address"],
+            chain_id=chain_id,
+            chain_name=wallet_data["blockchain"],
+            usdc_balance=0.0,  # 초기 잔액
+            is_active=True
+        )
+        
+        db.add(new_wallet)
+        await db.commit()
+        await db.refresh(new_wallet)
+        
+        print(f"💾 지갑 데이터베이스 저장 완료: {wallet_data['id']}")
         
         return WalletResponse(
             wallet_id=wallet_data["id"],
@@ -393,39 +415,68 @@ async def set_wallet_pin(wallet_id: str, pin: str):
 async def get_wallet_transactions(
     wallet_id: str,
     limit: int = 20,
-    offset: int = 0
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db)
 ):
     """지갑 거래 내역 조회"""
     try:
-        # 실제로는 DB에서 거래 내역 조회
-        # 여기서는 mock 데이터 반환
-        transactions = []
-        for i in range(limit):
-            transactions.append({
-                "transaction_id": f"tx_{wallet_id}_{i}",
-                "type": "payment" if i % 2 == 0 else "transfer",
-                "amount": 50.0 + (i * 10),
-                "currency": "USDC",
-                "status": "completed",
-                "from_address": f"0x{wallet_id[:40]}",
-                "to_address": f"0x{(i * 1000):040x}",
-                "transaction_hash": f"0x{(i * 1000000):064x}",
-                "created_at": datetime.utcnow().isoformat(),
-                "completed_at": datetime.utcnow().isoformat()
+        from sqlalchemy import select, func
+        from app.models.user import Transaction, Wallet
+        
+        # 1. 지갑 존재 확인 및 사용자 ID 조회
+        wallet_query = select(Wallet).where(Wallet.circle_wallet_id == wallet_id, Wallet.is_active == True)
+        wallet_result = await db.execute(wallet_query)
+        wallet = wallet_result.scalar_one_or_none()
+        
+        if not wallet:
+            raise HTTPException(status_code=404, detail="지갑을 찾을 수 없습니다")
+        
+        # 2. 해당 사용자의 거래 내역 조회 (최신순)
+        transaction_query = select(Transaction).where(
+            Transaction.user_id == wallet.user_id
+        ).order_by(Transaction.created_at.desc()).offset(offset).limit(limit)
+        
+        transaction_result = await db.execute(transaction_query)
+        transactions = transaction_result.scalars().all()
+        
+        # 3. 전체 거래 수 조회
+        total_query = select(func.count(Transaction.id)).where(Transaction.user_id == wallet.user_id)
+        total_result = await db.execute(total_query)
+        total_transactions = total_result.scalar()
+        
+        # 4. 응답 데이터 구성
+        transaction_list = []
+        for transaction in transactions:
+            transaction_list.append({
+                "transaction_id": transaction.transaction_id,
+                "type": transaction.transaction_type,
+                "amount": float(transaction.amount),
+                "currency": transaction.currency,
+                "status": transaction.status,
+                "from_address": transaction.source_address,
+                "to_address": transaction.target_address,
+                "transaction_hash": transaction.transaction_hash,
+                "created_at": transaction.created_at.isoformat() if transaction.created_at else None,
+                "completed_at": transaction.completed_at.isoformat() if transaction.completed_at else None,
+                "merchant_name": transaction.merchant_name,
+                "notes": transaction.notes
             })
         
         return {
             "wallet_id": wallet_id,
-            "total_transactions": 100,  # 전체 거래 수
+            "total_transactions": total_transactions,
             "page": {
                 "limit": limit,
                 "offset": offset,
-                "has_more": offset + limit < 100
+                "has_more": offset + limit < total_transactions
             },
-            "transactions": transactions
+            "transactions": transaction_list
         }
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"❌ 거래 내역 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=f"거래 내역 조회 실패: {str(e)}")
 
  

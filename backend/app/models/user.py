@@ -20,8 +20,9 @@ class User(Base):
     preferred_currency = Column(String(10), default="USDC")  # USDC, USD, KRW, THB 등
     
     # Circle Wallet 정보
-    circle_wallet_id = Column(String(255), unique=True, index=True)
-    circle_entity_id = Column(String(255), unique=True, index=True)
+    circle_wallet_id = Column(String(255), unique=True, index=True)  # 기본 지갑 ID (호환성 유지)
+    circle_entity_id = Column(String(255), unique=True, index=True)  # Circle Entity ID
+    circle_wallet_set_id = Column(String(255), unique=True, index=True)  # Circle WalletSet ID (사용자별 하나)
     
     # 인증 정보
     is_verified = Column(Boolean, default=False)

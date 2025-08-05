@@ -4,13 +4,19 @@ Circle API 클라이언트 서비스
 
 import httpx
 import json
+import base64
+import binascii
 from typing import Dict, Any, Optional, List
 from app.core.config import get_settings
 import asyncio
 import uuid
+import secrets
 import re
 from datetime import datetime
 from web3 import Web3
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+ 
 
 class CircleAPIClient:
     """Circle API 클라이언트"""
@@ -120,19 +126,18 @@ class CircleWalletService(CircleAPIClient):
         
         return all_chain_ids.get(blockchain, default_chain_id)
     
-    async def create_wallet_with_retry(self, user_id: str, blockchain: str = "ETH", retry_count: int = 0) -> Dict[str, Any]:
+    async def create_wallet_with_retry(self, wallet_set_id: str, blockchain: str = "ETH-SEPOLIA", count: int = 1, retry_count: int = 0) -> Dict[str, Any]:
         """재시도 로직이 포함된 지갑 생성"""
         try:
-            result = await self.create_wallet(user_id, blockchain)
+            result = await self.create_wallet(wallet_set_id, blockchain, count)
             
-            # 개발 환경이 아닌 경우 지갑 주소 검증
-            if self.settings.environment != "development":
-                if result.get("data") and result["data"].get("wallets"):
-                    wallet = result["data"]["wallets"][0]
-                    address = wallet.get("address")
-                    
-                    if not self.is_valid_ethereum_address(address):
-                        raise ValueError(f"Invalid wallet address generated: {address}")
+            # 지갑 주소 검증
+            if result.get("data") and result["data"].get("wallets"):
+                wallet = result["data"]["wallets"][0]
+                address = wallet.get("address")
+                
+                if not self.is_valid_ethereum_address(address):
+                    raise ValueError(f"Invalid wallet address generated: {address}")
             
             return result
             
@@ -140,14 +145,141 @@ class CircleWalletService(CircleAPIClient):
             if retry_count < self.max_retries:
                 print(f"⚠️ 지갑 생성 실패 (시도 {retry_count + 1}/{self.max_retries + 1}): {str(e)}")
                 await asyncio.sleep(self.retry_delay * (retry_count + 1))  # 지수 백오프
-                return await self.create_wallet_with_retry(user_id, blockchain, retry_count + 1)
+                return await self.create_wallet_with_retry(wallet_set_id, blockchain, count, retry_count + 1)
             else:
                 raise Exception(f"지갑 생성 최종 실패 ({self.max_retries + 1}회 시도): {str(e)}")
     
-    async def create_wallet(self, user_id: str, blockchain: str = "ETH-SEPOLIA") -> Dict[str, Any]:
-        """MPC 지갑 생성"""
+    async def get_entity_public_key(self) -> str:
+        """Circle의 Entity 공개키 가져오기 (Entity Secret 암호화용)"""
+        try:
+            print("🔑 Circle API 공개키 요청 중...")
+            response = await self._make_request("GET", "/v1/w3s/config/entity/publicKey")
+            
+            if response.get("data") and response["data"].get("publicKey"):
+                public_key = response["data"]["publicKey"]
+                print("✅ Circle API 공개키 수신 완료")
+                return public_key
+            else:
+                raise Exception("Circle 공개키 조회 응답이 올바르지 않습니다")
+                
+        except Exception as e:
+            print(f"❌ Circle API 공개키 요청 실패: {e}")
+            raise
+
+    @staticmethod
+    def generate_entity_secret() -> str:
+        """32바이트 Entity Secret 생성 (개발용)"""
+        # 32바이트 = 64자 hex 문자열 생성
+        entity_secret = secrets.token_hex(32)
+        print(f"🔑 새 Entity Secret 생성됨: {entity_secret}")
+        print("⚠️  이 값을 안전한 곳에 저장하고 환경변수 CIRCLE_ENTITY_SECRET에 설정하세요")
+        return entity_secret
+
+
+
+    def encrypt_entity_secret(self, entity_secret: str, public_key_pem: str) -> str:
+        """Entity Secret을 Circle 공개키로 RSA 암호화"""
+        try:
+            # hex 문자열을 바이트로 변환
+            entity_secret_bytes = binascii.unhexlify(entity_secret)
+            
+            # Circle API 공개키 형식 확인 및 처리
+            public_key_data = public_key_pem.strip()
+            
+            print(f"🔑 Circle API 공개키 형식 감지: {public_key_data[:50]}...")
+            
+            # Circle API는 RSA PEM 형식을 반환하므로 직접 로드
+            public_key = serialization.load_pem_public_key(public_key_data.encode())
+            
+            # RSA-OAEP 암호화
+            encrypted_data = public_key.encrypt(
+                entity_secret_bytes,
+                padding.OAEP(
+                    mgf=padding.MGF1(algorithm=hashes.SHA256()),
+                    algorithm=hashes.SHA256(),
+                    label=None
+                )
+            )
+            
+            # Base64 인코딩
+            encrypted_base64 = base64.b64encode(encrypted_data).decode('utf-8')
+            
+            # 길이 검증 (684자여야 함)
+            if len(encrypted_base64) != 684:
+                print(f"⚠️  암호화된 Entity Secret 길이: {len(encrypted_base64)} (예상: 684)")
+            
+            return encrypted_base64
+            
+        except Exception as e:
+            print(f"❌ Entity Secret 암호화 실패: {e}")
+            raise
+
+    async def get_or_create_entity_secret_ciphertext(self) -> str:
+        """Entity Secret Ciphertext 매번 새로 생성 (Circle API 보안 요구사항)"""
+        # 원본 Entity Secret이 있어야 함
+        if not self.settings.circle_entity_secret:
+            raise Exception(
+                "CIRCLE_ENTITY_SECRET이 설정되지 않았습니다.\n"
+                "Circle Console에서 Entity Secret을 등록하고 환경변수를 설정해주세요."
+            )
+        
+        print("🔐 Entity Secret Ciphertext 새로 생성 중...")
+        
+        # Circle 공개키 가져오기
+        public_key = await self.get_entity_public_key()
+        
+        # Entity Secret 암호화 (매번 새로 생성)
+        ciphertext = self.encrypt_entity_secret(
+            self.settings.circle_entity_secret, 
+            public_key
+        )
+        
+        print("✅ Entity Secret Ciphertext 생성 완료")
+        return ciphertext
+
+    async def get_or_create_wallet_set(self, user_id: str) -> str:
+        """사용자의 WalletSet을 생성하고 ID 반환"""
+        try:
+            # WalletSet 생성
+            result = await self.create_wallet_set(user_id)
+            
+            if result.get("data") and result["data"].get("walletSet"):
+                wallet_set_id = result["data"]["walletSet"]["id"]
+                print(f"✅ WalletSet 생성 완료: {wallet_set_id}")
+                return wallet_set_id
+            else:
+                raise Exception(f"WalletSet 생성 응답이 올바르지 않습니다: {result}")
+                
+        except Exception as e:
+            print(f"❌ WalletSet 생성 실패: {e}")
+            raise
+    
+    async def create_wallet_set(self, user_id: str, name: str = None) -> Dict[str, Any]:
+        """
+        WalletSet 생성 (사용자별로 하나)
+        https://developers.circle.com/w3s/reference/createwalletset
+        """
+        if not name:
+            name = f"User {user_id} WalletSet"
+        
+        # Entity Secret Ciphertext 가져오기 또는 생성
+        entity_secret_ciphertext = await self.get_or_create_entity_secret_ciphertext()
+        
+        data = {
+            "idempotencyKey": str(uuid.uuid4()),
+            "name": name,
+            "entitySecretCiphertext": entity_secret_ciphertext
+        }
+        
+        print(f"📦 WalletSet 생성 요청: user_id={user_id}, name={name}")
+        return await self._make_request("POST", "/v1/w3s/developer/walletSets", data)
+
+    async def create_wallet(self, wallet_set_id: str, blockchain: str = "ETH-SEPOLIA", count: int = 1) -> Dict[str, Any]:
+        """
+        실제 Circle API로 지갑 생성
+        https://developers.circle.com/w3s/reference/createwallets
+        """
         # 블록체인 매핑 (백엔드 → Circle API)
-        # 개발 환경에서는 모든 체인이 테스트넷을 사용
         if self.settings.environment == "development":
             blockchain_mapping = {
                 "ETH": "ETH-SEPOLIA",
@@ -191,40 +323,22 @@ class CircleWalletService(CircleAPIClient):
             }
         
         circle_blockchain = blockchain_mapping.get(blockchain, "ETH-SEPOLIA")
-        print(f"🔄 지갑 생성: {blockchain} → {circle_blockchain}")
+        print(f"🔄 지갑 생성: {blockchain} → {circle_blockchain}, walletSetId={wallet_set_id}")
+        
+        # Entity Secret Ciphertext 가져오기 또는 생성
+        entity_secret_ciphertext = await self.get_or_create_entity_secret_ciphertext()
         
         data = {
             "idempotencyKey": str(uuid.uuid4()),
-            "count": 1,
+            "accountType": "SCA",  # Smart Contract Account (Developer-Controlled)
             "blockchains": [circle_blockchain],
-            "entitySecretCipherText": "",  # 실제 구현에서는 암호화 필요
-            "metadata": {
-                "userId": user_id,
-                "createdAt": datetime.utcnow().isoformat()
-            }
+            "count": count,
+            "walletSetId": wallet_set_id,
+            "entitySecretCiphertext": entity_secret_ciphertext
         }
         
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            # 유효한 이더리움 주소 형식 생성
-            import secrets
-            random_address = "0x" + secrets.token_hex(20)  # 20바이트 = 40자리 hex
-            
-            return {
-                "data": {
-                    "wallets": [{
-                        "id": f"wallet_{uuid.uuid4()}",
-                        "address": random_address,
-                        "blockchain": circle_blockchain,  # 매핑된 블록체인 사용
-                        "state": "LIVE",
-                        "entityId": f"entity_{uuid.uuid4()}",
-                        "walletSetId": f"walletSet_{uuid.uuid4()}",
-                        "custodyType": "DEVELOPER"
-                    }]
-                }
-            }
-        
-        return await self._make_request("POST", "/v1/w3s/wallets", data)
+        print(f"🌐 Circle API 지갑 생성 요청: {data}")
+        return await self._make_request("POST", "/v1/w3s/developer/wallets", data)
     
     async def get_wallet_balance(self, wallet_id: str) -> Dict[str, Any]:
         """지갑 잔액 조회 (실제 Circle API 호출)"""
