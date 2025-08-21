@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -17,27 +18,98 @@ import { safeToFixed } from '../utils/formatters';
 export default function HistoryScreen() {
   const { state, loadTransactions } = useApp();
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'payment' | 'transfer'>('all');
+  const [filter, setFilter] = useState<'all' | 'payment' | 'transfer' | 'deposit' | 'received'>('all');
+  const [syncStatus, setSyncStatus] = useState<{
+    isSyncing: boolean;
+    lastSyncTime: string | null;
+    syncMessage: string | null;
+  }>({
+    isSyncing: false,
+    lastSyncTime: null,
+    syncMessage: null,
+  });
 
   // 필터링된 거래 목록
   const filteredTransactions = state.transactions.filter(transaction => {
     if (filter === 'all') return true;
+    if (filter === 'transfer') {
+      // 송금 필터는 'sent'와 'transfer' 모두 포함
+      return transaction.type === 'sent' || transaction.type === 'transfer';
+    }
+    if (filter === 'deposit') {
+      // 입금 필터는 'received'와 'deposit' 모두 포함
+      return transaction.type === 'received' || transaction.type === 'deposit';
+    }
     return transaction.type === filter;
   });
 
-  // 새로고침 핸들러
+  // 새로고침 핸들러 (동기화 포함)
   const onRefresh = async () => {
     setRefreshing(true);
+    setSyncStatus(prev => ({ ...prev, isSyncing: true }));
+    
     try {
-      // 모든 지갑의 거래 내역 로드
+      console.log('🔄 거래 내역 새로고침 시작');
+      
+      // 모든 지갑의 거래 내역 로드 (백엔드에서 자동 동기화)
       for (const wallet of state.wallets) {
+        console.log(`📱 지갑 ${wallet.walletId} 거래 내역 로드 중...`);
         await loadTransactions(wallet.walletId);
       }
+      
+      // 동기화 완료 상태 업데이트
+      setSyncStatus({
+        isSyncing: false,
+        lastSyncTime: new Date().toISOString(),
+        syncMessage: '거래 내역이 최신 상태로 업데이트되었습니다',
+      });
+      
+      console.log('✅ 거래 내역 새로고침 완료');
+      
     } catch (error) {
+      console.error('❌ 거래 내역 새로고침 실패:', error);
       Alert.alert('오류', '거래 내역을 불러올 수 없습니다.');
+      
+      setSyncStatus({
+        isSyncing: false,
+        lastSyncTime: null,
+        syncMessage: '새로고침 중 오류가 발생했습니다',
+      });
     } finally {
       setRefreshing(false);
     }
+  };
+
+  // 동기화 상태 메시지 표시
+  const renderSyncStatus = () => {
+    if (syncStatus.isSyncing) {
+      return (
+        <View style={styles.syncStatusContainer}>
+          <ActivityIndicator size="small" color="#007AFF" />
+          <Text style={styles.syncStatusText}>거래 내역 동기화 중...</Text>
+        </View>
+      );
+    }
+    
+    if (syncStatus.syncMessage) {
+      return (
+        <View style={styles.syncStatusContainer}>
+          <Ionicons 
+            name={syncStatus.syncMessage.includes('오류') ? 'warning' : 'checkmark-circle'} 
+            size={16} 
+            color={syncStatus.syncMessage.includes('오류') ? '#FF6B35' : '#28A745'} 
+          />
+          <Text style={[
+            styles.syncStatusText,
+            { color: syncStatus.syncMessage.includes('오류') ? '#FF6B35' : '#28A745' }
+          ]}>
+            {syncStatus.syncMessage}
+          </Text>
+        </View>
+      );
+    }
+    
+    return null;
   };
 
   // 거래 상태에 따른 아이콘 및 색상
@@ -45,10 +117,16 @@ export default function HistoryScreen() {
     switch (transaction.type) {
       case 'payment':
         return { name: 'card' as const, color: '#28A745' };
+      case 'sent':
+        return { name: 'send' as const, color: '#DC3545' };
+      case 'received':
+        return { name: 'arrow-down' as const, color: '#28A745' };
       case 'transfer':
         return { name: 'send' as const, color: '#007AFF' };
       case 'withdrawal':
         return { name: 'arrow-up' as const, color: '#FD7E14' };
+      case 'deposit':
+        return { name: 'arrow-down' as const, color: '#28A745' };
       default:
         return { name: 'swap-horizontal' as const, color: '#6F42C1' };
     }
@@ -80,10 +158,31 @@ export default function HistoryScreen() {
     }
   };
 
+  // 거래 타입별 한글 표시
+  const getTransactionTypeText = (type: string) => {
+    switch (type) {
+      case 'payment':
+        return '결제';
+      case 'sent':
+        return '송금';
+      case 'received':
+        return '입금';
+      case 'transfer':
+        return '송금';
+      case 'withdrawal':
+        return '출금';
+      case 'deposit':
+        return '입금';
+      default:
+        return '거래';
+    }
+  };
+
   // 거래 항목 렌더링
   const renderTransactionItem = ({ item }: { item: Transaction }) => {
     const icon = getTransactionIcon(item);
-    const isOutgoing = item.type === 'payment' || item.type === 'transfer';
+    const isOutgoing = item.type === 'payment' || item.type === 'transfer' || item.type === 'sent';
+    const isIncoming = item.type === 'deposit' || item.type === 'received';
 
     return (
       <TouchableOpacity style={styles.transactionItem}>
@@ -94,15 +193,14 @@ export default function HistoryScreen() {
         <View style={styles.transactionContent}>
           <View style={styles.transactionHeader}>
             <Text style={styles.transactionTitle}>
-              {item.type === 'payment' ? '결제' : 
-               item.type === 'transfer' ? '송금' : '출금'}
+              {getTransactionTypeText(item.type)}
               {item.merchantName && ` - ${item.merchantName}`}
             </Text>
             <Text style={[
               styles.transactionAmount,
-              { color: isOutgoing ? '#DC3545' : '#28A745' }
+              { color: isOutgoing ? '#DC3545' : isIncoming ? '#28A745' : '#007AFF' }
             ]}>
-              {isOutgoing ? '-' : '+'}${safeToFixed(item.amount, 2)}
+              {isOutgoing ? '-' : isIncoming ? '+' : ''}${safeToFixed(item.amount, 2)}
             </Text>
           </View>
           
@@ -110,7 +208,9 @@ export default function HistoryScreen() {
             <Text style={styles.transactionAddress}>
               {item.type === 'payment' && item.merchantName ? 
                 `가맹점: ${item.merchantName}` :
-                `수신자: ${item.toAddress.slice(0, 6)}...${item.toAddress.slice(-4)}`
+                item.type === 'deposit' ?
+                `입금 주소: ${item.toAddress ? item.toAddress.slice(0, 6) + '...' + item.toAddress.slice(-4) : 'N/A'}` :
+                `수신자: ${item.toAddress ? item.toAddress.slice(0, 6) + '...' + item.toAddress.slice(-4) : 'N/A'}`
               }
             </Text>
             <View style={[
@@ -125,7 +225,7 @@ export default function HistoryScreen() {
           
           <View style={styles.transactionFooter}>
             <Text style={styles.transactionDate}>
-              {new Date(item.createdAt).toLocaleString('ko-KR')}
+              {item.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR') : '날짜 정보 없음'}
             </Text>
             {item.transactionHash && (
               <TouchableOpacity style={styles.hashButton}>
@@ -145,17 +245,24 @@ export default function HistoryScreen() {
     );
   };
 
-  // 빈 상태 렌더링
+  // 빈 상태 렌더링 (개선된 메시지)
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Ionicons name="receipt-outline" size={64} color="#CCC" />
       <Text style={styles.emptyStateTitle}>거래 내역이 없습니다</Text>
       <Text style={styles.emptyStateText}>
         {filter === 'all' ? 
-          '아직 거래 내역이 없습니다.\n첫 번째 결제나 송금을 시작해보세요!' :
-          `${filter === 'payment' ? '결제' : '송금'} 내역이 없습니다.`
+          '아직 거래 내역이 없습니다.\n아래로 당겨서 새로고침하거나\n첫 번째 결제나 송금을 시작해보세요!' :
+          filter === 'payment' ? '결제 내역이 없습니다.\n다른 탭을 확인해보세요.' :
+          filter === 'transfer' ? '송금 내역이 없습니다.\n다른 탭을 확인해보세요.' :
+          filter === 'deposit' ? '입금 내역이 없습니다.\n다른 탭을 확인해보세요.' :
+          '거래 내역이 없습니다.\n다른 탭을 확인해보세요.'
         }
       </Text>
+      <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
+        <Ionicons name="refresh" size={16} color="#007AFF" />
+        <Text style={styles.refreshButtonText}>새로고침</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -203,7 +310,19 @@ export default function HistoryScreen() {
             송금
           </Text>
         </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={[styles.filterTab, filter === 'deposit' && styles.filterTabActive]}
+          onPress={() => setFilter('deposit')}
+        >
+          <Text style={[styles.filterTabText, filter === 'deposit' && styles.filterTabTextActive]}>
+            입금
+          </Text>
+        </TouchableOpacity>
       </View>
+
+      {/* 동기화 상태 메시지 */}
+      {renderSyncStatus()}
 
       {/* 거래 목록 */}
       <FlatList
@@ -237,7 +356,18 @@ export default function HistoryScreen() {
               <Text style={styles.summaryLabel}>이번 달 송금</Text>
               <Text style={styles.summaryValue}>
                 ${safeToFixed(filteredTransactions
-                  .filter(t => t.type === 'transfer' && new Date(t.createdAt).getMonth() === new Date().getMonth())
+                  .filter(t => (t.type === 'transfer' || t.type === 'sent') && new Date(t.createdAt).getMonth() === new Date().getMonth())
+                  .reduce((sum, t) => sum + (t.amount || 0), 0))}
+              </Text>
+            </View>
+            
+            <View style={styles.summaryDivider} />
+            
+            <View style={styles.summaryItem}>
+              <Text style={styles.summaryLabel}>이번 달 입금</Text>
+              <Text style={styles.summaryValue}>
+                ${safeToFixed(filteredTransactions
+                  .filter(t => (t.type === 'deposit' || t.type === 'received') && new Date(t.createdAt).getMonth() === new Date().getMonth())
                   .reduce((sum, t) => sum + (t.amount || 0), 0))}
               </Text>
             </View>
@@ -418,6 +548,36 @@ const styles = StyleSheet.create({
     color: '#CCC',
     textAlign: 'center',
     lineHeight: 20,
+  },
+  refreshButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#E0F2FE',
+    borderRadius: 10,
+  },
+  refreshButtonText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  syncStatusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    backgroundColor: '#F0F8FF',
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginBottom: 16,
+  },
+  syncStatusText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 8,
   },
   summaryCard: {
     backgroundColor: 'white',

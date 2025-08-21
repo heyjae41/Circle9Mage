@@ -25,7 +25,7 @@ export interface Wallet {
 // 거래 관련 타입
 export interface Transaction {
   transactionId: string;
-  type: 'payment' | 'transfer' | 'withdrawal';
+  type: 'payment' | 'transfer' | 'withdrawal' | 'deposit' | 'sent' | 'received';
   amount: number;
   currency: string;
   status: 'pending' | 'completed' | 'failed';

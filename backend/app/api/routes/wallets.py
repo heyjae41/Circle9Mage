@@ -418,10 +418,12 @@ async def get_wallet_transactions(
     offset: int = 0,
     db: AsyncSession = Depends(get_db)
 ):
-    """지갑 거래 내역 조회"""
+    """지갑 거래 내역 조회 (자동 동기화 포함)"""
     try:
         from sqlalchemy import select, func
         from app.models.user import Transaction, Wallet
+        from app.services.transaction_sync_service import TransactionSyncService
+        from datetime import datetime, timedelta
         
         # 1. 지갑 존재 확인 및 사용자 ID 조회
         wallet_query = select(Wallet).where(Wallet.circle_wallet_id == wallet_id, Wallet.is_active == True)
@@ -431,7 +433,65 @@ async def get_wallet_transactions(
         if not wallet:
             raise HTTPException(status_code=404, detail="지갑을 찾을 수 없습니다")
         
-        # 2. 해당 사용자의 거래 내역 조회 (최신순)
+        # 2. 동기화 필요 여부 판단
+        needs_sync = False
+        sync_result = None
+        last_sync_time = None
+        
+        # 2-1. 로컬 DB에 거래가 없는 경우 동기화 필요
+        transaction_count_query = select(func.count(Transaction.id)).where(
+            Transaction.user_id == wallet.user_id
+        )
+        count_result = await db.execute(transaction_count_query)
+        local_transaction_count = count_result.scalar()
+        
+        if local_transaction_count == 0:
+            print(f"📭 로컬 DB에 거래가 없음 - 자동 동기화 시작: wallet_id={wallet_id}")
+            needs_sync = True
+        else:
+            # 2-2. 가장 최근 거래 시간 확인 (1시간 이상 오래된 경우 동기화)
+            latest_transaction_query = select(Transaction.created_at).where(
+                Transaction.user_id == wallet.user_id
+            ).order_by(Transaction.created_at.desc()).limit(1)
+            
+            latest_result = await db.execute(latest_transaction_query)
+            latest_transaction = latest_result.scalar_one_or_none()
+            
+            if latest_transaction:
+                # timezone-aware datetime으로 통일
+                current_time = datetime.utcnow().replace(tzinfo=latest_transaction.tzinfo)
+                time_diff = current_time - latest_transaction
+                if time_diff > timedelta(hours=1):  # 1시간 이상 오래된 경우
+                    print(f"⏰ 마지막 거래가 {time_diff.total_seconds()/3600:.1f}시간 전 - 자동 동기화 시작: wallet_id={wallet_id}")
+                    needs_sync = True
+                    last_sync_time = latest_transaction.isoformat()
+        
+        # 3. 자동 동기화 실행 (필요한 경우)
+        if needs_sync:
+            try:
+                print(f"🔄 자동 거래 내역 동기화 실행: wallet_id={wallet_id}")
+                sync_service = TransactionSyncService()
+                sync_result = await sync_service.sync_wallet_transactions(
+                    wallet_id=wallet_id,
+                    user_id=wallet.user_id,
+                    db=db
+                )
+                
+                if sync_result.get("success", False):
+                    print(f"✅ 자동 동기화 완료: {sync_result}")
+                else:
+                    print(f"⚠️ 자동 동기화 실패: {sync_result.get('error', '알 수 없는 오류')}")
+                    
+            except Exception as sync_error:
+                print(f"❌ 자동 동기화 중 오류: {sync_error}")
+                # 동기화 실패해도 기존 데이터로 응답
+                sync_result = {
+                    "success": False,
+                    "error": str(sync_error),
+                    "message": "자동 동기화 실패, 기존 데이터로 응답"
+                }
+        
+        # 4. 동기화 후 최신 거래 내역 조회
         transaction_query = select(Transaction).where(
             Transaction.user_id == wallet.user_id
         ).order_by(Transaction.created_at.desc()).offset(offset).limit(limit)
@@ -439,12 +499,12 @@ async def get_wallet_transactions(
         transaction_result = await db.execute(transaction_query)
         transactions = transaction_result.scalars().all()
         
-        # 3. 전체 거래 수 조회
+        # 5. 전체 거래 수 조회 (동기화 후)
         total_query = select(func.count(Transaction.id)).where(Transaction.user_id == wallet.user_id)
         total_result = await db.execute(total_query)
         total_transactions = total_result.scalar()
         
-        # 4. 응답 데이터 구성
+        # 6. 응답 데이터 구성
         transaction_list = []
         for transaction in transactions:
             transaction_list.append({
@@ -462,7 +522,8 @@ async def get_wallet_transactions(
                 "notes": transaction.notes
             })
         
-        return {
+        # 7. 응답에 동기화 상태 포함
+        response_data = {
             "wallet_id": wallet_id,
             "total_transactions": total_transactions,
             "page": {
@@ -470,13 +531,100 @@ async def get_wallet_transactions(
                 "offset": offset,
                 "has_more": offset + limit < total_transactions
             },
-            "transactions": transaction_list
+            "transactions": transaction_list,
+            "sync_info": {
+                "auto_sync_performed": needs_sync,
+                "sync_success": sync_result.get("success", False) if sync_result else None,
+                "sync_message": sync_result.get("message", None) if sync_result else None,
+                "last_sync_time": last_sync_time,
+                "synced_at": datetime.utcnow().isoformat() if needs_sync else None
+            }
         }
+        
+        print(f"✅ 거래 내역 조회 완료: 총 {total_transactions}건, 자동동기화: {needs_sync}")
+        return response_data
         
     except HTTPException:
         raise
     except Exception as e:
         print(f"❌ 거래 내역 조회 실패: {str(e)}")
         raise HTTPException(status_code=500, detail=f"거래 내역 조회 실패: {str(e)}")
+
+@router.post("/{wallet_id}/sync-transactions")
+async def sync_wallet_transactions(
+    wallet_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """지갑 거래 내역 동기화 (Circle API → 로컬 DB)"""
+    try:
+        from sqlalchemy import select
+        from app.models.user import Wallet
+        from app.services.transaction_sync_service import TransactionSyncService
+        from app.services.auth_service import auth_service
+        from fastapi import Depends, HTTPException, status
+        
+        # 1. 지갑 존재 확인 및 사용자 ID 조회
+        wallet_query = select(Wallet).where(
+            Wallet.circle_wallet_id == wallet_id, 
+            Wallet.is_active == True
+        )
+        wallet_result = await db.execute(wallet_query)
+        wallet = wallet_result.scalar_one_or_none()
+        
+        if not wallet:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, 
+                detail="지갑을 찾을 수 없습니다"
+            )
+        
+        print(f"🔄 거래 내역 동기화 시작: wallet_id={wallet_id}, user_id={wallet.user_id}")
+        
+        # 2. TransactionSyncService를 사용하여 동기화 실행
+        sync_service = TransactionSyncService()
+        sync_result = await sync_service.sync_wallet_transactions(
+            wallet_id=wallet_id,
+            user_id=wallet.user_id,
+            db=db
+        )
+        
+        if not sync_result.get("success", False):
+            error_msg = sync_result.get("error", "알 수 없는 오류")
+            print(f"❌ 거래 내역 동기화 실패: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"거래 내역 동기화 실패: {error_msg}"
+            )
+        
+        # 3. 동기화 결과 로깅
+        print(f"✅ 거래 내역 동기화 완료: {sync_result}")
+        
+        # 4. 동기화 후 최신 거래 내역 조회
+        from sqlalchemy import func
+        from app.models.user import Transaction
+        
+        # 동기화된 거래 수 조회
+        total_query = select(func.count(Transaction.id)).where(
+            Transaction.user_id == wallet.user_id
+        )
+        total_result = await db.execute(total_query)
+        total_transactions = total_result.scalar()
+        
+        # 5. 응답 데이터 구성
+        return {
+            "wallet_id": wallet_id,
+            "sync_result": sync_result,
+            "total_transactions": total_transactions,
+            "message": "거래 내역 동기화가 완료되었습니다",
+            "synced_at": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"❌ 거래 내역 동기화 API 실패: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"거래 내역 동기화 중 오류가 발생했습니다: {str(e)}"
+        )
 
  

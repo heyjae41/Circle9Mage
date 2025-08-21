@@ -359,6 +359,36 @@ class CircleWalletService(CircleAPIClient):
                 }
             }
 
+    async def get_wallet_transactions(self, wallet_id: str) -> Dict[str, Any]:
+        """지갑 거래 내역 조회 (실제 Circle API 호출)"""
+        try:
+            print(f"🔍 Circle API 지갑 거래 내역 조회: {wallet_id}")
+            # Circle API의 올바른 엔드포인트 사용
+            response = await self._make_request("GET", "/v1/w3s/transactions", params={"walletIds": wallet_id})
+            print(f"✅ Circle API 거래 내역 응답: {response}")
+            
+            # 응답에서 해당 지갑의 거래만 필터링
+            if "data" in response and "transactions" in response["data"]:
+                wallet_transactions = [
+                    tx for tx in response["data"]["transactions"]
+                    if tx.get("walletId") == wallet_id
+                ]
+                return {
+                    "data": {
+                        "transactions": wallet_transactions
+                    }
+                }
+            
+            return response
+        except Exception as e:
+            print(f"❌ Circle API 거래 내역 조회 실패: {e}")
+            # API 호출 실패시 기본값 반환
+            return {
+                "data": {
+                    "transactions": []
+                }
+            }
+
 class CircleCCTPService(CircleAPIClient):
     """Circle Cross-Chain Transfer Protocol 서비스"""
     
