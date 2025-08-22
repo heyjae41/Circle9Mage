@@ -1,0 +1,285 @@
+{
+  "tasks": [
+    {
+      "id": "27e341d9-83bb-42a4-ad11-3b16398f4eaf",
+      "name": "Pydantic alias 패턴 구현 - payments.py",
+      "description": "payments.py의 CrossChainTransferRequest 모델에 Pydantic alias 패턴을 적용하여 camelCase와 snake_case를 모두 지원하도록 수정합니다. 현재 422 오류의 직접적 원인을 해결하는 우선순위 작업입니다.",
+      "notes": "현재 422 오류를 즉시 해결하는 핵심 작업. Pydantic v2 문법 사용 (populate_by_name). 내부 로직은 snake_case 유지.",
+      "status": "completed",
+      "dependencies": [],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T05:36:08.021Z",
+      "relatedFiles": [
+        {
+          "path": "backend/app/api/routes/payments.py",
+          "type": "TO_MODIFY",
+          "description": "CrossChainTransferRequest 모델과 API 엔드포인트 수정",
+          "lineStart": 29,
+          "lineEnd": 240
+        }
+      ],
+      "implementationGuide": "1. CrossChainTransferRequest 클래스 수정:\\n   - source_wallet_id: str = Field(..., alias=\"sourceWalletId\", description=\"소스 지갑 ID\")\\n   - target_address: str = Field(..., alias=\"targetAddress\", description=\"목표 주소\")\\n   - source_chain: str = Field(..., alias=\"sourceChain\", description=\"소스 체인\")\\n   - target_chain: str = Field(..., alias=\"targetChain\", description=\"목표 체인\")\\n2. Config 클래스 추가:\\n   class Config:\\n       populate_by_name = True\\n3. API 함수 내부에서 request.source_wallet_id 등 snake_case 사용 확인\\n4. @router.post 데코레이터에 response_model_by_alias=True 추가",
+      "verificationCriteria": "모바일 앱에서 송금 요청 시 422 오류 없이 성공적으로 API 호출되는지 확인. curl 테스트로 camelCase와 snake_case 모두 허용되는지 검증.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "Pydantic alias 패턴 구현을 성공적으로 완료했습니다. CrossChainTransferRequest 모델에 snake_case 필드와 camelCase alias를 추가하여 양방향 호환성을 확보했습니다. populate_by_name = True 설정으로 두 방식 모두 지원하며, API 함수 내부에서는 snake_case를 사용하도록 수정했습니다. response_model_by_alias=True 설정으로 응답도 camelCase 형태로 반환됩니다. curl 테스트에서 camelCase 필드명으로 422 오류 없이 정상 API 호출이 확인되었고, mock 응답이 올바르게 생성되어 현재 송금 기능의 422 오류 문제가 해결되었습니다.",
+      "completedAt": "2025-08-22T05:36:08.019Z"
+    },
+    {
+      "id": "e8d6b54d-4aa9-476d-8c3a-2010bd329207",
+      "name": "PaymentResponse 모델 camelCase 응답 지원",
+      "description": "PaymentResponse 모델의 모든 필드에 camelCase alias를 추가하여 프론트엔드에서 일관된 camelCase 응답을 받을 수 있도록 구현합니다.",
+      "notes": "응답 모델의 camelCase 변환으로 프론트엔드 호환성 완성. response_model_by_alias=True와 함께 작동.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "27e341d9-83bb-42a4-ad11-3b16398f4eaf"
+        }
+      ],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T06:07:39.306Z",
+      "relatedFiles": [
+        {
+          "path": "backend/app/api/routes/payments.py",
+          "type": "TO_MODIFY",
+          "description": "PaymentResponse, QRCodeResponse 모델 수정",
+          "lineStart": 38,
+          "lineEnd": 56
+        },
+        {
+          "path": "mobile/src/contexts/AppContext.tsx",
+          "type": "REFERENCE",
+          "description": "응답 처리 로직 확인",
+          "lineStart": 363,
+          "lineEnd": 390
+        }
+      ],
+      "implementationGuide": "1. PaymentResponse 클래스의 모든 필드에 alias 추가:\\n   - payment_id: str → payment_id: str = Field(..., alias=\"paymentId\")\\n   - transaction_hash: Optional[str] → transaction_hash: Optional[str] = Field(None, alias=\"transactionHash\")\\n   - estimated_completion_time: str → estimated_completion_time: str = Field(..., alias=\"estimatedCompletionTime\")\\n2. Config 클래스 추가:\\n   class Config:\\n       populate_by_name = True\\n3. QRCodeResponse도 동일하게 처리:\\n   - qr_code_id → Field(alias=\"qrCodeId\")\\n   - qr_code_data → Field(alias=\"qrCodeData\")\\n   - payment_url → Field(alias=\"paymentUrl\")\\n   - expires_at → Field(alias=\"expiresAt\")\\n   - merchant_name → Field(alias=\"merchantName\")",
+      "verificationCriteria": "API 응답이 camelCase 형태로 반환되어 프론트엔드에서 올바르게 파싱되는지 확인. estimatedCompletionTime, paymentId 등이 정상 처리되는지 검증.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "PaymentResponse 모델 camelCase 응답 지원을 성공적으로 완료했습니다. PaymentResponse와 QRCodeResponse 모델의 모든 snake_case 필드에 camelCase alias를 추가했습니다. payment_id → paymentId, transaction_hash → transactionHash, estimated_completion_time → estimatedCompletionTime, qr_code_id → qrCodeId, payment_url → paymentUrl, expires_at → expiresAt, merchant_name → merchantName 등의 alias를 구현했습니다. populate_by_name = True 설정으로 양방향 호환성을 확보하고, 모든 관련 엔드포인트에 response_model_by_alias=True를 추가했습니다. curl 테스트에서 API 응답이 완벽하게 camelCase로 변환되어 반환되는 것을 확인했으며, 프론트엔드와의 호환성이 완성되었습니다.",
+      "completedAt": "2025-08-22T06:07:39.304Z"
+    },
+    {
+      "id": "f0e4b7dc-edc3-4a50-9347-1b095d5d5c0e",
+      "name": "auth.py 모델 네이밍 컨벤션 통일",
+      "description": "auth.py의 모든 Pydantic 모델에 camelCase alias를 적용하여 일관된 API 인터페이스를 제공합니다. 로그인/회원가입 API의 네이밍 표준화 작업입니다.",
+      "notes": "인증 API는 프론트엔드에서 가장 자주 사용되므로 camelCase 통일 중요. 기존 snake_case도 계속 지원.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "27e341d9-83bb-42a4-ad11-3b16398f4eaf"
+        }
+      ],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T06:18:06.460Z",
+      "relatedFiles": [
+        {
+          "path": "backend/app/api/routes/auth.py",
+          "type": "TO_MODIFY",
+          "description": "모든 Pydantic 모델에 alias 추가",
+          "lineStart": 26,
+          "lineEnd": 68
+        },
+        {
+          "path": "mobile/src/services/apiService.ts",
+          "type": "REFERENCE",
+          "description": "인증 API 호출 확인",
+          "lineStart": 1,
+          "lineEnd": 50
+        }
+      ],
+      "implementationGuide": "1. RegisterRequest 모델 수정:\\n   - first_name → Field(alias=\"firstName\")\\n   - last_name → Field(alias=\"lastName\")\\n   - country_code → Field(alias=\"countryCode\")\\n2. LoginRequest, VerifyEmailRequest, VerifyPhoneRequest도 동일 적용\\n3. AuthResponse 모델:\\n   - access_token → Field(alias=\"accessToken\")\\n   - refresh_token → Field(alias=\"refreshToken\")\\n   - expires_in → Field(alias=\"expiresIn\")\\n4. UserResponse 모델:\\n   - first_name → Field(alias=\"firstName\")\\n   - last_name → Field(alias=\"lastName\")\\n   - country_code → Field(alias=\"countryCode\")\\n   - is_verified → Field(alias=\"isVerified\")\\n   - kyc_status → Field(alias=\"kycStatus\")\\n   - created_at → Field(alias=\"createdAt\")\\n5. 모든 모델에 Config 클래스 추가",
+      "verificationCriteria": "로그인/회원가입 API 호출 시 camelCase 필드명으로 정상 동작하는지 확인. firstName, lastName, accessToken 등이 올바르게 처리되는지 검증.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "auth.py 모델 네이밍 컨벤션 통일을 성공적으로 완료했습니다. 모든 Pydantic 모델에 camelCase alias를 추가했습니다. RegisterRequest에서 firstName, lastName, countryCode alias를 추가하고, VerifyEmailRequest와 VerifyPhoneRequest에서 verificationCode alias를 추가했습니다. AuthResponse에서 accessToken, refreshToken, tokenType, expiresIn alias를 추가하고, UserResponse에서 firstName, lastName, countryCode, isVerified, kycStatus, createdAt alias를 추가했습니다. 모든 모델에 populate_by_name = True Config를 추가하여 양방향 호환성을 확보했으며, 회원가입과 로그인 엔드포인트에 response_model_by_alias=True를 추가했습니다. curl 테스트에서 camelCase 요청이 정상 처리되고 응답도 camelCase로 변환되는 것을 확인했습니다.",
+      "completedAt": "2025-08-22T06:18:06.459Z"
+    },
+    {
+      "id": "1535375c-bf18-4ae6-9d52-a760105f3998",
+      "name": "wallets.py 모델 네이밍 컨벤션 통일",
+      "description": "wallets.py의 모든 Pydantic 모델에 camelCase alias를 적용합니다. 지갑 관련 API의 네이밍 표준화로 전체 시스템 일관성을 확보합니다.",
+      "notes": "지갑 API는 거래 내역 동기화에서 중요한 역할. camelCase 통일로 프론트엔드 호환성 향상.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "27e341d9-83bb-42a4-ad11-3b16398f4eaf"
+        }
+      ],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T06:24:19.777Z",
+      "relatedFiles": [
+        {
+          "path": "backend/app/api/routes/wallets.py",
+          "type": "TO_MODIFY",
+          "description": "지갑 관련 모든 Pydantic 모델 수정",
+          "lineStart": 17,
+          "lineEnd": 50
+        },
+        {
+          "path": "mobile/src/types/index.ts",
+          "type": "REFERENCE",
+          "description": "Wallet 인터페이스 확인",
+          "lineStart": 14,
+          "lineEnd": 23
+        }
+      ],
+      "implementationGuide": "1. CreateWalletRequest 모델:\\n   - wallet_name → Field(alias=\"walletName\")\\n2. WalletResponse 모델:\\n   - wallet_id → Field(alias=\"walletId\")\\n   - chain_id → Field(alias=\"chainId\")\\n   - created_at → Field(alias=\"createdAt\")\\n3. BalanceResponse 모델:\\n   - token_balances → Field(alias=\"tokenBalances\")\\n   - last_updated → Field(alias=\"lastUpdated\")\\n4. 기타 응답 모델들도 동일하게 처리\\n5. 모든 API 엔드포인트에 response_model_by_alias=True 추가\\n6. 모든 모델에 Config 클래스 추가",
+      "verificationCriteria": "지갑 목록 조회, 잔액 확인 API에서 walletId, chainId 등이 camelCase로 정상 반환되는지 확인.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "wallets.py 모델 네이밍 컨벤션 통일을 성공적으로 완료했습니다. 모든 Pydantic 모델에 camelCase alias를 추가했습니다. CreateWalletRequest에서 userId, walletName alias를 추가하고, WalletResponse에서 walletId, chainId, createdAt alias를 추가했습니다. BalanceResponse에서 walletId, totalUsdValue, lastUpdated alias를 추가하고, SupportedChainsResponse에서 supportedChains alias를 추가했습니다. 모든 모델에 populate_by_name = True Config를 추가하여 양방향 호환성을 확보했으며, 지갑 관련 모든 API 엔드포인트(/supported-chains, /create, /{wallet_id}/balance)에 response_model_by_alias=True를 추가했습니다. curl 테스트에서 supportedChains 필드가 camelCase로 정상 변환되어 반환되는 것을 확인했습니다.",
+      "completedAt": "2025-08-22T06:24:19.775Z"
+    },
+    {
+      "id": "d148e7f4-4a13-4495-99ad-6344d0758831",
+      "name": "users.py 모델 네이밍 컨벤션 통일",
+      "description": "users.py의 사용자 프로필 및 KYC 관련 모든 Pydantic 모델에 camelCase alias를 적용합니다.",
+      "notes": "KYC 필드가 많아 alias 작업량이 크지만, 사용자 프로필 API의 일관성을 위해 필수.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "27e341d9-83bb-42a4-ad11-3b16398f4eaf"
+        }
+      ],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T06:34:50.685Z",
+      "relatedFiles": [
+        {
+          "path": "backend/app/api/routes/users.py",
+          "type": "TO_MODIFY",
+          "description": "사용자 및 KYC 관련 모든 모델 수정",
+          "lineStart": 26,
+          "lineEnd": 85
+        },
+        {
+          "path": "mobile/src/contexts/AppContext.tsx",
+          "type": "REFERENCE",
+          "description": "사용자 프로필 처리 로직",
+          "lineStart": 450,
+          "lineEnd": 500
+        }
+      ],
+      "implementationGuide": "1. UserProfileResponse 모델:\\n   - first_name → Field(alias=\"firstName\")\\n   - last_name → Field(alias=\"lastName\")\\n   - country_code → Field(alias=\"countryCode\")\\n   - preferred_currency → Field(alias=\"preferredCurrency\")\\n   - is_verified → Field(alias=\"isVerified\")\\n   - kyc_status → Field(alias=\"kycStatus\")\\n   - kyc_level → Field(alias=\"kycLevel\")\\n   - created_at → Field(alias=\"createdAt\")\\n   - last_login_at → Field(alias=\"lastLoginAt\")\\n2. UserProfileUpdateRequest 모델:\\n   - preferred_currency → Field(alias=\"preferredCurrency\")\\n3. KYCDocumentRequest 모델의 모든 snake_case 필드들 alias 추가\\n4. KYCStatusResponse 모델도 동일하게 처리\\n5. 모든 모델에 Config 클래스 추가",
+      "verificationCriteria": "사용자 프로필 조회/수정, KYC 문서 제출 API에서 firstName, lastName, kycStatus 등이 camelCase로 처리되는지 확인.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "users.py 모델 네이밍 컨벤션 통일을 성공적으로 완료했습니다. 사용자 프로필 및 KYC 관련 모든 Pydantic 모델에 camelCase alias를 적용했습니다. UserProfileResponse에서 firstName, lastName, countryCode, preferredCurrency, isVerified, kycStatus, kycLevel, createdAt, lastLoginAt alias를 추가했습니다. UserProfileUpdateRequest에서 firstName, lastName, preferredCurrency alias를 추가했습니다. KYCDocumentRequest에서 documentType, documentNumber, fullName, dateOfBirth, addressLine1, addressLine2, stateProvince, postalCode, incomeRange, sourceOfFunds alias를 추가했습니다. KYCStatusResponse에서 userId, kycStatus, kycLevel, lastUpdated, nextSteps alias를 추가했습니다. 모든 모델에 populate_by_name = True Config를 추가하여 양방향 호환성을 확보했으며, 사용자 관련 모든 API 엔드포인트(/profile GET/PUT, /kyc/status)에 response_model_by_alias=True를 추가했습니다. curl 테스트에서 프로필 응답의 모든 필드가 camelCase로 정상 변환되어 반환되는 것을 확인했습니다.",
+      "completedAt": "2025-08-22T06:34:50.684Z"
+    },
+    {
+      "id": "e914937c-c3ec-4b2c-9b10-e9ef1b34a2d9",
+      "name": "나머지 API 모델 네이밍 컨벤션 통일",
+      "description": "deposits.py, compliance.py, admin.py의 모든 Pydantic 모델에 camelCase alias를 적용하여 전체 API 시스템의 네이밍 일관성을 완성합니다.",
+      "notes": "전체 API 시스템의 네이밍 일관성 완성. 프론트엔드에서 모든 API가 camelCase로 통일됨.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "f0e4b7dc-edc3-4a50-9347-1b095d5d5c0e"
+        }
+      ],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T06:49:33.399Z",
+      "relatedFiles": [
+        {
+          "path": "backend/app/api/routes/deposits.py",
+          "type": "TO_MODIFY",
+          "description": "USDC 충전 관련 모델 수정",
+          "lineStart": 28,
+          "lineEnd": 70
+        },
+        {
+          "path": "backend/app/api/routes/compliance.py",
+          "type": "TO_MODIFY",
+          "description": "컴플라이언스 관련 모델 수정",
+          "lineStart": 14,
+          "lineEnd": 50
+        },
+        {
+          "path": "backend/app/api/routes/admin.py",
+          "type": "TO_MODIFY",
+          "description": "관리자 관련 모델 수정",
+          "lineStart": 13,
+          "lineEnd": 35
+        }
+      ],
+      "implementationGuide": "1. deposits.py:\\n   - BankAccountData: account_holder_name → Field(alias=\"accountHolderName\"), bank_name → Field(alias=\"bankName\") 등\\n   - WireDepositRequest, CryptoDepositRequest, DepositResponse 모든 필드 처리\\n2. compliance.py:\\n   - TransactionScreeningRequest: from_address → Field(alias=\"fromAddress\"), to_address → Field(alias=\"toAddress\"), transaction_type → Field(alias=\"transactionType\")\\n   - AddressScreeningRequest: screening_type → Field(alias=\"screeningType\")\\n   - ScreeningResult: screening_id → Field(alias=\"screeningId\"), risk_score → Field(alias=\"riskScore\"), risk_level → Field(alias=\"riskLevel\"), sanctions_match → Field(alias=\"sanctionsMatch\"), screening_date → Field(alias=\"screeningDate\")\\n3. admin.py:\\n   - SystemStatus: performance_metrics → Field(alias=\"performanceMetrics\")\\n   - DashboardStats 모든 필드 처리\\n4. 모든 모델에 Config 클래스 추가\\n5. 모든 API 엔드포인트에 response_model_by_alias=True 추가",
+      "verificationCriteria": "모든 API 엔드포인트에서 camelCase 응답이 일관되게 반환되는지 전체 시스템 테스트로 확인.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "나머지 API 모델 네이밍 컨벤션 통일을 성공적으로 완료했습니다. compliance.py, admin.py, deposits.py의 모든 Pydantic 모델에 camelCase alias를 적용하여 전체 API 시스템의 네이밍 일관성을 완성했습니다. compliance.py에서 TransactionScreeningRequest(fromAddress, toAddress, transactionType), AddressScreeningRequest(screeningType), ScreeningResult(screeningId, riskScore, riskLevel, sanctionsMatch, screeningDate), ComplianceReport(reportId, totalTransactions, approvedTransactions, rejectedTransactions, pendingTransactions, highRiskTransactions, sanctionsMatches, complianceScore) alias를 추가했습니다. admin.py에서 SystemStatus(performanceMetrics), DashboardStats(totalUsers, activeUsers24h, totalTransactions, transactions24h, totalVolumeUsd, volume24hUsd, successRate, averageProcessingTime) alias를 추가했습니다. deposits.py에서 BankAccountData(accountHolderName, bankName, accountNumber, routingNumber, addressLine1, addressLine2, postalCode), WireDepositRequest(bankAccount), DepositResponse(depositId, trackingRef, depositAddress, wireInstructions, estimatedCompletion) alias를 추가했습니다. 모든 모델에 populate_by_name = True Config를 추가하여 양방향 호환성을 확보했으며, 모든 API 엔드포인트에 response_model_by_alias=True를 추가했습니다. curl 테스트에서 performanceMetrics 필드가 camelCase로 정상 변환되어 반환되는 것을 확인했습니다.",
+      "completedAt": "2025-08-22T06:49:33.398Z"
+    },
+    {
+      "id": "cf5f7e7e-0a9d-4f3b-8fd5-9f9dd5cf31c4",
+      "name": "FastAPI 전역 camelCase 응답 설정",
+      "description": "main.py에서 FastAPI 앱 전역적으로 response_model_by_alias=True를 설정하고, 각 라우터의 개별 설정을 정리합니다.",
+      "notes": "전역 설정으로 일관성 보장. 개별 라우터 설정보다 관리하기 쉬움. API 문서도 camelCase로 통일됨.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "e914937c-c3ec-4b2c-9b10-e9ef1b34a2d9"
+        }
+      ],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T07:11:55.581Z",
+      "relatedFiles": [
+        {
+          "path": "backend/main.py",
+          "type": "TO_MODIFY",
+          "description": "FastAPI 앱 전역 설정 추가",
+          "lineStart": 35,
+          "lineEnd": 42
+        },
+        {
+          "path": "backend/app/api/routes/payments.py",
+          "type": "TO_MODIFY",
+          "description": "개별 response_model_by_alias 제거",
+          "lineStart": 184,
+          "lineEnd": 185
+        }
+      ],
+      "implementationGuide": "1. main.py의 FastAPI 인스턴스 생성 시 설정 추가:\\n   app = FastAPI(\\n       title=\"CirclePay Global API\",\\n       description=\"Circle Developer Bounties 해커톤용 글로벌 크로스체인 결제 플랫폼\",\\n       version=\"1.0.0\",\\n       docs_url=\"/docs\",\\n       redoc_url=\"/redoc\",\\n       lifespan=lifespan,\\n       response_model_by_alias=True  # 전역 camelCase 응답\\n   )\\n2. 각 라우터 파일에서 개별 response_model_by_alias=True 설정 제거 (중복 방지)\\n3. API 문서 (/docs)에서 camelCase 스키마가 올바르게 표시되는지 확인\\n4. 테스트 스크립트로 모든 엔드포인트의 응답 형식 검증",
+      "verificationCriteria": "모든 API 엔드포인트에서 자동으로 camelCase 응답이 반환되는지 확인. Swagger UI에서 camelCase 스키마가 표시되는지 검증.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "FastAPI 전역 camelCase 응답 설정을 성공적으로 완료했습니다. main.py의 FastAPI 인스턴스 생성 시 response_model_by_alias=True를 전역 설정으로 추가하여 모든 API 엔드포인트에서 자동으로 camelCase 응답이 반환되도록 했습니다. 동시에 개별 라우터 파일들(auth.py, payments.py, wallets.py, users.py, admin.py, compliance.py, deposits.py)에서 총 18개의 중복된 response_model_by_alias=True 설정을 제거하여 코드 중복을 방지하고 일관성을 확보했습니다. 테스트 결과 /api/v1/wallets/supported-chains에서 supportedChains, /api/v1/admin/system/status에서 performanceMetrics가 camelCase로 정상 반환되는 것을 확인했습니다. OpenAPI 스키마에서도 supportedChains 필드가 camelCase로 생성되어 Swagger UI에서도 올바르게 표시됩니다. 이제 모든 API 엔드포인트에서 개별 설정 없이도 자동으로 camelCase 응답이 제공되며, 향후 새로 추가되는 API도 일관된 네이밍 규칙을 자동으로 적용받게 됩니다.",
+      "completedAt": "2025-08-22T07:11:55.579Z"
+    },
+    {
+      "id": "ec6fa10d-4d68-4448-83a3-ff32499e4e5c",
+      "name": "프론트엔드 API 호출 검증 및 테스트",
+      "description": "수정된 백엔드 API와 프론트엔드 간의 호환성을 검증하고, 모든 주요 기능이 정상 작동하는지 통합 테스트를 수행합니다.",
+      "notes": "전체 시스템의 안정성 확인. 기존 기능 손상 없이 네이밍 통일이 완료되었는지 검증.",
+      "status": "completed",
+      "dependencies": [
+        {
+          "taskId": "cf5f7e7e-0a9d-4f3b-8fd5-9f9dd5cf31c4"
+        }
+      ],
+      "createdAt": "2025-08-22T04:22:30.234Z",
+      "updatedAt": "2025-08-22T07:19:01.698Z",
+      "relatedFiles": [
+        {
+          "path": "mobile/src/services/apiService.ts",
+          "type": "REFERENCE",
+          "description": "API 호출 로직 검증",
+          "lineStart": 1,
+          "lineEnd": 100
+        },
+        {
+          "path": "mobile/src/types/index.ts",
+          "type": "REFERENCE",
+          "description": "TypeScript 타입 정의 확인",
+          "lineStart": 1,
+          "lineEnd": 112
+        },
+        {
+          "path": "tests/",
+          "type": "CREATE",
+          "description": "API 호환성 테스트 스크립트 생성"
+        }
+      ],
+      "implementationGuide": "1. 현재 송금 기능 테스트:\\n   - 모바일 앱에서 송금 요청 시 422 오류가 해결되었는지 확인\\n   - sourceWalletId, targetAddress 등이 올바르게 전달되는지 검증\\n2. 주요 API 엔드포인트 테스트:\\n   - 로그인/회원가입: firstName, lastName 등\\n   - 지갑 조회: walletId, chainId 등\\n   - 거래 내역: transactionId, createdAt 등\\n3. TypeScript 타입 검증:\\n   - mobile/src/types/index.ts의 인터페이스와 API 응답 일치 확인\\n   - 타입 에러 없이 컴파일되는지 검증\\n4. 에러 처리 확인:\\n   - 잘못된 필드명 사용 시 적절한 에러 메시지 반환\\n   - snake_case 필드도 여전히 지원되는지 확인",
+      "verificationCriteria": "모든 주요 기능(로그인, 지갑 조회, 송금, 거래 내역)이 정상 작동하고, API 응답이 camelCase로 일관되게 반환되며, TypeScript 타입 체크를 통과하는지 확인.",
+      "analysisResult": "React Native + Python FastAPI 프로젝트의 네이밍 컨벤션 표준화 작업. Pydantic alias 패턴을 활용하여 백엔드는 snake_case 유지, 프론트엔드는 camelCase 유지하면서 API 호환성을 확보. 현재 422 오류 해결과 향후 확장성을 모두 고려한 베스트 프랙티스 구현.",
+      "summary": "프론트엔드 API 호출 검증 및 테스트를 성공적으로 완료했습니다. 종합적인 API 호환성 테스트 스크립트를 생성하여 모든 주요 기능을 검증했습니다. 인증(로그인, 사용자 정보), 사용자 프로필, 지갑 관리, 결제/송금, 관리자 기능 등 5개 카테고리에서 모든 테스트가 성공했습니다. 특히 로그인 응답에서 사용자 정보 필드들(firstName, lastName, countryCode, isVerified, kycStatus)이 snake_case로 반환되던 문제를 발견하고 UserResponse 모델을 사용하여 수정했습니다. TypeScript 타입 정의는 이미 camelCase로 잘 정의되어 있고, SendScreen의 송금 기능도 sourceWalletId, targetAddress 등 camelCase 필드를 올바르게 사용하고 있습니다. 최종 송금 API 테스트에서도 camelCase 요청/응답이 정상 작동함을 확인했습니다. 422 오류가 해결되었고, 모든 API가 camelCase로 일관되게 응답하며, 프론트엔드-백엔드 간 완벽한 호환성을 확보했습니다.",
+      "completedAt": "2025-08-22T07:19:01.684Z"
+    }
+  ]
+}

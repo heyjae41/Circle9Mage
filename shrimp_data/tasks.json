@@ -1,176 +1,274 @@
 {
   "tasks": [
     {
-      "id": "0ef5f5ee-7726-4482-b9da-a34bba07adb0",
-      "name": "Circle API 거래 내역 조회 기능 구현",
-      "description": "Circle API에서 지갑의 실제 거래 내역을 가져오는 기능을 구현합니다. 기존 CircleWalletService에 get_wallet_transactions 메서드를 추가하여 Circle API의 /v1/w3s/wallets/{wallet_id}/transactions 엔드포인트를 호출하고 응답을 처리합니다.",
-      "notes": "기존 Circle API 클라이언트의 패턴을 따라 구현해야 합니다. 에러 발생 시 빈 배열을 반환하도록 fallback 처리합니다.",
-      "status": "completed",
+      "id": "4214015f-9e13-494e-b4e2-0a2edfe822fe",
+      "name": "AI 채팅 화면 기본 UI 구현",
+      "description": "ChatGPT 스타일의 채팅 인터페이스를 구현합니다. FlatList 기반으로 메시지 리스트를 표시하고, 사용자 입력창과 전송 버튼을 포함한 완전한 채팅 UI를 만듭니다.",
+      "status": "pending",
       "dependencies": [],
-      "createdAt": "2025-08-20T11:17:35.927Z",
-      "updatedAt": "2025-08-20T11:20:58.464Z",
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
       "relatedFiles": [
         {
-          "path": "backend/app/services/circle_client.py",
-          "type": "TO_MODIFY",
-          "description": "CircleWalletService 클래스에 거래 내역 조회 메서드 추가",
-          "lineStart": 340,
-          "lineEnd": 400
-        }
-      ],
-      "implementationGuide": "1. backend/app/services/circle_client.py의 CircleWalletService 클래스에 get_wallet_transactions 메서드 추가\\n2. Circle API 엔드포인트 /v1/w3s/wallets/{wallet_id}/transactions 호출\\n3. 응답 데이터 파싱 및 에러 처리 구현\\n4. 기존 get_wallet_balance 메서드와 동일한 패턴으로 구현",
-      "verificationCriteria": "Circle API에서 거래 내역을 성공적으로 가져올 수 있어야 합니다. 에러 발생 시에도 적절한 fallback 응답을 반환해야 합니다.",
-      "analysisResult": "거래 내역 누락 문제를 해결하기 위해 Circle API와 로컬 DB 간의 거래 내역 동기화 시스템을 구현합니다. 현재 총잔액은 $20.00으로 표시되지만 거래 내역은 0건으로 표시되고 있습니다. Faucet으로 USDC를 입금했지만 이 거래가 로컬 DB에 저장되지 않았기 때문입니다. 기존 프로젝트의 아키텍처 패턴을 따라 Circle API 클라이언트, 데이터베이스 모델, API 라우터를 확장하여 구현할 예정입니다.",
-      "summary": "Circle API 거래 내역 조회 기능 구현이 완료되었습니다. CircleWalletService 클래스에 get_wallet_transactions 메서드를 성공적으로 추가하여 Circle API의 /v1/w3s/wallets/{wallet_id}/transactions 엔드포인트를 호출하고 응답을 처리할 수 있습니다. 에러 발생 시에도 적절한 fallback 응답을 반환하며, 기존 get_wallet_balance 메서드와 동일한 패턴으로 구현되었습니다.",
-      "completedAt": "2025-08-20T11:20:58.462Z"
-    },
-    {
-      "id": "4cccda67-7257-445e-9264-b467a5b52b49",
-      "name": "거래 내역 동기화 서비스 구현",
-      "description": "Circle API에서 가져온 거래 내역을 로컬 DB와 동기화하는 서비스를 구현합니다. 새로운 거래는 DB에 저장하고, 기존 거래는 상태를 업데이트하며, 중복 저장을 방지합니다.",
-      "notes": "기존 Transaction 모델의 구조를 활용하여 Circle API 응답을 매핑합니다. 성능을 위해 배치 처리와 중복 검사를 구현합니다.",
-      "status": "completed",
-      "dependencies": [
-        {
-          "taskId": "0ef5f5ee-7726-4482-b9da-a34bba07adb0"
-        }
-      ],
-      "createdAt": "2025-08-20T11:17:35.927Z",
-      "updatedAt": "2025-08-20T11:26:48.842Z",
-      "relatedFiles": [
-        {
-          "path": "backend/app/services/transaction_sync_service.py",
+          "path": "mobile/src/screens/AIChatScreen.tsx",
           "type": "CREATE",
-          "description": "거래 내역 동기화 서비스 클래스 구현"
+          "description": "새로운 AI 채팅 화면 컴포넌트"
         },
-        {
-          "path": "backend/app/models/user.py",
-          "type": "REFERENCE",
-          "description": "Transaction 모델 구조 참조",
-          "lineStart": 73,
-          "lineEnd": 118
-        }
-      ],
-      "implementationGuide": "1. backend/app/services/transaction_sync_service.py 파일 생성\\n2. TransactionSyncService 클래스 구현\\n3. sync_wallet_transactions 메서드로 Circle API → 로컬 DB 동기화\\n4. 중복 거래 방지를 위한 transaction_id 기반 검증\\n5. 트랜잭션 사용으로 데이터 일관성 보장",
-      "verificationCriteria": "Circle API의 거래 내역을 로컬 DB에 정확하게 저장할 수 있어야 합니다. 중복 저장이 발생하지 않아야 하고, 기존 거래 상태가 올바르게 업데이트되어야 합니다.",
-      "analysisResult": "거래 내역 누락 문제를 해결하기 위해 Circle API와 로컬 DB 간의 거래 내역 동기화 시스템을 구현합니다. 현재 총잔액은 $20.00으로 표시되지만 거래 내역은 0건으로 표시되고 있습니다. Faucet으로 USDC를 입금했지만 이 거래가 로컬 DB에 저장되지 않았기 때문입니다. 기존 프로젝트의 아키텍처 패턴을 따라 Circle API 클라이언트, 데이터베이스 모델, API 라우터를 확장하여 구현할 예정입니다.",
-      "summary": "거래 내역 동기화 서비스 구현이 완료되었습니다. TransactionSyncService 클래스를 성공적으로 생성하여 Circle API에서 가져온 거래 내역을 로컬 DB와 동기화할 수 있습니다. 새로운 거래는 DB에 저장하고, 기존 거래는 상태를 업데이트하며, transaction_id 기반으로 중복 저장을 방지합니다. Circle API 응답을 로컬 DB 모델에 정확히 매핑하고, 포괄적인 에러 처리 및 로깅을 제공합니다.",
-      "completedAt": "2025-08-20T11:26:48.841Z"
-    },
-    {
-      "id": "6976c164-831c-4890-b808-c1624d155d8d",
-      "name": "거래 내역 동기화 API 엔드포인트 추가",
-      "description": "거래 내역을 수동으로 동기화할 수 있는 API 엔드포인트를 추가합니다. 기존 wallets.py 라우터에 POST /{wallet_id}/sync-transactions 엔드포인트를 추가하여 동기화 서비스를 호출합니다.",
-      "notes": "기존 API 엔드포인트의 패턴과 응답 형식을 따라야 합니다. 인증 및 권한 검증도 포함해야 합니다.",
-      "status": "completed",
-      "dependencies": [
-        {
-          "taskId": "4cccda67-7257-445e-9264-b467a5b52b49"
-        }
-      ],
-      "createdAt": "2025-08-20T11:17:35.927Z",
-      "updatedAt": "2025-08-20T11:31:00.532Z",
-      "relatedFiles": [
-        {
-          "path": "backend/app/api/routes/wallets.py",
-          "type": "TO_MODIFY",
-          "description": "거래 내역 동기화 API 엔드포인트 추가",
-          "lineStart": 480,
-          "lineEnd": 500
-        }
-      ],
-      "implementationGuide": "1. backend/app/api/routes/wallets.py에 새로운 엔드포인트 추가\\n2. POST /{wallet_id}/sync-transactions 엔드포인트 구현\\n3. TransactionSyncService 호출하여 동기화 실행\\n4. 기존 get_wallet_transactions 엔드포인트와 동일한 응답 형식 사용\\n5. 적절한 에러 처리 및 로깅 추가",
-      "verificationCriteria": "동기화 API 엔드포인트가 정상적으로 작동해야 합니다. Circle API와 로컬 DB 간의 동기화가 성공적으로 수행되어야 합니다.",
-      "analysisResult": "거래 내역 누락 문제를 해결하기 위해 Circle API와 로컬 DB 간의 거래 내역 동기화 시스템을 구현합니다. 현재 총잔액은 $20.00으로 표시되지만 거래 내역은 0건으로 표시되고 있습니다. Faucet으로 USDC를 입금했지만 이 거래가 로컬 DB에 저장되지 않았기 때문입니다. 기존 프로젝트의 아키텍처 패턴을 따라 Circle API 클라이언트, 데이터베이스 모델, API 라우터를 확장하여 구현할 예정입니다.",
-      "summary": "거래 내역 동기화 API 엔드포인트 추가가 완료되었습니다. POST /{wallet_id}/sync-transactions 엔드포인트를 성공적으로 구현하여 TransactionSyncService를 호출하고 Circle API와 로컬 DB 간의 동기화를 실행할 수 있습니다. 지갑 검증, 에러 처리, 로깅이 모두 구현되어 있으며, 기존 API와 일관된 응답 형식을 제공합니다.",
-      "completedAt": "2025-08-20T11:31:00.531Z"
-    },
-    {
-      "id": "a446fed5-9063-4c27-84a0-f35ab1890c64",
-      "name": "자동 거래 내역 동기화 메커니즘 구현",
-      "description": "기존 거래 내역 조회 API에서 필요시 자동으로 Circle API와 동기화하는 메커니즘을 구현합니다. 사용자가 거래 내역을 조회할 때마다 최신 상태를 보장합니다.",
-      "notes": "사용자 경험을 위해 동기화 시간을 최소화해야 합니다. 불필요한 API 호출을 방지하는 스마트한 동기화 로직이 필요합니다.",
-      "status": "completed",
-      "dependencies": [
-        {
-          "taskId": "6976c164-831c-4890-b808-c1624d155d8d"
-        }
-      ],
-      "createdAt": "2025-08-20T11:17:35.927Z",
-      "updatedAt": "2025-08-20T11:33:55.063Z",
-      "relatedFiles": [
-        {
-          "path": "backend/app/api/routes/wallets.py",
-          "type": "TO_MODIFY",
-          "description": "get_wallet_transactions 메서드에 자동 동기화 로직 추가",
-          "lineStart": 415,
-          "lineEnd": 480
-        }
-      ],
-      "implementationGuide": "1. backend/app/api/routes/wallets.py의 get_wallet_transactions 수정\\n2. 로컬 DB에 거래가 없거나 오래된 경우 자동 동기화\\n3. 동기화 후 최신 거래 내역 반환\\n4. 성능 최적화를 위한 조건부 동기화 로직 구현\\n5. 동기화 상태를 응답에 포함하여 프론트엔드에 전달",
-      "verificationCriteria": "거래 내역 조회 시 자동으로 동기화가 수행되어야 합니다. 동기화 후 최신 거래 내역이 정확하게 반환되어야 합니다.",
-      "analysisResult": "거래 내역 누락 문제를 해결하기 위해 Circle API와 로컬 DB 간의 거래 내역 동기화 시스템을 구현합니다. 현재 총잔액은 $20.00으로 표시되지만 거래 내역은 0건으로 표시되고 있습니다. Faucet으로 USDC를 입금했지만 이 거래가 로컬 DB에 저장되지 않았기 때문입니다. 기존 프로젝트의 아키텍처 패턴을 따라 Circle API 클라이언트, 데이터베이스 모델, API 라우터를 확장하여 구현할 예정입니다.",
-      "summary": "자동 거래 내역 동기화 메커니즘 구현이 완료되었습니다. get_wallet_transactions API에 스마트한 자동 동기화 로직을 추가하여, 로컬 DB에 거래가 없거나 1시간 이상 오래된 경우 자동으로 Circle API와 동기화합니다. 불필요한 API 호출을 방지하고 동기화 상태를 응답에 포함하여 프론트엔드에 전달하며, 동기화 실패 시에도 기존 데이터로 응답하여 안정성을 보장합니다.",
-      "completedAt": "2025-08-20T11:33:55.061Z"
-    },
-    {
-      "id": "bcbdd251-3b7f-4342-97cf-f1c2f5505e1a",
-      "name": "프론트엔드 거래 내역 표시 개선",
-      "description": "백엔드의 동기화된 거래 내역을 프론트엔드에서 올바르게 표시하도록 개선합니다. 실제 거래 데이터가 표시되도록 UI를 수정하고, 동기화 상태를 사용자에게 알립니다.",
-      "notes": "기존 UI 컴포넌트의 스타일과 패턴을 유지해야 합니다. 사용자 경험을 향상시키는 방향으로 개선합니다.",
-      "status": "completed",
-      "dependencies": [
-        {
-          "taskId": "a446fed5-9063-4c27-84a0-f35ab1890c64"
-        }
-      ],
-      "createdAt": "2025-08-20T11:17:35.927Z",
-      "updatedAt": "2025-08-20T11:40:51.396Z",
-      "relatedFiles": [
         {
           "path": "mobile/src/screens/HistoryScreen.tsx",
-          "type": "TO_MODIFY",
-          "description": "실제 거래 데이터 표시 및 동기화 상태 표시 개선",
-          "lineStart": 17,
-          "lineEnd": 50
-        }
-      ],
-      "implementationGuide": "1. mobile/src/screens/HistoryScreen.tsx에서 실제 거래 데이터 표시\\n2. 거래 내역이 없을 때 적절한 안내 메시지 표시\\n3. 새로고침 시 동기화 상태 표시\\n4. 거래 타입별 아이콘 및 색상 적용\\n5. 거래 상태에 따른 시각적 피드백 개선",
-      "verificationCriteria": "실제 거래 내역이 HistoryScreen에 올바르게 표시되어야 합니다. 거래 내역이 없을 때 적절한 안내 메시지가 표시되어야 합니다.",
-      "analysisResult": "거래 내역 누락 문제를 해결하기 위해 Circle API와 로컬 DB 간의 거래 내역 동기화 시스템을 구현합니다. 현재 총잔액은 $20.00으로 표시되지만 거래 내역은 0건으로 표시되고 있습니다. Faucet으로 USDC를 입금했지만 이 거래가 로컬 DB에 저장되지 않았기 때문입니다. 기존 프로젝트의 아키텍처 패턴을 따라 Circle API 클라이언트, 데이터베이스 모델, API 라우터를 확장하여 구현할 예정입니다.",
-      "summary": "프론트엔드 거래 내역 표시 개선이 완료되었습니다. HistoryScreen에서 실제 거래 데이터를 올바르게 표시하고, 동기화 상태를 사용자에게 알립니다. 'deposit' 거래 타입을 추가하여 입금 거래를 지원하고, 개선된 빈 상태 메시지와 새로고침 버튼을 제공합니다. 동기화 진행 상황을 시각적으로 표시하고, 필터링과 통계 기능을 강화하여 사용자 경험을 크게 향상시켰습니다.",
-      "completedAt": "2025-08-20T11:40:51.393Z"
-    },
-    {
-      "id": "20750ae1-3761-4adf-b898-05342f7eaf98",
-      "name": "거래 내역 동기화 시스템 테스트 및 검증",
-      "description": "구현된 거래 내역 동기화 시스템의 정확성과 성능을 테스트하고 검증합니다. Circle API 호출, DB 저장, 동기화 로직이 모두 정상적으로 작동하는지 확인합니다.",
-      "notes": "기존 테스트 패턴을 따라 구현합니다. 실제 Circle API 호출과 로컬 DB 연동을 모두 테스트해야 합니다.",
-      "status": "completed",
-      "dependencies": [
-        {
-          "taskId": "bcbdd251-3b7f-4342-97cf-f1c2f5505e1a"
-        }
-      ],
-      "createdAt": "2025-08-20T11:17:35.927Z",
-      "updatedAt": "2025-08-20T12:05:28.092Z",
-      "relatedFiles": [
-        {
-          "path": "tests/test_transaction_sync.py",
-          "type": "CREATE",
-          "description": "거래 내역 동기화 시스템 테스트"
+          "type": "REFERENCE",
+          "description": "FlatList 렌더링 패턴 참조"
         },
         {
-          "path": "tests/faucet.py",
-          "type": "REFERENCE",
-          "description": "기존 Faucet 테스트 참조"
+          "path": "mobile/src/screens/HomeScreen.tsx",
+          "type": "TO_MODIFY",
+          "description": "AI 버튼 클릭 시 AIChatScreen으로 네비게이션",
+          "lineStart": 315,
+          "lineEnd": 330
         }
       ],
-      "implementationGuide": "1. tests/test_transaction_sync.py 테스트 파일 생성\\n2. Circle API 거래 내역 조회 테스트\\n3. 로컬 DB 동기화 테스트\\n4. API 엔드포인트 통합 테스트\\n5. 성능 및 에러 처리 테스트\\n6. 실제 Faucet 거래 데이터로 검증",
-      "verificationCriteria": "모든 테스트가 통과해야 합니다. Circle API 호출, DB 동기화, API 응답이 모두 정상적으로 작동해야 합니다. 실제 Faucet 거래 데이터가 정확하게 표시되어야 합니다.",
-      "analysisResult": "거래 내역 누락 문제를 해결하기 위해 Circle API와 로컬 DB 간의 거래 내역 동기화 시스템을 구현합니다. 현재 총잔액은 $20.00으로 표시되지만 거래 내역은 0건으로 표시되고 있습니다. Faucet으로 USDC를 입금했지만 이 거래가 로컬 DB에 저장되지 않았기 때문입니다. 기존 프로젝트의 아키텍처 패턴을 따라 Circle API 클라이언트, 데이터베이스 모델, API 라우터를 확장하여 구현할 예정입니다.",
-      "summary": "거래 내역 동기화 시스템의 종합적인 테스트 및 검증이 완료되었습니다. 백엔드 서비스(CircleWalletService, TransactionSyncService)가 정상적으로 작동하고, API 엔드포인트도 정상 작동함을 확인했습니다. 다만 Circle API 인증 문제로 실제 거래 데이터 조회는 제한적이었습니다. 테스트 파일들을 올바른 tests 디렉토리에 배치하고, 백엔드 서비스 import 문제를 해결하여 시스템의 핵심 기능이 정상 작동함을 검증했습니다.",
-      "completedAt": "2025-08-20T12:05:28.090Z"
+      "implementationGuide": "// 기존 HistoryScreen의 FlatList 패턴 재사용\\n1. AIChatScreen.tsx 생성\\n2. FlatList로 메시지 목록 렌더링\\n3. TextInput + TouchableOpacity로 입력부 구현\\n4. 기존 LinearGradient, Ionicons 스타일 통일\\n\\ninterface ChatMessage {\\n  id: string;\\n  type: 'user' | 'ai';\\n  content: string;\\n  timestamp: Date;\\n  data?: any; // 추가 데이터 (잔액, 거래정보 등)\\n}\\n\\nconst renderMessage = ({ item }: { item: ChatMessage }) => (\\n  <View style={[styles.messageContainer, item.type === 'user' ? styles.userMessage : styles.aiMessage]}>\\n    <Text style={styles.messageText}>{item.content}</Text>\\n  </View>\\n);",
+      "verificationCriteria": "채팅 UI가 정상적으로 렌더링되고, 메시지 입력/전송이 가능하며, 기존 앱의 디자인 가이드와 일치하는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
+    },
+    {
+      "id": "23402ed2-3494-4069-8352-469319a25112",
+      "name": "자연어 명령 파싱 시스템 구현",
+      "description": "사용자의 자연어 입력을 분석하여 송금, 잔액조회, 거래내역 등의 의도를 파악하는 패턴 매칭 및 AI 파싱 시스템을 구현합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "4214015f-9e13-494e-b4e2-0a2edfe822fe"
+        }
+      ],
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
+      "relatedFiles": [
+        {
+          "path": "mobile/src/services/aiChatService.ts",
+          "type": "CREATE",
+          "description": "AI 채팅 관련 API 호출 서비스"
+        },
+        {
+          "path": "backend/app/api/routes/ai_chat.py",
+          "type": "CREATE",
+          "description": "AI 채팅 백엔드 API 엔드포인트"
+        },
+        {
+          "path": "mobile/src/utils/nlpParser.ts",
+          "type": "CREATE",
+          "description": "클라이언트 사이드 자연어 패턴 매칭"
+        }
+      ],
+      "implementationGuide": "// 클라이언트 사이드 패턴 매칭 + 백엔드 AI 파싱\\n1. Frontend: 기본 패턴 매칭 (정규식)\\n2. Backend: /api/v1/ai-chat/parse 엔드포인트\\n3. 의도 분류: TRANSFER, BALANCE, HISTORY, HELP\\n\\n// Frontend 패턴 매칭\\nconst parseIntent = (message: string) => {\\n  const transferPatterns = [/송금/, /보내/, /전송/, /send/i];\\n  const balancePatterns = [/잔액/, /balance/i, /얼마/];\\n  // ... 패턴 정의\\n};\\n\\n// Backend AI 파싱\\n@router.post('/ai-chat/parse')\\nasync def parse_natural_language(request: NLParseRequest):\\n    # GPT API 또는 로컬 NLP 모델 활용\\n    intent = await ai_service.parse_intent(request.message)\\n    return ParseResponse(intent=intent, entities=extracted_entities)",
+      "verificationCriteria": "자연어 입력이 정확한 의도로 분류되고, 기본적인 송금/잔액조회 명령이 올바르게 파싱되는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
+    },
+    {
+      "id": "3ecdd1c9-6e43-4ba3-ba4a-90e0fc3e2895",
+      "name": "기존 API 함수와 AI 채팅 연동",
+      "description": "AppContext의 기존 함수들(createTransfer, loadWallets, loadTransactions)을 AI 채팅에서 활용할 수 있도록 연동합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "23402ed2-3494-4069-8352-469319a25112"
+        }
+      ],
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
+      "relatedFiles": [
+        {
+          "path": "mobile/src/contexts/AppContext.tsx",
+          "type": "REFERENCE",
+          "description": "기존 API 함수들 활용"
+        },
+        {
+          "path": "mobile/src/screens/AIChatScreen.tsx",
+          "type": "TO_MODIFY",
+          "description": "AI 채팅에서 기존 API 함수 호출 로직 추가"
+        },
+        {
+          "path": "mobile/src/services/aiChatService.ts",
+          "type": "TO_MODIFY",
+          "description": "기존 API와의 연동 로직 추가"
+        }
+      ],
+      "implementationGuide": "// AppContext 기존 함수 재사용\\n1. useApp() 훅으로 기존 함수들 접근\\n2. AI 응답에 따른 기존 API 호출\\n3. 결과를 채팅 메시지로 변환\\n\\nconst handleAIResponse = async (intent: string, entities: any) => {\\n  switch (intent) {\\n    case 'TRANSFER':\\n      // createTransfer 함수 활용\\n      const result = await createTransfer({\\n        sourceWalletId: entities.sourceWallet,\\n        targetAddress: entities.targetAddress,\\n        amount: entities.amount\\n      });\\n      return formatTransferResponse(result);\\n    case 'BALANCE':\\n      // 기존 state.wallets 활용\\n      return formatBalanceResponse(state.wallets);\\n  }\\n};",
+      "verificationCriteria": "AI 채팅에서 실제 송금이 실행되고, 잔액 조회와 거래내역이 정확히 표시되는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
+    },
+    {
+      "id": "50291a42-bbd6-4e7e-ac96-670d85c51b99",
+      "name": "대화형 송금 플로우 구현",
+      "description": "단계별 대화를 통한 송금 프로세스를 구현합니다. 소스 지갑 선택 → 목적지 주소 입력 → 금액 확인 → 수수료 안내 → 최종 확인 순서로 진행됩니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "3ecdd1c9-6e43-4ba3-ba4a-90e0fc3e2895"
+        }
+      ],
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
+      "relatedFiles": [
+        {
+          "path": "mobile/src/screens/AIChatScreen.tsx",
+          "type": "TO_MODIFY",
+          "description": "대화 상태 관리 및 플로우 로직 추가"
+        },
+        {
+          "path": "mobile/src/utils/addressValidator.ts",
+          "type": "CREATE",
+          "description": "암호화폐 주소 유효성 검증 유틸리티"
+        },
+        {
+          "path": "mobile/src/components/WalletSelector.tsx",
+          "type": "CREATE",
+          "description": "채팅 내 지갑 선택 컴포넌트"
+        }
+      ],
+      "implementationGuide": "// 상태 기반 대화 플로우\\ninterface ChatState {\\n  step: 'INITIAL' | 'SELECT_WALLET' | 'INPUT_ADDRESS' | 'CONFIRM_AMOUNT' | 'SHOW_FEES' | 'FINAL_CONFIRM';\\n  transferData: {\\n    sourceWallet?: string;\\n    targetAddress?: string;\\n    amount?: number;\\n    estimatedFees?: number;\\n  };\\n}\\n\\nconst handleTransferFlow = async (currentState: ChatState, userInput: string) => {\\n  switch (currentState.step) {\\n    case 'SELECT_WALLET':\\n      // 지갑 목록 표시 및 선택 처리\\n      if (state.wallets.length === 1) {\\n        // 자동 선택\\n      } else {\\n        // 선택 UI 표시\\n      }\\n    case 'INPUT_ADDRESS':\\n      // 주소 유효성 검증\\n    // ... 각 단계별 처리\\n  }\\n};",
+      "verificationCriteria": "송금 플로우가 단계별로 정확히 진행되고, 각 단계에서 적절한 안내와 검증이 이루어지는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
+    },
+    {
+      "id": "3eeda8a9-fb88-4a35-9547-efbc79e6e569",
+      "name": "음성 인식 기능 통합",
+      "description": "expo-speech를 활용하여 음성 명령을 텍스트로 변환하는 기능을 구현합니다. 마이크 버튼을 통해 음성 입력을 받고 실시간으로 텍스트 변환합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "50291a42-bbd6-4e7e-ac96-670d85c51b99"
+        }
+      ],
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
+      "relatedFiles": [
+        {
+          "path": "mobile/package.json",
+          "type": "TO_MODIFY",
+          "description": "expo-speech 의존성 추가"
+        },
+        {
+          "path": "mobile/src/components/VoiceInput.tsx",
+          "type": "CREATE",
+          "description": "음성 입력 컴포넌트"
+        },
+        {
+          "path": "mobile/src/screens/AIChatScreen.tsx",
+          "type": "TO_MODIFY",
+          "description": "음성 입력 기능 통합"
+        },
+        {
+          "path": "mobile/src/utils/speechRecognition.ts",
+          "type": "CREATE",
+          "description": "음성 인식 유틸리티 함수"
+        }
+      ],
+      "implementationGuide": "// expo-speech 패키지 설치 및 설정\\n1. npm install expo-speech\\n2. 마이크 권한 확인 (이미 Info.plist에 설정됨)\\n3. 음성-텍스트 변환 구현\\n\\nimport * as Speech from 'expo-speech';\\n\\nconst VoiceInput = () => {\\n  const [isListening, setIsListening] = useState(false);\\n  const [transcript, setTranscript] = useState('');\\n\\n  const startListening = async () => {\\n    try {\\n      setIsListening(true);\\n      const result = await Speech.getAvailableVoicesAsync();\\n      // 음성 인식 시작\\n    } catch (error) {\\n      console.error('음성 인식 오류:', error);\\n    }\\n  };\\n\\n  return (\\n    <TouchableOpacity onPress={startListening}>\\n      <Ionicons name={isListening ? 'mic' : 'mic-outline'} />\\n    </TouchableOpacity>\\n  );\\n};",
+      "verificationCriteria": "음성 명령이 정확히 텍스트로 변환되고, 변환된 텍스트로 송금 명령이 실행되는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
+    },
+    {
+      "id": "ebf609bd-dd59-4b0e-9fa4-6db2f88470d1",
+      "name": "수수료 시뮬레이션 및 실시간 계산",
+      "description": "송금 전에 예상 수수료를 실시간으로 계산하여 사용자에게 보여주는 기능을 구현합니다. 네트워크별 수수료를 조회하고 총 비용을 안내합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "50291a42-bbd6-4e7e-ac96-670d85c51b99"
+        }
+      ],
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
+      "relatedFiles": [
+        {
+          "path": "backend/app/api/routes/ai_chat.py",
+          "type": "TO_MODIFY",
+          "description": "수수료 계산 엔드포인트 추가"
+        },
+        {
+          "path": "mobile/src/components/FeeEstimate.tsx",
+          "type": "CREATE",
+          "description": "수수료 표시 컴포넌트"
+        },
+        {
+          "path": "mobile/src/services/aiChatService.ts",
+          "type": "TO_MODIFY",
+          "description": "수수료 조회 API 호출 추가"
+        }
+      ],
+      "implementationGuide": "// 기존 Circle API 수수료 조회 활용\\n1. Backend: Circle API 수수료 조회 엔드포인트\\n2. Frontend: 실시간 수수료 표시\\n\\n// Backend 수수료 조회\\n@router.post('/ai-chat/estimate-fees')\\nasync def estimate_transfer_fees(request: FeeEstimateRequest):\\n    fees = await circle_client.estimate_transfer_fees(\\n        source_chain=request.source_chain,\\n        target_chain=request.target_chain,\\n        amount=request.amount\\n    )\\n    return FeeEstimateResponse(\\n        gas_fee=fees.gas_fee,\\n        bridge_fee=fees.bridge_fee,\\n        total_fee=fees.total_fee\\n    )\\n\\n// Frontend 실시간 표시\\nconst FeeDisplay = ({ transferData }) => (\\n  <View style={styles.feeContainer}>\\n    <Text>송금 금액: ${transferData.amount}</Text>\\n    <Text>네트워크 수수료: ${transferData.gasFee}</Text>\\n    <Text>총 비용: ${transferData.totalCost}</Text>\\n  </View>\\n);",
+      "verificationCriteria": "송금 전에 정확한 수수료가 표시되고, 실제 송금 시 예상 수수료와 일치하는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
+    },
+    {
+      "id": "8399442c-fbb4-4f8a-be83-1ebb638d110b",
+      "name": "주소록 및 최근 거래 연동",
+      "description": "자주 사용하는 주소를 저장하고, 최근 거래 내역에서 주소를 선택할 수 있는 기능을 구현합니다. 사용자 편의성을 위한 스마트 주소 추천 시스템을 포함합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "ebf609bd-dd59-4b0e-9fa4-6db2f88470d1"
+        }
+      ],
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
+      "relatedFiles": [
+        {
+          "path": "mobile/src/utils/addressBook.ts",
+          "type": "CREATE",
+          "description": "주소록 관리 유틸리티"
+        },
+        {
+          "path": "mobile/src/components/AddressSelector.tsx",
+          "type": "CREATE",
+          "description": "주소 선택 컴포넌트"
+        },
+        {
+          "path": "mobile/src/screens/AIChatScreen.tsx",
+          "type": "TO_MODIFY",
+          "description": "주소록 연동 및 스마트 추천 기능 추가"
+        }
+      ],
+      "implementationGuide": "// AsyncStorage 활용한 주소록 관리\\n1. 즐겨찾기 주소 저장/조회\\n2. 최근 거래에서 주소 추출\\n3. 스마트 추천 시스템\\n\\ninterface AddressBookEntry {\\n  address: string;\\n  nickname: string;\\n  lastUsed: Date;\\n  frequency: number;\\n}\\n\\nconst AddressBook = {\\n  async save(entry: AddressBookEntry) {\\n    const existing = await AsyncStorage.getItem('addressBook');\\n    const addresses = existing ? JSON.parse(existing) : [];\\n    addresses.push(entry);\\n    await AsyncStorage.setItem('addressBook', JSON.stringify(addresses));\\n  },\\n  \\n  async getRecentAddresses() {\\n    // 최근 거래에서 주소 추출\\n    return state.transactions\\n      .filter(tx => tx.toAddress)\\n      .map(tx => tx.toAddress)\\n      .slice(0, 5);\\n  }\\n};",
+      "verificationCriteria": "주소록이 정상적으로 저장되고, 최근 거래 주소가 추천되며, 스마트 추천이 정확히 작동하는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
+    },
+    {
+      "id": "9b1795fc-f432-4784-8fcc-3d5d32613eec",
+      "name": "AI 채팅 고도화 및 최적화",
+      "description": "채팅 성능 최적화, 오프라인 지원, 에러 처리, 사용자 경험 개선 등 전반적인 품질 향상을 위한 고도화 작업을 수행합니다.",
+      "status": "pending",
+      "dependencies": [
+        {
+          "taskId": "8399442c-fbb4-4f8a-be83-1ebb638d110b"
+        },
+        {
+          "taskId": "3eeda8a9-fb88-4a35-9547-efbc79e6e569"
+        }
+      ],
+      "createdAt": "2025-08-22T12:55:04.267Z",
+      "updatedAt": "2025-08-22T12:55:04.267Z",
+      "relatedFiles": [
+        {
+          "path": "mobile/src/screens/AIChatScreen.tsx",
+          "type": "TO_MODIFY",
+          "description": "성능 최적화 및 UX 개선 적용"
+        },
+        {
+          "path": "mobile/src/components/TypingIndicator.tsx",
+          "type": "CREATE",
+          "description": "AI 응답 대기 시 타이핑 효과"
+        },
+        {
+          "path": "mobile/src/utils/chatOptimization.ts",
+          "type": "CREATE",
+          "description": "채팅 성능 최적화 유틸리티"
+        }
+      ],
+      "implementationGuide": "// 성능 및 UX 최적화\\n1. FlatList 가상화로 대화 내역 성능 최적화\\n2. 오프라인 모드에서 명령 대기열 관리\\n3. 로딩 상태 및 에러 처리 개선\\n4. 타이핑 효과 및 애니메이션 추가\\n\\n// 성능 최적화\\nconst ChatList = () => (\\n  <FlatList\\n    data={messages}\\n    renderItem={renderMessage}\\n    getItemLayout={(data, index) => ({\\n      length: ITEM_HEIGHT,\\n      offset: ITEM_HEIGHT * index,\\n      index\\n    })}\\n    removeClippedSubviews={true}\\n    maxToRenderPerBatch={10}\\n  />\\n);\\n\\n// 오프라인 지원\\nconst handleOfflineCommand = async (command: string) => {\\n  await offlineStorage.queueCommand({\\n    type: 'AI_CHAT',\\n    payload: command,\\n    timestamp: Date.now()\\n  });\\n};",
+      "verificationCriteria": "대화 내역이 많아도 부드럽게 스크롤되고, 오프라인에서도 명령이 대기열에 저장되며, 전반적인 사용자 경험이 향상되었는지 확인",
+      "analysisResult": "AI 기반 자연어 USDC 송금 인터페이스 구현 - ChatGPT 스타일의 대화형 UI로 복잡한 Web3 송금을 \"10달러 송금해줘\"처럼 간단한 자연어 명령으로 처리할 수 있는 혁신적인 UX 구현. 기존 Circle API 통합과 React Native 인프라를 최대한 재사용하여 안정성과 일관성을 보장."
     }
   ]
 }

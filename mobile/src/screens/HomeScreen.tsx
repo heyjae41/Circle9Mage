@@ -275,46 +275,58 @@ export default function HomeScreen() {
           >
             <Ionicons name="qr-code" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>QR 결제</Text>
+          <Text style={styles.actionText}>QR결제</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => navigation.navigate('Send' as never)}
+          onPress={() => Alert.alert(
+            '쇼핑몰 준비중 🛍️',
+            'USDC 크로스체인 결제 쇼핑몰을 준비 중입니다',
+            [{ text: '확인' }]
+          )}
         >
           <LinearGradient
             colors={['#FD7E14', '#FF6B35']}
             style={styles.actionGradient}
           >
-            <Ionicons name="send" size={24} color="white" />
+            <Ionicons name="storefront" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>송금</Text>
+          <Text style={styles.actionText}>쇼핑</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => navigation.navigate('Send' as never)}
+          onPress={() => Alert.alert(
+            '핫플 서비스 준비중 🔥',
+            '핫플과 맛집에서 상품을 주문하고 QR로 결제할 수 있는 POS를 준비 중입니다.',
+            [{ text: '확인' }]
+          )}
         >
           <LinearGradient
             colors={['#6F42C1', '#8A2BE2']}
             style={styles.actionGradient}
           >
-            <Ionicons name="swap-horizontal" size={24} color="white" />
+            <Ionicons name="flame" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>크로스체인</Text>
+          <Text style={styles.actionText}>핫플</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => navigation.navigate('Deposit' as never)}
+          onPress={() => Alert.alert(
+            'AI 금융 서비스 준비중 🤖',
+            'AI 기반 투자 상담 및 개인 맞춤형 금융 서비스를 준비 중입니다.',
+            [{ text: '확인' }]
+          )}
         >
           <LinearGradient
             colors={['#DC3545', '#C82333']}
             style={styles.actionGradient}
           >
-            <Ionicons name="card" size={24} color="white" />
+            <Ionicons name="sparkles" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>충전</Text>
+          <Text style={styles.actionText}>AI</Text>
         </TouchableOpacity>
       </View>
 
