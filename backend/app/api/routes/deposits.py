@@ -27,38 +27,50 @@ auth_service = AuthService()
 # Pydantic 모델들
 class BankAccountData(BaseModel):
     """은행 계좌 정보"""
-    account_holder_name: str = Field(..., description="계좌 소유자 이름")
-    bank_name: str = Field(..., description="은행명")
-    account_number: str = Field(..., description="계좌번호") 
-    routing_number: str = Field(..., description="라우팅 번호 (미국) 또는 SWIFT 코드")
-    address_line1: str = Field(..., description="주소 1")
-    address_line2: Optional[str] = Field(None, description="주소 2")
+    account_holder_name: str = Field(..., alias="accountHolderName", description="계좌 소유자 이름")
+    bank_name: str = Field(..., alias="bankName", description="은행명")
+    account_number: str = Field(..., alias="accountNumber", description="계좌번호") 
+    routing_number: str = Field(..., alias="routingNumber", description="라우팅 번호 (미국) 또는 SWIFT 코드")
+    address_line1: str = Field(..., alias="addressLine1", description="주소 1")
+    address_line2: Optional[str] = Field(None, alias="addressLine2", description="주소 2")
     city: str = Field(..., description="도시")
     state: str = Field(..., description="주/도")
-    postal_code: str = Field(..., description="우편번호")
+    postal_code: str = Field(..., alias="postalCode", description="우편번호")
     country: str = Field(..., description="국가 코드 (예: US, KR)")
+    
+    class Config:
+        populate_by_name = True
 
 class WireDepositRequest(BaseModel):
     """은행 송금 충전 요청"""
-    bank_account: BankAccountData
+    bank_account: BankAccountData = Field(..., alias="bankAccount")
     amount: str = Field(..., description="충전 금액")
     currency: str = Field(default="USD", description="통화")
+    
+    class Config:
+        populate_by_name = True
 
 class CryptoDepositRequest(BaseModel):
     """암호화폐 충전 요청"""
     chain: str = Field(..., description="블록체인 (ETH, BASE, ARB, MATIC, AVAX)")
     amount: str = Field(..., description="충전 금액")
     currency: str = Field(default="USD", description="통화")
+    
+    class Config:
+        populate_by_name = True
 
 class DepositResponse(BaseModel):
     """충전 응답"""
-    deposit_id: str
+    deposit_id: str = Field(..., alias="depositId")
     status: str
     message: str
-    tracking_ref: Optional[str] = None
-    deposit_address: Optional[str] = None
-    wire_instructions: Optional[Dict[str, Any]] = None
-    estimated_completion: Optional[str] = None
+    tracking_ref: Optional[str] = Field(None, alias="trackingRef")
+    deposit_address: Optional[str] = Field(None, alias="depositAddress")
+    wire_instructions: Optional[Dict[str, Any]] = Field(None, alias="wireInstructions")
+    estimated_completion: Optional[str] = Field(None, alias="estimatedCompletion")
+    
+    class Config:
+        populate_by_name = True
 
 @router.post(
     "/wallets/{wallet_id}/deposit/wire",

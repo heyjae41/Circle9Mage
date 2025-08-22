@@ -13,17 +13,20 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed } from '../utils/formatters';
 
 export default function ProfileScreen() {
+  const navigation = useNavigation();
   const { 
     state, 
     getUserProfile, 
     updateUserProfile, 
     submitKYCDocument, 
     getKYCStatus,
-    resubmitKYCDocument 
+    resubmitKYCDocument,
+    logout 
   } = useApp();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -66,6 +69,26 @@ export default function ProfileScreen() {
     loadProfileData();
     loadKYCStatus();
   }, []);
+
+  // 로그아웃 핸들러
+  const handleLogout = () => {
+    Alert.alert(
+      '로그아웃',
+      '정말 로그아웃하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '로그아웃', style: 'destructive', onPress: async () => {
+          try {
+            await logout();
+            // 로그아웃 성공 후 LoginScreen으로 이동
+            (navigation as any).navigate('Login');
+          } catch (error) {
+            Alert.alert('오류', '로그아웃 중 오류가 발생했습니다.');
+          }
+        }}
+      ]
+    );
+  };
 
   const loadProfileData = async () => {
     try {
@@ -621,6 +644,19 @@ export default function ProfileScreen() {
       {/* 문서 목록 섹션 */}
       {renderDocumentsSection()}
 
+      {/* 로그아웃 섹션 (로그인 상태에서만 표시) */}
+      {state.isAuthenticated && (
+        <View style={styles.section}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#DC3545" />
+            <Text style={styles.logoutText}>로그아웃</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 하단 여백 */}
+      <View style={styles.bottomSpacing} />
+
       {/* 모달들 */}
       {renderEditProfileModal()}
       {renderKYCFormModal()}
@@ -988,5 +1024,28 @@ const styles = StyleSheet.create({
     marginTop: 16,
     fontSize: 16,
     color: '#374151',
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    marginHorizontal: 20,
+    paddingVertical: 16,
+    borderRadius: 12,
+    gap: 8,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+  },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#DC3545',
+  },
+  bottomSpacing: {
+    height: 40,
   },
 }); 

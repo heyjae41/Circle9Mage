@@ -75,16 +75,43 @@ class TransactionSyncService:
     async def _fetch_circle_transactions(self, wallet_id: str) -> List[Dict[str, Any]]:
         """Circle API에서 거래 내역 조회"""
         try:
+            print(f"🔍 Circle API 거래 내역 조회 시작: wallet_id={wallet_id}")
             response = await self.circle_client.get_wallet_transactions(wallet_id)
+            print(f"📨 Circle API 응답 수신: {type(response)}")
             
             if "data" in response and "transactions" in response["data"]:
-                return response["data"]["transactions"]
+                transactions = response["data"]["transactions"]
+                print(f"✅ Circle API에서 {len(transactions)}개 거래 발견")
+                
+                # 거래 데이터 샘플 로깅
+                if transactions:
+                    first_tx = transactions[0]
+                    print(f"📋 첫 번째 거래 샘플:")
+                    print(f"   - ID: {first_tx.get('id', 'N/A')}")
+                    print(f"   - Type: {first_tx.get('transactionType', 'N/A')}")
+                    print(f"   - State: {first_tx.get('state', 'N/A')}")
+                    print(f"   - Amounts: {first_tx.get('amounts', 'N/A')}")
+                    print(f"   - CreateDate: {first_tx.get('createDate', 'N/A')}")
+                
+                return transactions
             else:
-                logger.warning(f"⚠️ Circle API 응답에 transactions 필드가 없습니다: {response}")
+                print(f"⚠️ Circle API 응답에 transactions 필드가 없습니다:")
+                print(f"   응답 구조: {list(response.keys()) if isinstance(response, dict) else type(response)}")
                 return []
                 
         except Exception as e:
-            logger.error(f"❌ Circle API 거래 내역 조회 실패: {e}")
+            error_msg = str(e)
+            print(f"❌ Circle API 거래 내역 조회 실패: {error_msg}")
+            logger.error(f"❌ Circle API 거래 내역 조회 실패: {error_msg}")
+            
+            # 특정 오류 타입에 대한 추가 정보
+            if "Server disconnected" in error_msg:
+                print("💡 해결 방법: Circle API 서버 연결 불안정. 잠시 후 다시 시도해주세요.")
+            elif "timeout" in error_msg.lower():
+                print("💡 해결 방법: 네트워크 타임아웃. 인터넷 연결을 확인해주세요.")
+            elif "401" in error_msg or "Unauthorized" in error_msg:
+                print("💡 해결 방법: API 키를 확인해주세요.")
+                
             return []
     
     async def _sync_transactions_to_db(
@@ -99,19 +126,28 @@ class TransactionSyncService:
         new_count = 0
         updated_count = 0
         
-        for circle_tx in circle_transactions:
+        for i, circle_tx in enumerate(circle_transactions):
             try:
+                print(f"🔄 거래 {i+1}/{len(circle_transactions)} 처리 중: {circle_tx.get('id', 'unknown')}")
+                
                 # Circle API 응답을 로컬 DB 모델에 매핑
                 mapped_transaction = self._map_circle_to_local_transaction(
                     circle_tx, user_id, wallet_id
                 )
                 
                 if not mapped_transaction:
+                    print(f"⚠️ 거래 매핑 실패: {circle_tx.get('id', 'unknown')}")
                     logger.warning(f"⚠️ 거래 매핑 실패: {circle_tx.get('id', 'unknown')}")
                     continue
                 
+                print(f"✅ 거래 매핑 성공:")
+                print(f"   - Type: {mapped_transaction.get('transaction_type')}")
+                print(f"   - Amount: {mapped_transaction.get('amount')}")
+                print(f"   - Status: {mapped_transaction.get('status')}")
+                
                 # 중복 거래 확인 및 저장/업데이트
                 result = await self._upsert_transaction(mapped_transaction, db)
+                print(f"💾 DB 저장 결과: {result}")
                 
                 if result == "new":
                     new_count += 1
@@ -119,6 +155,7 @@ class TransactionSyncService:
                     updated_count += 1
                     
             except Exception as e:
+                print(f"❌ 거래 동기화 실패: {circle_tx.get('id', 'unknown')} - {e}")
                 logger.error(f"❌ 거래 동기화 실패: {circle_tx.get('id', 'unknown')} - {e}")
                 continue
         
@@ -156,7 +193,7 @@ class TransactionSyncService:
                 "user_id": user_id,
                 "transaction_id": circle_tx.get("id"),  # Circle 거래 ID
                 "transaction_hash": circle_tx.get("txHash"),  # 블록체인 해시
-                "transaction_type": self._map_transaction_type(transaction_type),
+                "transaction_type": transaction_type,
                 "status": self._map_transaction_status(circle_tx.get("state")),
                 "amount": amount,
                 "currency": "USDC",  # Circle USDC 거래
@@ -276,8 +313,12 @@ class TransactionSyncService:
         try:
             # 업데이트할 필드들
             update_fields = {
+                "transaction_type": new_data["transaction_type"],
                 "status": new_data["status"],
                 "amount": new_data["amount"],
+                "source_address": new_data["source_address"],
+                "target_address": new_data["target_address"],
+                "transaction_hash": new_data["transaction_hash"],
                 "extra_metadata": new_data["extra_metadata"],
                 "notes": new_data["notes"]
             }

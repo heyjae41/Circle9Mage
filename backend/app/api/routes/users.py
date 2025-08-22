@@ -27,57 +27,69 @@ class UserProfileResponse(BaseModel):
     """사용자 프로필 응답"""
     id: int
     email: str
-    first_name: str
-    last_name: str
-    country_code: str
-    preferred_currency: str
+    first_name: str = Field(..., alias="firstName")
+    last_name: str = Field(..., alias="lastName")
+    country_code: str = Field(..., alias="countryCode")
+    preferred_currency: str = Field(..., alias="preferredCurrency")
     phone: Optional[str] = None
-    is_verified: bool
-    kyc_status: str
-    kyc_level: int
-    created_at: str
-    last_login_at: Optional[str] = None
+    is_verified: bool = Field(..., alias="isVerified")
+    kyc_status: str = Field(..., alias="kycStatus")
+    kyc_level: int = Field(..., alias="kycLevel")
+    created_at: str = Field(..., alias="createdAt")
+    last_login_at: Optional[str] = Field(None, alias="lastLoginAt")
+    
+    class Config:
+        populate_by_name = True
 
 class UserProfileUpdateRequest(BaseModel):
     """사용자 프로필 업데이트 요청"""
-    first_name: Optional[str] = Field(None, description="이름")
-    last_name: Optional[str] = Field(None, description="성")
+    first_name: Optional[str] = Field(None, alias="firstName", description="이름")
+    last_name: Optional[str] = Field(None, alias="lastName", description="성")
     phone: Optional[str] = Field(None, description="전화번호")
-    preferred_currency: Optional[str] = Field(None, description="선호 통화")
+    preferred_currency: Optional[str] = Field(None, alias="preferredCurrency", description="선호 통화")
+    
+    class Config:
+        populate_by_name = True
 
 class KYCDocumentRequest(BaseModel):
     """KYC 문서 제출 요청"""
-    document_type: str = Field(..., description="문서 타입 (passport, driver_license, national_id, utility_bill)")
-    document_number: Optional[str] = Field(None, description="문서 번호")
+    document_type: str = Field(..., alias="documentType", description="문서 타입 (passport, driver_license, national_id, utility_bill)")
+    document_number: Optional[str] = Field(None, alias="documentNumber", description="문서 번호")
     
     # 개인 정보 (Level 1)
-    full_name: str = Field(..., description="전체 이름")
-    date_of_birth: str = Field(..., description="생년월일 (YYYY-MM-DD)")
+    full_name: str = Field(..., alias="fullName", description="전체 이름")
+    date_of_birth: str = Field(..., alias="dateOfBirth", description="생년월일 (YYYY-MM-DD)")
     nationality: str = Field(..., description="국적 (ISO 국가 코드)")
     gender: Optional[str] = Field(None, description="성별")
     
     # 주소 정보 (Level 2)
-    address_line1: Optional[str] = Field(None, description="주소 1")
-    address_line2: Optional[str] = Field(None, description="주소 2")
+    address_line1: Optional[str] = Field(None, alias="addressLine1", description="주소 1")
+    address_line2: Optional[str] = Field(None, alias="addressLine2", description="주소 2")
     city: Optional[str] = Field(None, description="도시")
-    state_province: Optional[str] = Field(None, description="주/도")
-    postal_code: Optional[str] = Field(None, description="우편번호")
+    state_province: Optional[str] = Field(None, alias="stateProvince", description="주/도")
+    postal_code: Optional[str] = Field(None, alias="postalCode", description="우편번호")
     country: Optional[str] = Field(None, description="국가 (ISO 코드)")
     
     # 직업 정보 (Level 2)
     occupation: Optional[str] = Field(None, description="직업")
     employer: Optional[str] = Field(None, description="고용주")
-    income_range: Optional[str] = Field(None, description="소득 범위")
-    source_of_funds: Optional[str] = Field(None, description="자금 출처")
+    income_range: Optional[str] = Field(None, alias="incomeRange", description="소득 범위")
+    source_of_funds: Optional[str] = Field(None, alias="sourceOfFunds", description="자금 출처")
+    
+    class Config:
+        populate_by_name = True
 
 class KYCStatusResponse(BaseModel):
     """KYC 상태 응답"""
-    user_id: int
-    kyc_status: str
-    kyc_level: int
+    user_id: int = Field(..., alias="userId")
+    kyc_status: str = Field(..., alias="kycStatus")
+    kyc_level: int = Field(..., alias="kycLevel")
     documents: List[Dict[str, Any]]
-    last_updated: Optional[str] = None
-    next_steps: List[str]
+    last_updated: Optional[str] = Field(None, alias="lastUpdated")
+    next_steps: List[str] = Field(..., alias="nextSteps")
+    
+    class Config:
+        populate_by_name = True
 
 @router.get(
     "/profile",

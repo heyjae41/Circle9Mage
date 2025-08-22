@@ -3,7 +3,7 @@
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
@@ -16,18 +16,24 @@ class SystemStatus(BaseModel):
     uptime: str
     version: str
     services: Dict[str, str]
-    performance_metrics: Dict[str, Any]
+    performance_metrics: Dict[str, Any] = Field(..., alias="performanceMetrics")
+    
+    class Config:
+        populate_by_name = True
 
 class DashboardStats(BaseModel):
     """대시보드 통계 모델"""
-    total_users: int
-    active_users_24h: int
-    total_transactions: int
-    transactions_24h: int
-    total_volume_usd: float
-    volume_24h_usd: float
-    success_rate: float
-    average_processing_time: str
+    total_users: int = Field(..., alias="totalUsers")
+    active_users_24h: int = Field(..., alias="activeUsers24h")
+    total_transactions: int = Field(..., alias="totalTransactions")
+    transactions_24h: int = Field(..., alias="transactions24h")
+    total_volume_usd: float = Field(..., alias="totalVolumeUsd")
+    volume_24h_usd: float = Field(..., alias="volume24hUsd")
+    success_rate: float = Field(..., alias="successRate")
+    average_processing_time: str = Field(..., alias="averageProcessingTime")
+    
+    class Config:
+        populate_by_name = True
 
 @router.get("/system/status", response_model=SystemStatus)
 async def get_system_status():

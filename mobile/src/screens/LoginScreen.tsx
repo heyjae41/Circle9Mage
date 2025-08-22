@@ -189,7 +189,7 @@ export default function LoginScreen({ route }: any) {
       });
       
       // JWT 토큰 설정 및 AsyncStorage에 저장
-      await setAuthToken(response.access_token, response.refresh_token);
+      await setAuthToken(response.accessToken, response.refreshToken);
       
       // 로그인 정보 저장 (편의성을 위해)
       await AsyncStorage.setItem('saved_email', loginData.email);

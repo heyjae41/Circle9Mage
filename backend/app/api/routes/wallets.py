@@ -16,31 +16,43 @@ router = APIRouter()
 # Request/Response 모델들
 class CreateWalletRequest(BaseModel):
     """지갑 생성 요청 모델"""
-    user_id: str = Field(..., description="사용자 ID")
+    user_id: str = Field(..., alias="userId", description="사용자 ID")
     blockchain: str = Field(default="ethereum", description="블록체인 네트워크 (ethereum, base, arbitrum, avalanche, polygon, optimism)")
-    wallet_name: Optional[str] = Field(None, description="지갑 이름")
+    wallet_name: Optional[str] = Field(None, alias="walletName", description="지갑 이름")
+    
+    class Config:
+        populate_by_name = True
 
 class WalletResponse(BaseModel):
     """지갑 응답 모델"""
-    wallet_id: str
+    wallet_id: str = Field(..., alias="walletId")
     address: str
     blockchain: str
-    chain_id: int
+    chain_id: int = Field(..., alias="chainId")
     status: str
-    created_at: datetime
+    created_at: datetime = Field(..., alias="createdAt")
     balances: List[dict]
+    
+    class Config:
+        populate_by_name = True
 
 class BalanceResponse(BaseModel):
     """잔액 응답 모델"""
-    wallet_id: str
-    total_usd_value: float
+    wallet_id: str = Field(..., alias="walletId")
+    total_usd_value: float = Field(..., alias="totalUsdValue")
     balances: List[dict]
-    last_updated: datetime
+    last_updated: datetime = Field(..., alias="lastUpdated")
+    
+    class Config:
+        populate_by_name = True
 
 class SupportedChainsResponse(BaseModel):
     """지원 체인 목록 응답 모델"""
     environment: str
-    supported_chains: List[dict]
+    supported_chains: List[dict] = Field(..., alias="supportedChains")
+    
+    class Config:
+        populate_by_name = True
 
 @router.get("/supported-chains", response_model=SupportedChainsResponse)
 async def get_supported_chains():
@@ -508,17 +520,17 @@ async def get_wallet_transactions(
         transaction_list = []
         for transaction in transactions:
             transaction_list.append({
-                "transaction_id": transaction.transaction_id,
+                "transactionId": transaction.transaction_id,
                 "type": transaction.transaction_type,
                 "amount": float(transaction.amount),
                 "currency": transaction.currency,
                 "status": transaction.status,
-                "from_address": transaction.source_address,
-                "to_address": transaction.target_address,
-                "transaction_hash": transaction.transaction_hash,
-                "created_at": transaction.created_at.isoformat() if transaction.created_at else None,
-                "completed_at": transaction.completed_at.isoformat() if transaction.completed_at else None,
-                "merchant_name": transaction.merchant_name,
+                "fromAddress": transaction.source_address,
+                "toAddress": transaction.target_address,
+                "transactionHash": transaction.transaction_hash,
+                "createdAt": transaction.created_at.isoformat() if transaction.created_at else None,
+                "completedAt": transaction.completed_at.isoformat() if transaction.completed_at else None,
+                "merchantName": transaction.merchant_name,
                 "notes": transaction.notes
             })
         
@@ -548,7 +560,7 @@ async def get_wallet_transactions(
         raise
     except Exception as e:
         print(f"❌ 거래 내역 조회 실패: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"거래 내역 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"거래 내역 조회 실패: {str(e)}") 
 
 @router.post("/{wallet_id}/sync-transactions")
 async def sync_wallet_transactions(

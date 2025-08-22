@@ -225,7 +225,7 @@ export default function SignUpScreen() {
       });
       
       // AppContext에 토큰 설정 및 AsyncStorage에 저장
-      await setAuthToken(loginResponse.access_token, loginResponse.refresh_token);
+      await setAuthToken(loginResponse.accessToken, loginResponse.refreshToken);
       
       Alert.alert('로그인 성공!', '환영합니다!', [
         { text: '확인', onPress: () => {

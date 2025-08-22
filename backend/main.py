@@ -38,7 +38,8 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    lifespan=lifespan
+    lifespan=lifespan,
+    response_model_by_alias=True  # 전역 camelCase 응답 설정
 )
 
 # CORS 설정

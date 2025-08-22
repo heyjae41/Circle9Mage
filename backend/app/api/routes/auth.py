@@ -27,44 +27,62 @@ class RegisterRequest(BaseModel):
     """회원가입 요청 모델"""
     email: EmailStr = Field(..., description="이메일 주소")
     phone: str = Field(..., min_length=10, max_length=20, description="전화번호 (국가코드 포함)")
-    first_name: str = Field(..., min_length=1, max_length=100, description="이름")
-    last_name: str = Field(..., min_length=1, max_length=100, description="성")
-    country_code: str = Field(..., min_length=2, max_length=2, description="국가 코드 (KR, US 등)")
+    first_name: str = Field(..., alias="firstName", min_length=1, max_length=100, description="이름")
+    last_name: str = Field(..., alias="lastName", min_length=1, max_length=100, description="성")
+    country_code: str = Field(..., alias="countryCode", min_length=2, max_length=2, description="국가 코드 (KR, US 등)")
     pin: str = Field(..., min_length=6, max_length=6, description="6자리 PIN 번호")
+    
+    class Config:
+        populate_by_name = True
 
 class LoginRequest(BaseModel):
     """로그인 요청 모델"""
     email: EmailStr = Field(..., description="이메일 주소")
     pin: str = Field(..., min_length=6, max_length=6, description="6자리 PIN 번호")
+    
+    class Config:
+        populate_by_name = True
 
 class VerifyEmailRequest(BaseModel):
     """이메일 인증 요청 모델"""
     email: EmailStr = Field(..., description="이메일 주소")
-    verification_code: str = Field(..., min_length=6, max_length=6, description="6자리 인증 코드")
+    verification_code: str = Field(..., alias="verificationCode", min_length=6, max_length=6, description="6자리 인증 코드")
+    
+    class Config:
+        populate_by_name = True
 
 class VerifyPhoneRequest(BaseModel):
     """SMS 인증 요청 모델"""
     phone: str = Field(..., description="전화번호")
-    verification_code: str = Field(..., min_length=6, max_length=6, description="6자리 인증 코드")
+    verification_code: str = Field(..., alias="verificationCode", min_length=6, max_length=6, description="6자리 인증 코드")
+    
+    class Config:
+        populate_by_name = True
 
 class AuthResponse(BaseModel):
     """인증 응답 모델"""
-    access_token: str
-    refresh_token: str
-    token_type: str = "bearer"
-    expires_in: int
+    access_token: str = Field(..., alias="accessToken")
+    refresh_token: str = Field(..., alias="refreshToken")
+    token_type: str = Field(default="bearer", alias="tokenType")
+    expires_in: int = Field(..., alias="expiresIn")
     user: dict
+    
+    class Config:
+        populate_by_name = True
 
 class UserResponse(BaseModel):
     """사용자 정보 응답 모델"""
     id: int
     email: str
-    first_name: str
-    last_name: str
-    country_code: str
-    is_verified: bool
-    kyc_status: str
-    created_at: datetime
+    first_name: str = Field(..., alias="firstName")
+    last_name: str = Field(..., alias="lastName")
+    country_code: str = Field(..., alias="countryCode")
+    is_verified: bool = Field(..., alias="isVerified")
+    kyc_status: str = Field(..., alias="kycStatus")
+    created_at: datetime = Field(..., alias="createdAt")
+    
+    class Config:
+        populate_by_name = True
 
 def hash_pin(pin: str) -> str:
     """PIN을 해시화"""
@@ -374,19 +392,24 @@ async def login_user(
             refresh_token=refresh_token
         )
         
+        # 사용자 정보를 UserResponse 모델로 변환
+        user_response = UserResponse(
+            id=user.id,
+            email=user.email,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            country_code=user.country_code,
+            is_verified=user.is_verified,
+            kyc_status=user.kyc_status,
+            kyc_level=user.kyc_level,
+            created_at=user.created_at.isoformat() if user.created_at else ""
+        )
+        
         return AuthResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             expires_in=settings.access_token_expire_minutes * 60,
-            user={
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-                "country_code": user.country_code,
-                "is_verified": user.is_verified,
-                "kyc_status": user.kyc_status
-            }
+            user=user_response.model_dump(by_alias=True)
         )
         
     except HTTPException:

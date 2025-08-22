@@ -13,39 +13,51 @@ router = APIRouter()
 # Request/Response 모델들
 class TransactionScreeningRequest(BaseModel):
     """거래 스크리닝 요청 모델"""
-    from_address: str = Field(..., description="송신자 주소")
-    to_address: str = Field(..., description="수신자 주소")
+    from_address: str = Field(..., alias="fromAddress", description="송신자 주소")
+    to_address: str = Field(..., alias="toAddress", description="수신자 주소")
     amount: float = Field(..., gt=0, description="거래 금액")
     currency: str = Field(default="USDC", description="통화")
-    transaction_type: str = Field(default="transfer", description="거래 유형")
+    transaction_type: str = Field(default="transfer", alias="transactionType", description="거래 유형")
+    
+    class Config:
+        populate_by_name = True
 
 class AddressScreeningRequest(BaseModel):
     """주소 스크리닝 요청 모델"""
     address: str = Field(..., description="스크리닝할 주소")
-    screening_type: str = Field(default="comprehensive", description="스크리닝 유형")
+    screening_type: str = Field(default="comprehensive", alias="screeningType", description="스크리닝 유형")
+    
+    class Config:
+        populate_by_name = True
 
 class ScreeningResult(BaseModel):
     """스크리닝 결과 모델"""
-    screening_id: str
+    screening_id: str = Field(..., alias="screeningId")
     result: str  # approved, rejected, pending
-    risk_score: float
-    risk_level: str  # low, medium, high
+    risk_score: float = Field(..., alias="riskScore")
+    risk_level: str = Field(..., alias="riskLevel")  # low, medium, high
     reasons: List[str]
-    sanctions_match: bool
-    screening_date: datetime
+    sanctions_match: bool = Field(..., alias="sanctionsMatch")
+    screening_date: datetime = Field(..., alias="screeningDate")
     recommendations: List[str]
+    
+    class Config:
+        populate_by_name = True
 
 class ComplianceReport(BaseModel):
     """컴플라이언스 리포트 모델"""
-    report_id: str
+    report_id: str = Field(..., alias="reportId")
     period: str
-    total_transactions: int
-    approved_transactions: int
-    rejected_transactions: int
-    pending_transactions: int
-    high_risk_transactions: int
-    sanctions_matches: int
-    compliance_score: float
+    total_transactions: int = Field(..., alias="totalTransactions")
+    approved_transactions: int = Field(..., alias="approvedTransactions")
+    rejected_transactions: int = Field(..., alias="rejectedTransactions")
+    pending_transactions: int = Field(..., alias="pendingTransactions")
+    high_risk_transactions: int = Field(..., alias="highRiskTransactions")
+    sanctions_matches: int = Field(..., alias="sanctionsMatches")
+    compliance_score: float = Field(..., alias="complianceScore")
+    
+    class Config:
+        populate_by_name = True
 
 @router.post("/screen/transaction", response_model=ScreeningResult)
 async def screen_transaction(request: TransactionScreeningRequest):

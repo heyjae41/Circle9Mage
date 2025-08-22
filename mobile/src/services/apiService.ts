@@ -464,10 +464,10 @@ class ApiService {
     pin: string;
   }) {
     return this.post<{
-      access_token: string;
-      refresh_token: string;
-      token_type: string;
-      expires_in: number;
+      accessToken: string;
+      refreshToken: string;
+      tokenType: string;
+      expiresIn: number;
       user: any;
     }>('/auth/login', credentials);
   }

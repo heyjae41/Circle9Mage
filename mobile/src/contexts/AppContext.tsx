@@ -619,13 +619,13 @@ export function AppProvider({ children }: AppProviderProps) {
               const refreshResponse = await apiService.refreshToken(refreshToken);
               
               // 새 토큰 저장
-              await AsyncStorage.setItem('access_token', refreshResponse.access_token);
-              await AsyncStorage.setItem('refresh_token', refreshResponse.refresh_token);
+              await AsyncStorage.setItem('access_token', refreshResponse.accessToken);
+              await AsyncStorage.setItem('refresh_token', refreshResponse.refreshToken);
               
-              dispatch({ type: 'SET_ACCESS_TOKEN', payload: refreshResponse.access_token });
+              dispatch({ type: 'SET_ACCESS_TOKEN', payload: refreshResponse.accessToken });
               
               // 새 토큰으로 자동 갱신 스케줄링
-              tokenManager.scheduleTokenRefresh(refreshResponse.access_token);
+              tokenManager.scheduleTokenRefresh(refreshResponse.accessToken);
               
               await loadUserData();
               
