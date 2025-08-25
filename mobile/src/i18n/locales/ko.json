@@ -1,0 +1,194 @@
+{
+  "common": {
+    "loading": "로딩 중...",
+    "processing": "처리 중...",
+    "confirm": "확인",
+    "cancel": "취소",
+    "save": "저장",
+    "edit": "편집",
+    "delete": "삭제",
+    "retry": "다시 시도",
+    "close": "닫기",
+    "next": "다음",
+    "previous": "이전",
+    "done": "완료",
+    "error": "오류",
+    "success": "성공",
+    "warning": "경고",
+    "info": "정보"
+  },
+  "navigation": {
+    "home": "홈",
+    "payment": "결제",
+    "send": "송금",
+    "deposit": "충전",
+    "history": "내역",
+    "aiAssistant": "AI",
+    "profile": "프로필",
+    "login": "로그인",
+    "signUp": "회원가입"
+  },
+  "headers": {
+    "circlePay": "CirclePay Global",
+    "qrPayment": "QR 결제",
+    "crossChainSend": "크로스체인 송금",
+    "usdcDeposit": "USDC 충전",
+    "transactionHistory": "거래 내역",
+    "aiAssistant": "AI 어시스턴트",
+    "profileKyc": "프로필 & KYC"
+  },
+  "screens": {
+    "home": {
+      "welcome": "안녕하세요, {{name}}님! 👋",
+      "subtitle": "글로벌 크로스체인 결제가 준비되었습니다",
+      "appTitle": "CirclePay Global",
+      "appSubtitle": "글로벌 크로스체인 USDC 결제 플랫폼",
+      "features": {
+        "title": "주요 기능",
+        "fastTransfer": "빠른 크로스체인 송금",
+        "secureUsdc": "안전한 USDC 거래",
+        "qrPayment": "QR 코드 결제",
+        "simpleKyc": "간편 KYC 인증"
+      },
+      "auth": {
+        "getStarted": "시작하기",
+        "alreadyHaveAccount": "이미 계정이 있으신가요?"
+      },
+      "wallet": {
+        "totalBalance": "총 잔액",
+        "mainWallet": "메인 지갑",
+        "quickActions": "빠른 실행"
+      }
+    },
+    "login": {
+      "title": "로그인",
+      "subtitle": "CirclePay Global에 다시 오신 것을 환영합니다",
+      "email": "이메일 주소",
+      "pin": "PIN 번호",
+      "biometric": "생체 인증",
+      "forgotPin": "PIN을 잊으셨나요?",
+      "loginSuccess": "로그인 성공!",
+      "loginFailed": "로그인 실패",
+      "welcome": "환영합니다!",
+      "errorMessage": "로그인 중 오류가 발생했습니다."
+    },
+    "signUp": {
+      "title": "회원가입",
+      "subtitle": "CirclePay Global에 가입하세요",
+      "firstName": "이름",
+      "lastName": "성",
+      "email": "이메일",
+      "pin": "PIN 번호",
+      "confirmPin": "PIN 확인",
+      "phone": "전화번호",
+      "country": "국가",
+      "agreeTerms": "이용약관에 동의합니다",
+      "agreePrivacy": "개인정보 처리방침에 동의합니다"
+    },
+    "profile": {
+      "title": "프로필 & KYC",
+      "subtitle": "개인정보 관리 및 신원 인증",
+      "personalInfo": "개인 정보",
+      "editProfile": "프로필 편집",
+      "kycStatus": "KYC 인증 상태",
+      "documents": "제출된 문서",
+      "loadingKyc": "KYC 정보를 불러오는 중...",
+      "loadingProfile": "프로필 정보를 불러오는 중...",
+      "logout": "로그아웃",
+      "riskScore": "위험도: {{score}}%",
+      "language": "언어 설정",
+      "selectLanguage": "언어 선택"
+    },
+    "ai": {
+      "title": "AI 어시스턴트",
+      "placeholder": "메시지를 입력하세요...",
+      "listeningIndicator": "음성 인식 중...",
+      "sendMessage": "메시지 전송",
+      "voiceInput": "음성 입력",
+      "speakResponse": "음성으로 듣기"
+    },
+    "settings": {
+      "title": "설정",
+      "account": "계정",
+      "security": "보안",
+      "notifications": "알림",
+      "autoConvert": "자동 환전",
+      "autoConvertDesc": "결제 시 자동 USDC 변환",
+      "language": "언어",
+      "theme": "테마",
+      "themeLight": "라이트 모드",
+      "support": "지원",
+      "help": "도움말",
+      "helpDesc": "자주 묻는 질문, 사용법",
+      "customerSupport": "고객 지원",
+      "customerSupportDesc": "24시간 채팅 상담",
+      "terms": "이용약관",
+      "termsDesc": "서비스 약관 및 개인정보 처리방침",
+      "rateApp": "앱 평가",
+      "rateAppDesc": "App Store에서 평가하기"
+    }
+  },
+  "kyc": {
+    "status": {
+      "pending": "대기 중",
+      "approved": "승인됨",
+      "rejected": "거부됨",
+      "review": "검토 중"
+    },
+    "documentTypes": {
+      "passport": "여권",
+      "driverLicense": "운전면허증",
+      "nationalId": "주민등록증",
+      "utilityBill": "공과금 고지서"
+    }
+  },
+  "transactions": {
+    "status": {
+      "pending": "대기 중",
+      "completed": "완료됨",
+      "failed": "실패",
+      "cancelled": "취소됨"
+    },
+    "types": {
+      "send": "송금",
+      "receive": "수신",
+      "deposit": "입금",
+      "withdrawal": "출금",
+      "payment": "결제"
+    }
+  },
+  "security": {
+    "highAmount": {
+      "title": "고액 송금 확인",
+      "description": "{{amount}} USDC는 고액 송금입니다.",
+      "warning": "{{amount}} USDC는 고액 송금입니다. 추가 보안 확인이 필요합니다.",
+      "recommendations": [
+        "받는 주소를 다시 한 번 확인해 주세요",
+        "송금 목적과 수취인을 재확인해 주세요",
+        "거래가 완료되면 취소할 수 없습니다",
+        "확실하다면 '고액 송금 확인'을 말씀해 주세요"
+      ]
+    },
+    "suspiciousAddress": {
+      "title": "주소 보안 경고",
+      "description": "이 주소는 의심스러운 패턴을 보입니다.",
+      "warning": "주의: 이 주소는 의심스러운 패턴을 보입니다.",
+      "recommendations": [
+        "주소를 다시 한 번 확인해 주세요",
+        "수취인과 직접 연락하여 주소를 재확인하세요",
+        "소액으로 테스트 송금을 먼저 시도해 보세요"
+      ]
+    }
+  },
+  "languages": {
+    "korean": "한국어",
+    "english": "English",
+    "chinese": "中文",
+    "arabic": "العربية",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español",
+    "hindi": "हिन्दी",
+    "japanese": "日本語"
+  }
+}

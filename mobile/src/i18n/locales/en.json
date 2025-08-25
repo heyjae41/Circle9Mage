@@ -1,0 +1,194 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "processing": "Processing...",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "retry": "Retry",
+    "close": "Close",
+    "next": "Next",
+    "previous": "Previous",
+    "done": "Done",
+    "error": "Error",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info"
+  },
+  "navigation": {
+    "home": "Home",
+    "payment": "Payment",
+    "send": "Send",
+    "deposit": "Deposit",
+    "history": "History",
+    "aiAssistant": "AI",
+    "profile": "Profile",
+    "login": "Login",
+    "signUp": "Sign Up"
+  },
+  "headers": {
+    "circlePay": "CirclePay Global",
+    "qrPayment": "QR Payment",
+    "crossChainSend": "Cross-Chain Send",
+    "usdcDeposit": "USDC Deposit",
+    "transactionHistory": "Transaction History",
+    "aiAssistant": "AI Assistant",
+    "profileKyc": "Profile & KYC"
+  },
+  "screens": {
+    "home": {
+      "welcome": "Hello, {{name}}! 👋",
+      "subtitle": "Global cross-chain payments are ready",
+      "appTitle": "CirclePay Global",
+      "appSubtitle": "Global Cross-Chain USDC Payment Platform",
+      "features": {
+        "title": "Key Features",
+        "fastTransfer": "Fast Cross-Chain Transfers",
+        "secureUsdc": "Secure USDC Transactions",
+        "qrPayment": "QR Code Payments",
+        "simpleKyc": "Simple KYC Verification"
+      },
+      "auth": {
+        "getStarted": "Get Started",
+        "alreadyHaveAccount": "Already have an account?"
+      },
+      "wallet": {
+        "totalBalance": "Total Balance",
+        "mainWallet": "Main Wallet",
+        "quickActions": "Quick Actions"
+      }
+    },
+    "login": {
+      "title": "Login",
+      "subtitle": "Welcome back to CirclePay Global",
+      "email": "Email Address",
+      "pin": "PIN Number",
+      "biometric": "Biometric Authentication",
+      "forgotPin": "Forgot your PIN?",
+      "loginSuccess": "Login Successful!",
+      "loginFailed": "Login Failed",
+      "welcome": "Welcome!",
+      "errorMessage": "An error occurred during login."
+    },
+    "signUp": {
+      "title": "Sign Up",
+      "subtitle": "Join CirclePay Global",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "pin": "PIN Number",
+      "confirmPin": "Confirm PIN",
+      "phone": "Phone Number",
+      "country": "Country",
+      "agreeTerms": "I agree to the Terms of Service",
+      "agreePrivacy": "I agree to the Privacy Policy"
+    },
+    "profile": {
+      "title": "Profile & KYC",
+      "subtitle": "Personal Information Management & Identity Verification",
+      "personalInfo": "Personal Information",
+      "editProfile": "Edit Profile",
+      "kycStatus": "KYC Verification Status",
+      "documents": "Submitted Documents",
+      "loadingKyc": "Loading KYC information...",
+      "loadingProfile": "Loading profile information...",
+      "logout": "Logout",
+      "riskScore": "Risk Score: {{score}}%",
+      "language": "Language Settings",
+      "selectLanguage": "Select Language"
+    },
+    "ai": {
+      "title": "AI Assistant",
+      "placeholder": "Type a message...",
+      "listeningIndicator": "Listening...",
+      "sendMessage": "Send Message",
+      "voiceInput": "Voice Input",
+      "speakResponse": "Listen to Response"
+    },
+    "settings": {
+      "title": "Settings",
+      "account": "Account",
+      "security": "Security",
+      "notifications": "Notifications",
+      "autoConvert": "Auto Convert",
+      "autoConvertDesc": "Automatic USDC conversion during payments",
+      "language": "Language",
+      "theme": "Theme",
+      "themeLight": "Light Mode",
+      "support": "Support",
+      "help": "Help",
+      "helpDesc": "FAQs and usage guides",
+      "customerSupport": "Customer Support",
+      "customerSupportDesc": "24/7 chat support",
+      "terms": "Terms of Service",
+      "termsDesc": "Service terms and privacy policy",
+      "rateApp": "Rate App",
+      "rateAppDesc": "Rate us on the App Store"
+    }
+  },
+  "kyc": {
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "review": "Under Review"
+    },
+    "documentTypes": {
+      "passport": "Passport",
+      "driverLicense": "Driver's License",
+      "nationalId": "National ID",
+      "utilityBill": "Utility Bill"
+    }
+  },
+  "transactions": {
+    "status": {
+      "pending": "Pending",
+      "completed": "Completed",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "types": {
+      "send": "Send",
+      "receive": "Receive",
+      "deposit": "Deposit",
+      "withdrawal": "Withdrawal",
+      "payment": "Payment"
+    }
+  },
+  "security": {
+    "highAmount": {
+      "title": "High Amount Transfer Confirmation",
+      "description": "{{amount}} USDC is a high-amount transfer.",
+      "warning": "{{amount}} USDC is a high-amount transfer. Additional security verification is required.",
+      "recommendations": [
+        "Please double-check the recipient address",
+        "Reconfirm the transfer purpose and recipient",
+        "This transaction cannot be reversed once completed",
+        "Say 'confirm high amount transfer' if you're sure"
+      ]
+    },
+    "suspiciousAddress": {
+      "title": "Address Security Warning",
+      "description": "This address shows suspicious patterns.",
+      "warning": "Warning: This address shows suspicious patterns.",
+      "recommendations": [
+        "Please double-check the address",
+        "Contact the recipient directly to reconfirm the address",
+        "Try a small test transfer first"
+      ]
+    }
+  },
+  "languages": {
+    "korean": "한국어",
+    "english": "English",
+    "chinese": "中文",
+    "arabic": "العربية",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español",
+    "hindi": "हिन्दी",
+    "japanese": "日本語"
+  }
+}

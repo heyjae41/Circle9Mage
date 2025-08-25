@@ -5,6 +5,9 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+// i18n 초기화 (반드시 다른 컴포넌트보다 먼저 import)
+import './src/i18n';
+
 // 화면 임포트
 import HomeScreen from './src/screens/HomeScreen';
 import PaymentScreen from './src/screens/PaymentScreen';

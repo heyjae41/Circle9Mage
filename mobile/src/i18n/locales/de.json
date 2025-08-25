@@ -1,0 +1,194 @@
+{
+  "common": {
+    "loading": "Lädt...",
+    "processing": "Verarbeitung...",
+    "confirm": "Bestätigen",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "edit": "Bearbeiten",
+    "delete": "Löschen",
+    "retry": "Wiederholen",
+    "close": "Schließen",
+    "next": "Weiter",
+    "previous": "Zurück",
+    "done": "Fertig",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "warning": "Warnung",
+    "info": "Information"
+  },
+  "navigation": {
+    "home": "Start",
+    "payment": "Zahlung",
+    "send": "Senden",
+    "deposit": "Einzahlung",
+    "history": "Verlauf",
+    "aiAssistant": "KI",
+    "profile": "Profil",
+    "login": "Anmelden",
+    "signUp": "Registrieren"
+  },
+  "headers": {
+    "circlePay": "CirclePay Global",
+    "qrPayment": "QR-Zahlung",
+    "crossChainSend": "Cross-Chain-Überweisung",
+    "usdcDeposit": "USDC-Einzahlung",
+    "transactionHistory": "Transaktionsverlauf",
+    "aiAssistant": "KI-Assistent",
+    "profileKyc": "Profil & KYC"
+  },
+  "screens": {
+    "home": {
+      "welcome": "Hallo, {{name}}! 👋",
+      "subtitle": "Globale Cross-Chain-Zahlungen sind bereit",
+      "appTitle": "CirclePay Global",
+      "appSubtitle": "Globale Cross-Chain-USDC-Zahlungsplattform",
+      "features": {
+        "title": "Hauptmerkmale",
+        "fastTransfer": "Schnelle Cross-Chain-Überweisungen",
+        "secureUsdc": "Sichere USDC-Transaktionen",
+        "qrPayment": "QR-Code-Zahlungen",
+        "simpleKyc": "Einfache KYC-Verifizierung"
+      },
+      "auth": {
+        "getStarted": "Loslegen",
+        "alreadyHaveAccount": "Haben Sie bereits ein Konto?"
+      },
+      "wallet": {
+        "totalBalance": "Gesamtguthaben",
+        "mainWallet": "Haupt-Wallet",
+        "quickActions": "Schnellaktionen"
+      }
+    },
+    "login": {
+      "title": "Anmelden",
+      "subtitle": "Willkommen zurück bei CirclePay Global",
+      "email": "E-Mail-Adresse",
+      "pin": "PIN-Nummer",
+      "biometric": "Biometrische Authentifizierung",
+      "forgotPin": "PIN vergessen?",
+      "loginSuccess": "Anmeldung erfolgreich!",
+      "loginFailed": "Anmeldung fehlgeschlagen",
+      "welcome": "Willkommen!",
+      "errorMessage": "Bei der Anmeldung ist ein Fehler aufgetreten."
+    },
+    "signUp": {
+      "title": "Registrieren",
+      "subtitle": "Bei CirclePay Global anmelden",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "email": "E-Mail",
+      "pin": "PIN-Nummer",
+      "confirmPin": "PIN bestätigen",
+      "phone": "Telefonnummer",
+      "country": "Land",
+      "agreeTerms": "Ich stimme den Nutzungsbedingungen zu",
+      "agreePrivacy": "Ich stimme der Datenschutzrichtlinie zu"
+    },
+    "profile": {
+      "title": "Profil & KYC",
+      "subtitle": "Verwaltung persönlicher Informationen & Identitätsverifizierung",
+      "personalInfo": "Persönliche Informationen",
+      "editProfile": "Profil bearbeiten",
+      "kycStatus": "KYC-Verifizierungsstatus",
+      "documents": "Eingereichte Dokumente",
+      "loadingKyc": "KYC-Informationen werden geladen...",
+      "loadingProfile": "Profilinformationen werden geladen...",
+      "logout": "Abmelden",
+      "riskScore": "Risikobewertung: {{score}}%",
+      "language": "Spracheinstellungen",
+      "selectLanguage": "Sprache auswählen"
+    },
+    "ai": {
+      "title": "KI-Assistent",
+      "placeholder": "Nachricht eingeben...",
+      "listeningIndicator": "Zuhören...",
+      "sendMessage": "Nachricht senden",
+      "voiceInput": "Spracheingabe",
+      "speakResponse": "Antwort anhören"
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "account": "Konto",
+      "security": "Sicherheit",
+      "notifications": "Benachrichtigungen",
+      "autoConvert": "Automatische Umwandlung",
+      "autoConvertDesc": "Automatische USDC-Umwandlung bei Zahlungen",
+      "language": "Sprache",
+      "theme": "Design",
+      "themeLight": "Heller Modus",
+      "support": "Support",
+      "help": "Hilfe",
+      "helpDesc": "FAQs und Nutzungsanleitungen",
+      "customerSupport": "Kundensupport",
+      "customerSupportDesc": "24/7 Chat-Support",
+      "terms": "Nutzungsbedingungen",
+      "termsDesc": "Servicebedingungen und Datenschutzrichtlinie",
+      "rateApp": "App bewerten",
+      "rateAppDesc": "Bewerten Sie uns im App Store"
+    }
+  },
+  "kyc": {
+    "status": {
+      "pending": "Ausstehend",
+      "approved": "Genehmigt",
+      "rejected": "Abgelehnt",
+      "review": "In Überprüfung"
+    },
+    "documentTypes": {
+      "passport": "Reisepass",
+      "driverLicense": "Führerschein",
+      "nationalId": "Personalausweis",
+      "utilityBill": "Versorgungsrechnung"
+    }
+  },
+  "transactions": {
+    "status": {
+      "pending": "Ausstehend",
+      "completed": "Abgeschlossen",
+      "failed": "Fehlgeschlagen",
+      "cancelled": "Abgebrochen"
+    },
+    "types": {
+      "send": "Senden",
+      "receive": "Empfangen",
+      "deposit": "Einzahlung",
+      "withdrawal": "Abhebung",
+      "payment": "Zahlung"
+    }
+  },
+  "security": {
+    "highAmount": {
+      "title": "Bestätigung für hohe Überweisungssumme",
+      "description": "{{amount}} USDC ist eine hohe Überweisungssumme.",
+      "warning": "{{amount}} USDC ist eine hohe Überweisungssumme. Eine zusätzliche Sicherheitsverifizierung ist erforderlich.",
+      "recommendations": [
+        "Bitte überprüfen Sie die Empfängeradresse erneut",
+        "Bestätigen Sie den Überweisungszweck und Empfänger erneut",
+        "Diese Transaktion kann nach Abschluss nicht rückgängig gemacht werden",
+        "Sagen Sie 'hohe Überweisung bestätigen', wenn Sie sicher sind"
+      ]
+    },
+    "suspiciousAddress": {
+      "title": "Adress-Sicherheitswarnung",
+      "description": "Diese Adresse zeigt verdächtige Muster.",
+      "warning": "Warnung: Diese Adresse zeigt verdächtige Muster.",
+      "recommendations": [
+        "Bitte überprüfen Sie die Adresse erneut",
+        "Kontaktieren Sie den Empfänger direkt, um die Adresse zu bestätigen",
+        "Versuchen Sie zuerst eine kleine Testüberweisung"
+      ]
+    }
+  },
+  "languages": {
+    "korean": "한국어",
+    "english": "English",
+    "chinese": "中文",
+    "arabic": "العربية",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español",
+    "hindi": "हिन्दी",
+    "japanese": "日本語"
+  }
+}

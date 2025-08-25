@@ -16,6 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useTranslation } from 'react-i18next';
 import apiService from '../services/apiService';
 import { useApp } from '../contexts/AppContext';
 import { biometricAuthManager } from '../utils/biometricAuth';
@@ -27,12 +28,13 @@ interface LoginData {
 
 export default function LoginScreen({ route }: any) {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { loadUserData, setAuthToken, hideTokenExpiredModal } = useApp();
   
   const [loading, setLoading] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [biometricType, setBiometricType] = useState<string>('생체 인증');
+  const [biometricType, setBiometricType] = useState<string>(t('screens.login.biometric'));
   const [savedCredentials, setSavedCredentials] = useState<LoginData | null>(null);
   
   // 로그인 폼 데이터
@@ -164,12 +166,12 @@ export default function LoginScreen({ route }: any) {
   // 폼 유효성 검사
   const validateForm = (): boolean => {
     if (!loginData.email || !isValidEmail(loginData.email)) {
-      Alert.alert('오류', '올바른 이메일 주소를 입력해주세요.');
+      Alert.alert(t('common.error'), t('common.invalidEmail', { defaultValue: '올바른 이메일 주소를 입력해주세요.' }));
       return false;
     }
     
     if (!loginData.pin || loginData.pin.length < 6) {
-      Alert.alert('오류', 'PIN을 입력해주세요.');
+      Alert.alert(t('common.error'), t('common.invalidPin', { defaultValue: 'PIN을 입력해주세요.' }));
       return false;
     }
     
@@ -210,11 +212,11 @@ export default function LoginScreen({ route }: any) {
       
       // Alert 대신 간단한 메시지로 변경하여 UI 블록 방지
       setTimeout(() => {
-        Alert.alert('로그인 성공!', '환영합니다!');
+        Alert.alert(t('screens.login.loginSuccess'), t('screens.login.welcome'));
       }, 200); // 상태 업데이트 후 알림 표시
       
     } catch (error: any) {
-      Alert.alert('로그인 실패', error.message || '로그인 중 오류가 발생했습니다.');
+      Alert.alert(t('screens.login.loginFailed'), error.message || t('screens.login.errorMessage'));
     } finally {
       setLoading(false);
     }
@@ -223,14 +225,14 @@ export default function LoginScreen({ route }: any) {
   // 생체 인증 로그인
   const handleBiometricLogin = async () => {
     if (!biometricAvailable || !biometricEnabled) {
-      Alert.alert('알림', '생체 인증을 사용할 수 없습니다.\n설정에서 생체 인증을 활성화해주세요.');
+      Alert.alert(t('common.info'), t('common.biometricNotAvailable', { defaultValue: '생체 인증을 사용할 수 없습니다.\n설정에서 생체 인증을 활성화해주세요.' }));
       return;
     }
 
     // 저장된 토큰이 있는지 확인
     const savedToken = await AsyncStorage.getItem('access_token');
     if (!savedToken) {
-      Alert.alert('알림', '저장된 로그인 정보가 없습니다.\n먼저 일반 로그인을 진행해주세요.');
+      Alert.alert(t('common.info'), t('common.noSavedCredentials', { defaultValue: '저장된 로그인 정보가 없습니다.\n먼저 일반 로그인을 진행해주세요.' }));
       return;
     }
 
@@ -248,8 +250,8 @@ export default function LoginScreen({ route }: any) {
           await setAuthToken(savedToken);
           await loadUserData();
           
-          Alert.alert('로그인 성공!', `${biometricType}으로 로그인되었습니다!`, [
-            { text: '확인' }
+          Alert.alert(t('screens.login.loginSuccess'), t('screens.login.biometricSuccess', { type: biometricType, defaultValue: `${biometricType}으로 로그인되었습니다!` }), [
+            { text: t('common.confirm') }
           ]);
           
           console.log('✅ 생체 인증 로그인 성공');
@@ -257,8 +259,8 @@ export default function LoginScreen({ route }: any) {
           // 토큰이 만료되었거나 유효하지 않은 경우
           console.log('토큰 검증 실패:', tokenError);
           Alert.alert(
-            '알림', 
-            '인증 정보가 만료되었습니다.\nPIN으로 다시 로그인해주세요.',
+            t('common.info'),
+            t('common.tokenExpired', { defaultValue: '인증 정보가 만료되었습니다.\nPIN으로 다시 로그인해주세요.' }),
             [
               { text: '확인', onPress: () => {
                 // 만료된 토큰 삭제
@@ -275,8 +277,8 @@ export default function LoginScreen({ route }: any) {
          } else if (authResult.error?.includes('PIN 입력으로 전환')) {
            // 사용자가 fallback을 선택한 경우
            Alert.alert(
-             '생체 인증 대신 PIN 사용',
-             'PIN 번호를 입력하여 로그인해주세요.',
+             t('common.biometricFallback', { defaultValue: '생체 인증 대신 PIN 사용' }),
+             t('common.usePinInstead', { defaultValue: 'PIN 번호를 입력하여 로그인해주세요.' }),
              [{ text: '확인', onPress: () => {
                // 이메일 필드에 포커스 (PIN 입력 유도)
                if (loginData.email) {
@@ -287,15 +289,15 @@ export default function LoginScreen({ route }: any) {
          } else {
            // 기타 생체 인증 실패
            Alert.alert(
-             '생체 인증 실패',
-             `${authResult.error}\n\nPIN 번호로 로그인을 계속하세요.`,
+             t('common.biometricFailed', { defaultValue: '생체 인증 실패' }),
+             `${authResult.error}\n\n${t('common.continueWithPin', { defaultValue: 'PIN 번호로 로그인을 계속하세요.' })}`,
              [{ text: '확인' }]
            );
          }
        }
     } catch (error: any) {
       console.error('생체 인증 로그인 오류:', error);
-      Alert.alert('오류', '생체 인증 중 오류가 발생했습니다.');
+      Alert.alert(t('common.error'), t('common.biometricError', { defaultValue: '생체 인증 중 오류가 발생했습니다.' }));
     } finally {
       setLoading(false);
     }
@@ -309,8 +311,8 @@ export default function LoginScreen({ route }: any) {
   // PIN 초기화 (비밀번호 찾기)
   const handleForgotPin = () => {
     Alert.alert(
-      '도움말',
-      'PIN을 잊으셨나요?\n\n현재는 개발 단계로 다음 방법을 시도해보세요:\n1. 회원가입 시 사용한 PIN 확인\n2. 새로 회원가입\n\n향후 이메일/SMS를 통한 PIN 재설정 기능이 추가될 예정입니다.',
+      t('common.help', { defaultValue: '도움말' }),
+      t('common.forgotPinHelp', { defaultValue: 'PIN을 잊으셨나요?\n\n현재는 개발 단계로 다음 방법을 시도해보세요:\n1. 회원가입 시 사용한 PIN 확인\n2. 새로 회원가입\n\n향후 이메일/SMS를 통한 PIN 재설정 기능이 추가될 예정입니다.' }),
       [
         { text: '회원가입', onPress: goToSignUp },
         { text: '닫기', style: 'cancel' }
@@ -332,7 +334,7 @@ export default function LoginScreen({ route }: any) {
               style={styles.headerGradient}
             >
               <Ionicons name="log-in" size={48} color="white" />
-              <Text style={styles.headerTitle}>로그인</Text>
+              <Text style={styles.headerTitle}>{t('screens.login.title')}</Text>
               <Text style={styles.headerSubtitle}>
                 CirclePay Global에 다시 오신 것을 환영합니다
               </Text>
@@ -342,7 +344,7 @@ export default function LoginScreen({ route }: any) {
           {/* 로그인 폼 */}
           <View style={styles.formSection}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>이메일 주소</Text>
+              <Text style={styles.inputLabel}>{t('screens.login.email')}</Text>
               <View style={styles.inputContainer}>
                 <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
                 <TextInput
@@ -380,7 +382,7 @@ export default function LoginScreen({ route }: any) {
 
             {/* PIN 찾기 */}
             <TouchableOpacity onPress={handleForgotPin} style={styles.forgotPinButton}>
-              <Text style={styles.forgotPinText}>PIN을 잊으셨나요?</Text>
+              <Text style={styles.forgotPinText}>{t('screens.login.forgotPin')}</Text>
             </TouchableOpacity>
 
             {/* 로그인 버튼 */}
@@ -398,7 +400,7 @@ export default function LoginScreen({ route }: any) {
                 ) : (
                   <>
                     <Ionicons name="log-in" size={24} color="white" />
-                    <Text style={styles.submitText}>로그인</Text>
+                    <Text style={styles.submitText}>{t('screens.login.title')}</Text>
                   </>
                 )}
               </LinearGradient>
@@ -420,7 +422,7 @@ export default function LoginScreen({ route }: any) {
                     size={24} 
                     color="white" 
                   />
-                  <Text style={styles.submitText}>{biometricType}으로 로그인</Text>
+                  <Text style={styles.submitText}>{t('screens.login.biometric')}</Text>
                 </LinearGradient>
               </TouchableOpacity>
             )}
@@ -428,7 +430,7 @@ export default function LoginScreen({ route }: any) {
             {/* 구분선 */}
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>또는</Text>
+              <Text style={styles.dividerText}>{t('common.or', { defaultValue: '또는' })}</Text>
               <View style={styles.dividerLine} />
             </View>
 
@@ -442,7 +444,7 @@ export default function LoginScreen({ route }: any) {
                 style={styles.submitGradient}
               >
                 <Ionicons name="person-add" size={24} color="white" />
-                <Text style={styles.submitText}>새 계정 만들기</Text>
+                <Text style={styles.submitText}>{t('navigation.signUp')}</Text>
               </LinearGradient>
             </TouchableOpacity>
           </View>

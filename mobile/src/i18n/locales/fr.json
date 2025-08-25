@@ -1,0 +1,194 @@
+{
+  "common": {
+    "loading": "Chargement...",
+    "processing": "Traitement...",
+    "confirm": "Confirmer",
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "done": "Terminé",
+    "error": "Erreur",
+    "success": "Succès",
+    "warning": "Avertissement",
+    "info": "Information"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "payment": "Paiement",
+    "send": "Envoyer",
+    "deposit": "Dépôt",
+    "history": "Historique",
+    "aiAssistant": "IA",
+    "profile": "Profil",
+    "login": "Connexion",
+    "signUp": "Inscription"
+  },
+  "headers": {
+    "circlePay": "CirclePay Global",
+    "qrPayment": "Paiement QR",
+    "crossChainSend": "Envoi Inter-Chaînes",
+    "usdcDeposit": "Dépôt USDC",
+    "transactionHistory": "Historique des Transactions",
+    "aiAssistant": "Assistant IA",
+    "profileKyc": "Profil & KYC"
+  },
+  "screens": {
+    "home": {
+      "welcome": "Bonjour, {{name}} ! 👋",
+      "subtitle": "Les paiements inter-chaînes globaux sont prêts",
+      "appTitle": "CirclePay Global",
+      "appSubtitle": "Plateforme de Paiement USDC Inter-Chaînes Globale",
+      "features": {
+        "title": "Fonctionnalités Principales",
+        "fastTransfer": "Transferts Inter-Chaînes Rapides",
+        "secureUsdc": "Transactions USDC Sécurisées",
+        "qrPayment": "Paiements par Code QR",
+        "simpleKyc": "Vérification KYC Simple"
+      },
+      "auth": {
+        "getStarted": "Commencer",
+        "alreadyHaveAccount": "Vous avez déjà un compte ?"
+      },
+      "wallet": {
+        "totalBalance": "Solde Total",
+        "mainWallet": "Portefeuille Principal",
+        "quickActions": "Actions Rapides"
+      }
+    },
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Bienvenue sur CirclePay Global",
+      "email": "Adresse Email",
+      "pin": "Code PIN",
+      "biometric": "Authentification Biométrique",
+      "forgotPin": "Code PIN oublié ?",
+      "loginSuccess": "Connexion Réussie !",
+      "loginFailed": "Échec de la Connexion",
+      "welcome": "Bienvenue !",
+      "errorMessage": "Une erreur s'est produite lors de la connexion."
+    },
+    "signUp": {
+      "title": "Inscription",
+      "subtitle": "Rejoignez CirclePay Global",
+      "firstName": "Prénom",
+      "lastName": "Nom de Famille",
+      "email": "Email",
+      "pin": "Code PIN",
+      "confirmPin": "Confirmer le PIN",
+      "phone": "Numéro de Téléphone",
+      "country": "Pays",
+      "agreeTerms": "J'accepte les Conditions d'Utilisation",
+      "agreePrivacy": "J'accepte la Politique de Confidentialité"
+    },
+    "profile": {
+      "title": "Profil & KYC",
+      "subtitle": "Gestion des Informations Personnelles & Vérification d'Identité",
+      "personalInfo": "Informations Personnelles",
+      "editProfile": "Modifier le Profil",
+      "kycStatus": "Statut de Vérification KYC",
+      "documents": "Documents Soumis",
+      "loadingKyc": "Chargement des informations KYC...",
+      "loadingProfile": "Chargement des informations du profil...",
+      "logout": "Déconnexion",
+      "riskScore": "Score de Risque : {{score}}%",
+      "language": "Paramètres de Langue",
+      "selectLanguage": "Sélectionner la Langue"
+    },
+    "ai": {
+      "title": "Assistant IA",
+      "placeholder": "Tapez un message...",
+      "listeningIndicator": "Écoute...",
+      "sendMessage": "Envoyer le Message",
+      "voiceInput": "Entrée Vocale",
+      "speakResponse": "Écouter la Réponse"
+    },
+    "settings": {
+      "title": "Paramètres",
+      "account": "Compte",
+      "security": "Sécurité",
+      "notifications": "Notifications",
+      "autoConvert": "Conversion Automatique",
+      "autoConvertDesc": "Conversion automatique en USDC lors des paiements",
+      "language": "Langue",
+      "theme": "Thème",
+      "themeLight": "Mode Clair",
+      "support": "Support",
+      "help": "Aide",
+      "helpDesc": "FAQ et guides d'utilisation",
+      "customerSupport": "Support Client",
+      "customerSupportDesc": "Support de chat 24h/24 et 7j/7",
+      "terms": "Conditions d'Utilisation",
+      "termsDesc": "Conditions de service et politique de confidentialité",
+      "rateApp": "Évaluer l'App",
+      "rateAppDesc": "Évaluez-nous sur l'App Store"
+    }
+  },
+  "kyc": {
+    "status": {
+      "pending": "En Attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté",
+      "review": "En Cours de Révision"
+    },
+    "documentTypes": {
+      "passport": "Passeport",
+      "driverLicense": "Permis de Conduire",
+      "nationalId": "Carte d'Identité Nationale",
+      "utilityBill": "Facture de Services Publics"
+    }
+  },
+  "transactions": {
+    "status": {
+      "pending": "En Attente",
+      "completed": "Terminé",
+      "failed": "Échoué",
+      "cancelled": "Annulé"
+    },
+    "types": {
+      "send": "Envoyer",
+      "receive": "Recevoir",
+      "deposit": "Dépôt",
+      "withdrawal": "Retrait",
+      "payment": "Paiement"
+    }
+  },
+  "security": {
+    "highAmount": {
+      "title": "Confirmation de Transfert de Montant Élevé",
+      "description": "{{amount}} USDC est un transfert de montant élevé.",
+      "warning": "{{amount}} USDC est un transfert de montant élevé. Une vérification de sécurité supplémentaire est requise.",
+      "recommendations": [
+        "Veuillez vérifier à nouveau l'adresse du destinataire",
+        "Reconfirmez l'objectif du transfert et le destinataire",
+        "Cette transaction ne peut pas être annulée une fois terminée",
+        "Dites 'confirmer le transfert de montant élevé' si vous êtes sûr"
+      ]
+    },
+    "suspiciousAddress": {
+      "title": "Avertissement de Sécurité d'Adresse",
+      "description": "Cette adresse montre des modèles suspects.",
+      "warning": "Avertissement : Cette adresse montre des modèles suspects.",
+      "recommendations": [
+        "Veuillez vérifier à nouveau l'adresse",
+        "Contactez directement le destinataire pour reconfirmer l'adresse",
+        "Essayez d'abord un petit transfert de test"
+      ]
+    }
+  },
+  "languages": {
+    "korean": "한국어",
+    "english": "English",
+    "chinese": "中文",
+    "arabic": "العربية",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español",
+    "hindi": "हिन्दी",
+    "japanese": "日本語"
+  }
+}

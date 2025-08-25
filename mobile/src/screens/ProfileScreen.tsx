@@ -14,10 +14,13 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed } from '../utils/formatters';
+import { supportedLanguagesInfo } from '../i18n';
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation();
   const { 
     state, 
@@ -26,7 +29,8 @@ export default function ProfileScreen() {
     submitKYCDocument, 
     getKYCStatus,
     resubmitKYCDocument,
-    logout 
+    logout,
+    changeLanguage 
   } = useApp();
   
   const [isLoading, setIsLoading] = useState(false);
@@ -73,17 +77,17 @@ export default function ProfileScreen() {
   // 로그아웃 핸들러
   const handleLogout = () => {
     Alert.alert(
-      '로그아웃',
-      '정말 로그아웃하시겠습니까?',
+      t('common.logout'),
+      t('common.logoutConfirm', { defaultValue: '정말 로그아웃하시겠습니까?' }),
       [
-        { text: '취소', style: 'cancel' },
-        { text: '로그아웃', style: 'destructive', onPress: async () => {
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.logout'), style: 'destructive', onPress: async () => {
           try {
             await logout();
             // 로그아웃 성공 후 LoginScreen으로 이동
             (navigation as any).navigate('Login');
           } catch (error) {
-            Alert.alert('오류', '로그아웃 중 오류가 발생했습니다.');
+            Alert.alert(t('common.error'), t('common.logoutError', { defaultValue: '로그아웃 중 오류가 발생했습니다.' }));
           }
         }}
       ]
@@ -119,7 +123,7 @@ export default function ProfileScreen() {
   // 프로필 업데이트
   const handleUpdateProfile = async () => {
     if (!profileData.first_name || !profileData.last_name) {
-      Alert.alert('오류', '이름과 성을 입력해주세요.');
+      Alert.alert(t('common.error'), t('common.enterNameRequired', { defaultValue: '이름과 성을 입력해주세요.' }));
       return;
     }
 
@@ -128,17 +132,17 @@ export default function ProfileScreen() {
       await updateUserProfile(profileData);
       
       Alert.alert(
-        '프로필 업데이트 완료!',
-        '프로필 정보가 성공적으로 업데이트되었습니다.',
+        t('common.profileUpdateComplete', { defaultValue: '프로필 업데이트 완료!' }),
+        t('common.profileUpdateSuccess', { defaultValue: '프로필 정보가 성공적으로 업데이트되었습니다.' }),
         [
           {
-            text: '확인',
+            text: t('common.confirm'),
             onPress: () => setShowEditProfile(false)
           }
         ]
       );
     } catch (error) {
-      Alert.alert('프로필 업데이트 실패', '프로필 업데이트 중 오류가 발생했습니다.');
+      Alert.alert(t('common.profileUpdateFailed', { defaultValue: '프로필 업데이트 실패' }), t('common.profileUpdateError', { defaultValue: '프로필 업데이트 중 오류가 발생했습니다.' }));
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +151,7 @@ export default function ProfileScreen() {
   // KYC 문서 제출
   const handleSubmitKYC = async () => {
     if (!kycData.full_name || !kycData.date_of_birth || !kycData.nationality) {
-      Alert.alert('오류', '필수 항목을 모두 입력해주세요.');
+      Alert.alert(t('common.error'), t('common.fillAllRequired'));
       return;
     }
 
@@ -156,11 +160,11 @@ export default function ProfileScreen() {
       const result = await submitKYCDocument(kycData, selectedDocumentFile || undefined);
       
       Alert.alert(
-        'KYC 문서 제출 완료!',
-        `${result.message}\n\n상태: ${result.status}\n예상 처리 시간: ${result.estimated_review_time}`,
+        t('kyc.submissionComplete', { defaultValue: 'KYC 문서 제출 완료!' }),
+        `${result.message}\n\n${t('kyc.status', { defaultValue: '상태' })}: ${result.status}\n${t('kyc.estimatedTime', { defaultValue: '예상 처리 시간' })}: ${result.estimated_review_time}`,
         [
           {
-            text: '확인',
+            text: t('common.confirm'),
             onPress: () => {
               setShowKYCForm(false);
               loadKYCStatus(); // 상태 새로고침
@@ -169,7 +173,7 @@ export default function ProfileScreen() {
         ]
       );
     } catch (error) {
-      Alert.alert('KYC 제출 실패', 'KYC 문서 제출 중 오류가 발생했습니다.');
+      Alert.alert(t('kyc.submissionFailed', { defaultValue: 'KYC 제출 실패' }), t('kyc.submissionError', { defaultValue: 'KYC 문서 제출 중 오류가 발생했습니다.' }));
     } finally {
       setIsLoading(false);
     }
@@ -203,41 +207,41 @@ export default function ProfileScreen() {
   const renderProfileSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>프로필 정보</Text>
+        <Text style={styles.sectionTitle}>{t('screens.profile.profileInfo', { defaultValue: '프로필 정보' })}</Text>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => setShowEditProfile(true)}
         >
           <Ionicons name="pencil" size={16} color="#6366f1" />
-          <Text style={styles.editButtonText}>편집</Text>
+          <Text style={styles.editButtonText}>{t('common.edit', { defaultValue: '편집' })}</Text>
         </TouchableOpacity>
       </View>
       
       <View style={styles.profileInfo}>
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>이메일</Text>
+          <Text style={styles.infoLabel}>{t('common.email', { defaultValue: '이메일' })}</Text>
           <Text style={styles.infoValue}>{state.user?.email || 'N/A'}</Text>
         </View>
         
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>이름</Text>
+          <Text style={styles.infoLabel}>{t('common.name', { defaultValue: '이름' })}</Text>
           <Text style={styles.infoValue}>
             {profileData.first_name} {profileData.last_name}
           </Text>
         </View>
         
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>전화번호</Text>
-          <Text style={styles.infoValue}>{profileData.phone || '미설정'}</Text>
+          <Text style={styles.infoLabel}>{t('common.phone', { defaultValue: '전화번호' })}</Text>
+          <Text style={styles.infoValue}>{profileData.phone || t('common.notSet', { defaultValue: '미설정' })}</Text>
         </View>
         
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>선호 통화</Text>
+          <Text style={styles.infoLabel}>{t('common.preferredCurrency', { defaultValue: '선호 통화' })}</Text>
           <Text style={styles.infoValue}>{profileData.preferred_currency}</Text>
         </View>
         
         <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>국가</Text>
+          <Text style={styles.infoLabel}>{t('common.country', { defaultValue: '국가' })}</Text>
           <Text style={styles.infoValue}>{state.user?.countryCode || 'N/A'}</Text>
         </View>
       </View>
@@ -341,6 +345,57 @@ export default function ProfileScreen() {
     };
     return typeNames[type as keyof typeof typeNames] || type;
   };
+
+  // 언어 변경 핸들러
+  const handleChangeLanguage = async (languageCode: string) => {
+    try {
+      await changeLanguage(languageCode);
+    } catch (error) {
+      console.error('언어 변경 실패:', error);
+      Alert.alert(
+        t('common.error'),
+        t('common.languageChangeFailed', { defaultValue: '언어 변경에 실패했습니다.' })
+      );
+    }
+  };
+
+  // 언어 선택 섹션
+  const renderLanguageSection = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{t('screens.profile.language', { defaultValue: '언어 설정' })}</Text>
+        <View style={styles.languageBadge}>
+          <Text style={styles.languageBadgeText}>
+            {supportedLanguagesInfo.find(lang => lang.code === state.currentLanguage)?.flag || '🌐'}
+          </Text>
+        </View>
+      </View>
+      
+      <View style={styles.languageContainer}>
+        {supportedLanguagesInfo.map((language) => (
+          <TouchableOpacity
+            key={language.code}
+            style={[
+              styles.languageOption,
+              state.currentLanguage === language.code && styles.languageOptionSelected
+            ]}
+            onPress={() => handleChangeLanguage(language.code)}
+          >
+            <Text style={styles.languageFlag}>{language.flag}</Text>
+            <Text style={[
+              styles.languageName,
+              state.currentLanguage === language.code && styles.languageNameSelected
+            ]}>
+              {language.name}
+            </Text>
+            {state.currentLanguage === language.code && (
+              <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
 
   // 프로필 편집 모달
   const renderEditProfileModal = () => (
@@ -622,7 +677,7 @@ export default function ProfileScreen() {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#6366f1" />
-        <Text style={styles.loadingText}>프로필 정보를 불러오는 중...</Text>
+        <Text style={styles.loadingText}>{t('common.loadingProfile', { defaultValue: '프로필 정보를 불러오는 중...' })}</Text>
       </View>
     );
   }
@@ -631,12 +686,15 @@ export default function ProfileScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.title}>프로필 & KYC</Text>
-        <Text style={styles.subtitle}>개인정보 관리 및 신원 인증</Text>
+        <Text style={styles.title}>{t('headers.profileAndKyc', { defaultValue: '프로필 & KYC' })}</Text>
+        <Text style={styles.subtitle}>{t('common.profileSubtitle', { defaultValue: '개인정보 관리 및 신원 인증' })}</Text>
       </View>
 
       {/* 프로필 정보 섹션 */}
       {renderProfileSection()}
+
+      {/* 언어 선택 섹션 */}
+      {renderLanguageSection()}
 
       {/* KYC 상태 섹션 */}
       {renderKYCSection()}
@@ -649,7 +707,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#DC3545" />
-            <Text style={styles.logoutText}>로그아웃</Text>
+            <Text style={styles.logoutText}>{t('common.logout', { defaultValue: '로그아웃' })}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -667,7 +725,7 @@ export default function ProfileScreen() {
           <View style={styles.loadingOverlay}>
             <View style={styles.loadingModal}>
               <ActivityIndicator size="large" color="#6366f1" />
-              <Text style={styles.loadingModalText}>처리 중...</Text>
+              <Text style={styles.loadingModalText}>{t('common.processing', { defaultValue: '처리 중...' })}</Text>
             </View>
           </View>
         </Modal>
@@ -1047,5 +1105,48 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 40,
+  },
+  // 언어 선택 스타일
+  languageBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  languageBadgeText: {
+    fontSize: 16,
+  },
+  languageContainer: {
+    gap: 8,
+  },
+  languageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  languageOptionSelected: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#007AFF',
+  },
+  languageFlag: {
+    fontSize: 20,
+    marginRight: 12,
+  },
+  languageName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  languageNameSelected: {
+    color: '#007AFF',
+    fontWeight: '600',
   },
 }); 

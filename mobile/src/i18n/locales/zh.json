@@ -1,0 +1,194 @@
+{
+  "common": {
+    "loading": "加载中...",
+    "processing": "处理中...",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "edit": "编辑",
+    "delete": "删除",
+    "retry": "重试",
+    "close": "关闭",
+    "next": "下一步",
+    "previous": "上一步",
+    "done": "完成",
+    "error": "错误",
+    "success": "成功",
+    "warning": "警告",
+    "info": "信息"
+  },
+  "navigation": {
+    "home": "首页",
+    "payment": "支付",
+    "send": "转账",
+    "deposit": "充值",
+    "history": "历史",
+    "aiAssistant": "AI",
+    "profile": "个人资料",
+    "login": "登录",
+    "signUp": "注册"
+  },
+  "headers": {
+    "circlePay": "CirclePay Global",
+    "qrPayment": "二维码支付",
+    "crossChainSend": "跨链转账",
+    "usdcDeposit": "USDC充值",
+    "transactionHistory": "交易历史",
+    "aiAssistant": "AI助手",
+    "profileKyc": "个人资料与KYC"
+  },
+  "screens": {
+    "home": {
+      "welcome": "您好，{{name}}！👋",
+      "subtitle": "全球跨链支付已准备就绪",
+      "appTitle": "CirclePay Global",
+      "appSubtitle": "全球跨链USDC支付平台",
+      "features": {
+        "title": "主要功能",
+        "fastTransfer": "快速跨链转账",
+        "secureUsdc": "安全USDC交易",
+        "qrPayment": "二维码支付",
+        "simpleKyc": "简单KYC验证"
+      },
+      "auth": {
+        "getStarted": "开始使用",
+        "alreadyHaveAccount": "已有账户？"
+      },
+      "wallet": {
+        "totalBalance": "总余额",
+        "mainWallet": "主钱包",
+        "quickActions": "快速操作"
+      }
+    },
+    "login": {
+      "title": "登录",
+      "subtitle": "欢迎回到CirclePay Global",
+      "email": "邮箱地址",
+      "pin": "PIN码",
+      "biometric": "生物识别认证",
+      "forgotPin": "忘记PIN码？",
+      "loginSuccess": "登录成功！",
+      "loginFailed": "登录失败",
+      "welcome": "欢迎！",
+      "errorMessage": "登录时发生错误。"
+    },
+    "signUp": {
+      "title": "注册",
+      "subtitle": "加入CirclePay Global",
+      "firstName": "名",
+      "lastName": "姓",
+      "email": "邮箱",
+      "pin": "PIN码",
+      "confirmPin": "确认PIN码",
+      "phone": "电话号码",
+      "country": "国家",
+      "agreeTerms": "我同意服务条款",
+      "agreePrivacy": "我同意隐私政策"
+    },
+    "profile": {
+      "title": "个人资料与KYC",
+      "subtitle": "个人信息管理与身份验证",
+      "personalInfo": "个人信息",
+      "editProfile": "编辑个人资料",
+      "kycStatus": "KYC验证状态",
+      "documents": "已提交文件",
+      "loadingKyc": "正在加载KYC信息...",
+      "loadingProfile": "正在加载个人资料信息...",
+      "logout": "登出",
+      "riskScore": "风险评分：{{score}}%",
+      "language": "语言设置",
+      "selectLanguage": "选择语言"
+    },
+    "ai": {
+      "title": "AI助手",
+      "placeholder": "输入消息...",
+      "listeningIndicator": "正在听取...",
+      "sendMessage": "发送消息",
+      "voiceInput": "语音输入",
+      "speakResponse": "语音播放"
+    },
+    "settings": {
+      "title": "设置",
+      "account": "账户",
+      "security": "安全",
+      "notifications": "通知",
+      "autoConvert": "自动转换",
+      "autoConvertDesc": "支付时自动转换为USDC",
+      "language": "语言",
+      "theme": "主题",
+      "themeLight": "浅色模式",
+      "support": "支持",
+      "help": "帮助",
+      "helpDesc": "常见问题和使用指南",
+      "customerSupport": "客户支持",
+      "customerSupportDesc": "24小时聊天支持",
+      "terms": "服务条款",
+      "termsDesc": "服务条款和隐私政策",
+      "rateApp": "评价应用",
+      "rateAppDesc": "在App Store中评价我们"
+    }
+  },
+  "kyc": {
+    "status": {
+      "pending": "待处理",
+      "approved": "已批准",
+      "rejected": "已拒绝",
+      "review": "审核中"
+    },
+    "documentTypes": {
+      "passport": "护照",
+      "driverLicense": "驾驶执照",
+      "nationalId": "身份证",
+      "utilityBill": "水电费账单"
+    }
+  },
+  "transactions": {
+    "status": {
+      "pending": "待处理",
+      "completed": "已完成",
+      "failed": "失败",
+      "cancelled": "已取消"
+    },
+    "types": {
+      "send": "发送",
+      "receive": "接收",
+      "deposit": "存款",
+      "withdrawal": "提款",
+      "payment": "支付"
+    }
+  },
+  "security": {
+    "highAmount": {
+      "title": "大额转账确认",
+      "description": "{{amount}} USDC为大额转账。",
+      "warning": "{{amount}} USDC为大额转账。需要额外的安全验证。",
+      "recommendations": [
+        "请再次检查收款地址",
+        "重新确认转账目的和收款人",
+        "交易完成后无法撤销",
+        "如果确定，请说'确认大额转账'"
+      ]
+    },
+    "suspiciousAddress": {
+      "title": "地址安全警告",
+      "description": "此地址显示可疑模式。",
+      "warning": "警告：此地址显示可疑模式。",
+      "recommendations": [
+        "请再次检查地址",
+        "直接联系收款人重新确认地址",
+        "建议先进行小额测试转账"
+      ]
+    }
+  },
+  "languages": {
+    "korean": "한국어",
+    "english": "English",
+    "chinese": "中文",
+    "arabic": "العربية",
+    "french": "Français",
+    "german": "Deutsch",
+    "spanish": "Español",
+    "hindi": "हिन्दी",
+    "japanese": "日本語"
+  }
+}

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed, safeAdd } from '../utils/formatters';
 
@@ -28,6 +29,7 @@ if (Platform.OS !== 'web') {
 }
 
 export default function PaymentScreen() {
+  const { t } = useTranslation();
   const { state, createPayment } = useApp();
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
@@ -81,10 +83,10 @@ export default function PaymentScreen() {
           qrCodeId,
         });
       } else {
-        Alert.alert('오류', '유효하지 않은 QR 코드입니다.');
+        Alert.alert(t('common.error'), t('common.invalidQRCode', { defaultValue: '유효하지 않은 QR 코드입니다.' }));
       }
     } catch (error) {
-      Alert.alert('오류', 'QR 코드를 읽을 수 없습니다.');
+      Alert.alert(t('common.error'), t('common.cannotReadQR', { defaultValue: 'QR 코드를 읽을 수 없습니다.' }));
     }
   };
 
@@ -102,12 +104,12 @@ export default function PaymentScreen() {
       });
 
       Alert.alert(
-        '결제 완료!',
-        `$${payment.amount} USDC가 ${payment.merchantName}에 결제되었습니다.\n\n예상 완료 시간: ${result.estimatedCompletionTime}`,
+        t('common.paymentComplete', { defaultValue: '결제 완료!' }),
+        t('common.paymentSuccess', { amount: payment.amount, merchant: payment.merchantName, time: result.estimatedCompletionTime, defaultValue: `$${payment.amount} USDC가 ${payment.merchantName}에 결제되었습니다.\n\n예상 완료 시간: ${result.estimatedCompletionTime}` }),
         [{ text: '확인', onPress: () => setScanned(false) }]
       );
     } catch (error) {
-      Alert.alert('결제 실패', '결제 처리 중 오류가 발생했습니다.');
+      Alert.alert(t('common.paymentFailed', { defaultValue: '결제 실패' }), t('common.paymentError', { defaultValue: '결제 처리 중 오류가 발생했습니다.' }));
     } finally {
       setIsProcessing(false);
     }
@@ -116,7 +118,7 @@ export default function PaymentScreen() {
   // 수동 결제 처리
   const handleManualPayment = async () => {
     if (!paymentData.amount || !paymentData.merchantName) {
-      Alert.alert('오류', '금액과 가맹점명을 입력해주세요.');
+      Alert.alert(t('common.error'), t('common.enterAmountAndMerchant', { defaultValue: '금액과 가맹점명을 입력해주세요.' }));
       return;
     }
 
@@ -134,7 +136,7 @@ export default function PaymentScreen() {
   if (hasPermission === null) {
     return (
       <View style={styles.container}>
-        <Text>카메라 권한을 요청 중입니다...</Text>
+        <Text>{t('common.requestingPermission', { defaultValue: '카메라 권한을 요청 중입니다...' })}</Text>
       </View>
     );
   }
@@ -145,7 +147,7 @@ export default function PaymentScreen() {
       <View style={styles.container}>
         <View style={styles.permissionContainer}>
           <Ionicons name="camera-outline" size={64} color="#CCC" />
-          <Text style={styles.permissionTitle}>카메라 권한이 필요합니다</Text>
+          <Text style={styles.permissionTitle}>{t('common.cameraPermissionNeeded', { defaultValue: '카메라 권한이 필요합니다' })}</Text>
           <Text style={styles.permissionText}>
             QR 코드를 스캔하여 결제하려면 카메라 권한을 허용해주세요.
           </Text>
@@ -153,7 +155,7 @@ export default function PaymentScreen() {
             style={styles.permissionButton}
             onPress={() => BarCodeScanner?.requestPermissionsAsync()}
           >
-            <Text style={styles.permissionButtonText}>권한 허용</Text>
+            <Text style={styles.permissionButtonText}>{t('common.allowPermission', { defaultValue: '권한 허용' })}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -165,8 +167,8 @@ export default function PaymentScreen() {
       {/* 메인 컨텐츠 */}
       <View style={styles.mainContent}>
         <View style={styles.header}>
-          <Text style={styles.title}>간편 결제</Text>
-          <Text style={styles.subtitle}>QR 코드를 스캔하거나 수동으로 결제하세요</Text>
+          <Text style={styles.title}>{t('headers.qrPayment')}</Text>
+          <Text style={styles.subtitle}>{t('common.scanOrManualPayment', { defaultValue: 'QR 코드를 스캔하거나 수동으로 결제하세요' })}</Text>
         </View>
 
         {/* 총 잔액 표시 */}
@@ -174,7 +176,7 @@ export default function PaymentScreen() {
           colors={['#28A745', '#20C997']}
           style={styles.balanceCard}
         >
-          <Text style={styles.balanceLabel}>사용 가능 잔액</Text>
+          <Text style={styles.balanceLabel}>{t('common.availableBalance', { defaultValue: '사용 가능 잔액' })}</Text>
           <Text style={styles.balanceAmount}>
             ${safeToFixed(state.wallets.reduce((sum, w) => safeAdd(sum, w.usdcBalance), 0), 2)} USDC
           </Text>
@@ -187,8 +189,8 @@ export default function PaymentScreen() {
             onPress={() => {
               if (Platform.OS === 'web') {
                 Alert.alert(
-                  '기능 제한',
-                  'QR 스캔 기능은 모바일 앱에서만 사용할 수 있습니다.\n수동 결제를 이용해주세요.',
+                  t('common.featureLimitation', { defaultValue: '기능 제한' }),
+                  t('common.qrMobileOnly', { defaultValue: 'QR 스캔 기능은 모바일 앱에서만 사용할 수 있습니다.\n수동 결제를 이용해주세요.' }),
                   [{ text: '확인' }]
                 );
               } else {
@@ -201,7 +203,7 @@ export default function PaymentScreen() {
               style={styles.optionGradient}
             >
               <Ionicons name="qr-code-outline" size={48} color="white" />
-              <Text style={styles.optionTitle}>QR 스캔</Text>
+              <Text style={styles.optionTitle}>{t('common.qrScan', { defaultValue: 'QR 스캔' })}</Text>
               <Text style={styles.optionSubtitle}>
                 {Platform.OS === 'web' ? '모바일에서만 사용 가능' : '매장의 QR 코드를 스캔하세요'}
               </Text>
@@ -217,15 +219,15 @@ export default function PaymentScreen() {
               style={styles.optionGradient}
             >
               <Ionicons name="card-outline" size={48} color="white" />
-              <Text style={styles.optionTitle}>수동 결제</Text>
-              <Text style={styles.optionSubtitle}>금액을 직접 입력하세요</Text>
+              <Text style={styles.optionTitle}>{t('common.manualPayment', { defaultValue: '수동 결제' })}</Text>
+              <Text style={styles.optionSubtitle}>{t('common.enterAmountManually', { defaultValue: '금액을 직접 입력하세요' })}</Text>
             </LinearGradient>
           </TouchableOpacity>
         </View>
 
         {/* 최근 결제 내역 */}
         <View style={styles.recentPayments}>
-          <Text style={styles.sectionTitle}>최근 결제</Text>
+          <Text style={styles.sectionTitle}>{t('common.recentPayments', { defaultValue: '최근 결제' })}</Text>
           {state.transactions.filter(t => t.type === 'payment').slice(0, 3).map((payment, index) => (
             <View key={`payment-${payment.transactionId}-${index}`} style={styles.paymentItem}>
               <View style={styles.paymentIcon}>
@@ -258,7 +260,7 @@ export default function PaymentScreen() {
             >
               <Ionicons name="close" size={24} color="white" />
             </TouchableOpacity>
-            <Text style={styles.scannerTitle}>QR 코드 스캔</Text>
+            <Text style={styles.scannerTitle}>{t('common.qrScan')}</Text>
           </View>
           
           {Platform.OS !== 'web' && BarCodeScanner ? (
@@ -294,7 +296,7 @@ export default function PaymentScreen() {
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>수동 결제</Text>
+              <Text style={styles.modalTitle}>{t('common.manualPayment')}</Text>
               <TouchableOpacity onPress={() => setShowManualPayment(false)}>
                 <Ionicons name="close" size={24} color="#666" />
               </TouchableOpacity>
@@ -302,7 +304,7 @@ export default function PaymentScreen() {
 
             <View style={styles.form}>
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>결제 금액 (USDC)</Text>
+                <Text style={styles.inputLabel}>{t('common.paymentAmount', { defaultValue: '결제 금액 (USDC)' })}</Text>
                 <TextInput
                   style={styles.input}
                   value={paymentData.amount}
@@ -313,7 +315,7 @@ export default function PaymentScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>가맹점명</Text>
+                <Text style={styles.inputLabel}>{t('common.merchantName', { defaultValue: '가맹점명' })}</Text>
                 <TextInput
                   style={styles.input}
                   value={paymentData.merchantName}
@@ -323,7 +325,7 @@ export default function PaymentScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>메모 (선택사항)</Text>
+                <Text style={styles.inputLabel}>{t('common.memo', { defaultValue: '메모 (선택사항)' })}</Text>
                 <TextInput
                   style={styles.input}
                   value={paymentData.description}
@@ -340,7 +342,7 @@ export default function PaymentScreen() {
                 {isProcessing ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text style={styles.payButtonText}>결제하기</Text>
+                  <Text style={styles.payButtonText}>{t('common.pay', { defaultValue: '결제하기' })}</Text>
                 )}
               </TouchableOpacity>
             </View>

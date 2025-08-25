@@ -8,6 +8,7 @@ import { biometricAuthManager } from '../utils/biometricAuth';
 import { networkService, NetworkState } from '../services/networkService';
 import { offlineStorage } from '../services/offlineStorage';
 import { syncService, SyncResult } from '../services/syncService';
+import i18n from '../i18n';
 
 // 액션 타입 정의
 type AppAction =
@@ -21,6 +22,7 @@ type AppAction =
   | { type: 'UPDATE_WALLET_BALANCE'; payload: { walletId: string; balance: number } }
   | { type: 'SET_AUTHENTICATED'; payload: boolean }
   | { type: 'SET_ACCESS_TOKEN'; payload: string | null }
+  | { type: 'SET_LANGUAGE'; payload: string }
   | { type: 'SHOW_TOKEN_EXPIRED_MODAL'; payload: { reason: 'expired' | 'invalid' | 'network' | 'unknown'; autoRetryCount: number } }
   | { type: 'HIDE_TOKEN_EXPIRED_MODAL' }
   | { type: 'SET_NETWORK_STATE'; payload: NetworkState }
@@ -37,6 +39,7 @@ const initialState: AppState = {
   error: null,
   isAuthenticated: false,
   accessToken: null,
+  currentLanguage: 'ko', // 기본값 한국어
   tokenExpiredModal: {
     visible: false,
     reason: 'expired',
@@ -83,6 +86,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, isAuthenticated: action.payload };
     case 'SET_ACCESS_TOKEN':
       return { ...state, accessToken: action.payload };
+    case 'SET_LANGUAGE':
+      return { ...state, currentLanguage: action.payload };
     case 'SHOW_TOKEN_EXPIRED_MODAL':
       return {
         ...state,
@@ -166,6 +171,11 @@ interface AppContextType {
   
   // 동기화 관련
   requestSync: () => Promise<void>;
+  
+  // 언어 관련
+  changeLanguage: (languageCode: string) => Promise<void>;
+  isRTL: (languageCode?: string) => boolean;
+  getRTLStyle: (languageCode?: string) => any;
 }
 
 // 컨텍스트 생성
@@ -821,6 +831,46 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
 
+  // 언어 변경 함수
+  const changeLanguage = async (languageCode: string): Promise<void> => {
+    try {
+      console.log(`🌍 언어 변경 시작: ${state.currentLanguage} -> ${languageCode}`);
+      
+      // AsyncStorage에 언어 설정 저장 (biometricAuth.ts 패턴 준수)
+      await AsyncStorage.setItem('user_language', languageCode);
+      console.log('💾 AsyncStorage에 언어 설정 저장 완료');
+      
+      // i18n 언어 변경
+      await i18n.changeLanguage(languageCode);
+      console.log('🔄 i18n 언어 변경 완료');
+      
+      // 상태 업데이트
+      dispatch({ type: 'SET_LANGUAGE', payload: languageCode });
+      console.log('✅ 언어 변경 완료:', languageCode);
+      
+    } catch (error) {
+      console.error('❌ 언어 변경 실패:', error);
+      dispatch({ type: 'SET_ERROR', payload: '언어 변경에 실패했습니다' });
+      throw error;
+    }
+  };
+
+  // RTL 언어 감지 함수
+  const isRTL = (languageCode?: string): boolean => {
+    const rtlLanguages = ['ar', 'he', 'fa']; // 아랍어, 히브리어, 페르시아어
+    return rtlLanguages.includes(languageCode || state.currentLanguage);
+  };
+
+  // RTL 스타일 헬퍼 함수
+  const getRTLStyle = (languageCode?: string) => {
+    const isRightToLeft = isRTL(languageCode);
+    return {
+      flexDirection: isRightToLeft ? 'row-reverse' : 'row',
+      textAlign: isRightToLeft ? 'right' : 'left',
+      writingDirection: isRightToLeft ? 'rtl' : 'ltr',
+    };
+  };
+
   // 네트워크 상태 모니터링
   useEffect(() => {
     const unsubscribe = networkService.addListener((networkState: NetworkState) => {
@@ -841,8 +891,28 @@ export function AppProvider({ children }: AppProviderProps) {
     return unsubscribe;
   }, [state.offlineModal.hasShownOnce, state.offlineModal.visible]);
 
+  // 저장된 언어 설정 로드
+  const loadSavedLanguage = async () => {
+    try {
+      const savedLanguage = await AsyncStorage.getItem('user_language');
+      if (savedLanguage) {
+        console.log('💾 저장된 언어 설정 발견:', savedLanguage);
+        await i18n.changeLanguage(savedLanguage);
+        dispatch({ type: 'SET_LANGUAGE', payload: savedLanguage });
+        console.log('✅ 저장된 언어 설정 적용 완료');
+      } else {
+        console.log('📱 저장된 언어 설정 없음, 기본값(ko) 사용');
+      }
+    } catch (error) {
+      console.error('❌ 언어 설정 로드 실패:', error);
+    }
+  };
+
   // 앱 시작 시 초기 데이터 로드
   useEffect(() => {
+    // 언어 설정을 가장 먼저 로드
+    loadSavedLanguage();
+    
     checkAuthStatus();
     
     // 지원 체인 로드
@@ -887,6 +957,9 @@ export function AppProvider({ children }: AppProviderProps) {
     showOfflineModal,
     hideOfflineModal,
     requestSync,
+    changeLanguage,
+    isRTL,
+    getRTLStyle,
   };
 
   return (

@@ -11,10 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed, safeAdd } from '../utils/formatters';
 
 export default function SendScreen() {
+  const { t } = useTranslation();
   const { state, createTransfer } = useApp();
   const [sendData, setSendData] = useState({
     amount: '',
@@ -32,23 +34,23 @@ export default function SendScreen() {
   // 송금 처리
   const handleSend = async () => {
     if (!sendData.amount || !sendData.targetAddress || !selectedSourceWallet) {
-      Alert.alert('오류', '모든 필수 항목을 입력해주세요.');
+      Alert.alert(t('common.error'), t('common.fillAllRequired', { defaultValue: '모든 필수 항목을 입력해주세요.' }));
       return;
     }
 
     if (parseFloat(sendData.amount) <= 0) {
-      Alert.alert('오류', '유효한 금액을 입력해주세요.');
+      Alert.alert(t('common.error'), t('common.enterValidAmount', { defaultValue: '유효한 금액을 입력해주세요.' }));
       return;
     }
 
     const sourceWallet = state.wallets.find(w => w.walletId === selectedSourceWallet);
     if (!sourceWallet) {
-      Alert.alert('오류', '출금 지갑을 선택해주세요.');
+      Alert.alert(t('common.error'), t('common.selectSourceWallet'));
       return;
     }
 
     if (parseFloat(sendData.amount) > sourceWallet.usdcBalance) {
-      Alert.alert('오류', '잔액이 부족합니다.');
+      Alert.alert(t('common.error'), t('common.insufficientBalance', { defaultValue: '잔액이 부족합니다.' }));
       return;
     }
 
@@ -65,7 +67,7 @@ export default function SendScreen() {
       });
 
       Alert.alert(
-        '송금 완료!',
+        t('common.transferComplete', { defaultValue: '송금 완료!' }),
         `$${sendData.amount} USDC가 성공적으로 전송되었습니다.\n\n예상 완료 시간: ${result.estimatedCompletionTime}`,
         [
           {
@@ -84,7 +86,7 @@ export default function SendScreen() {
         ]
       );
     } catch (error) {
-      Alert.alert('송금 실패', '송금 처리 중 오류가 발생했습니다.');
+      Alert.alert(t('common.transferFailed', { defaultValue: '송금 실패' }), t('common.transferError', { defaultValue: '송금 처리 중 오류가 발생했습니다.' }));
     } finally {
       setIsProcessing(false);
     }
@@ -94,8 +96,8 @@ export default function SendScreen() {
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.title}>크로스체인 송금</Text>
-        <Text style={styles.subtitle}>안전하고 빠른 글로벌 송금 서비스</Text>
+        <Text style={styles.title}>{t('headers.crossChainSend')}</Text>
+        <Text style={styles.subtitle}>{t('common.safeAndFastGlobalTransfer', { defaultValue: '안전하고 빠른 글로벌 송금 서비스' })}</Text>
       </View>
 
       {/* 총 잔액 카드 */}
@@ -103,16 +105,16 @@ export default function SendScreen() {
         colors={['#FD7E14', '#FF6B35']}
         style={styles.balanceCard}
       >
-        <Text style={styles.balanceLabel}>총 사용 가능 금액</Text>
+        <Text style={styles.balanceLabel}>{t('common.totalAvailableAmount', { defaultValue: '총 사용 가능 금액' })}</Text>
         <Text style={styles.balanceAmount}>${safeToFixed(totalBalance)} USDC</Text>
-        <Text style={styles.balanceNote}>모든 체인의 USDC 잔액 합계</Text>
+        <Text style={styles.balanceNote}>{t('common.allChainUsdcSum', { defaultValue: '모든 체인의 USDC 잔액 합계' })}</Text>
       </LinearGradient>
 
       {/* 송금 폼 */}
       <View style={styles.formContainer}>
         {/* 출금 지갑 선택 */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>출금 지갑 선택</Text>
+          <Text style={styles.inputLabel}>{t('common.selectSourceWallet', { defaultValue: '출금 지갑 선택' })}</Text>
           <View style={styles.walletSelector}>
             {state.wallets.map((wallet, index) => (
               <TouchableOpacity
@@ -147,7 +149,7 @@ export default function SendScreen() {
 
         {/* 수신자 주소 */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>수신자 주소</Text>
+          <Text style={styles.inputLabel}>{t('common.recipientAddress', { defaultValue: '수신자 주소' })}</Text>
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
@@ -167,7 +169,7 @@ export default function SendScreen() {
 
         {/* 송금 금액 */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>송금 금액</Text>
+          <Text style={styles.inputLabel}>{t('common.transferAmount', { defaultValue: '송금 금액' })}</Text>
           <View style={styles.amountContainer}>
             <TextInput
               style={styles.amountInput}
@@ -198,7 +200,7 @@ export default function SendScreen() {
 
         {/* 목적지 체인 (옵션) */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>목적지 체인 (선택사항)</Text>
+          <Text style={styles.inputLabel}>{t('common.destinationChain', { defaultValue: '목적지 체인 (선택사항)' })}</Text>
           <View style={styles.chainSelector}>
             {state.supportedChains.map((chain, index) => (
               <TouchableOpacity
@@ -225,7 +227,7 @@ export default function SendScreen() {
 
         {/* 메모 */}
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>메모 (선택사항)</Text>
+          <Text style={styles.inputLabel}>{t('common.memo')}</Text>
           <TextInput
             style={[styles.input, styles.memoInput]}
             value={sendData.notes}
@@ -240,19 +242,19 @@ export default function SendScreen() {
         {/* 수수료 정보 */}
         <View style={styles.feeInfo}>
           <View style={styles.feeRow}>
-            <Text style={styles.feeLabel}>예상 가스비</Text>
+            <Text style={styles.feeLabel}>{t('common.estimatedGasFee', { defaultValue: '예상 가스비' })}</Text>
             <Text style={styles.feeValue}>$2.50</Text>
           </View>
           <View style={styles.feeRow}>
-            <Text style={styles.feeLabel}>브리지 수수료</Text>
+            <Text style={styles.feeLabel}>{t('common.bridgeFee', { defaultValue: '브리지 수수료' })}</Text>
             <Text style={styles.feeValue}>$0.50</Text>
           </View>
           <View style={styles.feeRow}>
-            <Text style={styles.feeLabel}>서비스 수수료</Text>
+            <Text style={styles.feeLabel}>{t('common.serviceFee', { defaultValue: '서비스 수수료' })}</Text>
             <Text style={styles.feeValue}>$1.00</Text>
           </View>
           <View style={[styles.feeRow, styles.totalFeeRow]}>
-            <Text style={styles.totalFeeLabel}>총 수수료</Text>
+            <Text style={styles.totalFeeLabel}>{t('common.totalFee', { defaultValue: '총 수수료' })}</Text>
             <Text style={styles.totalFeeValue}>$4.00</Text>
           </View>
         </View>
@@ -275,7 +277,7 @@ export default function SendScreen() {
             ) : (
               <>
                 <Ionicons name="send" size={20} color="white" />
-                <Text style={styles.sendButtonText}>송금하기</Text>
+                <Text style={styles.sendButtonText}>{t('common.send', { defaultValue: '송금하기' })}</Text>
               </>
             )}
           </LinearGradient>
@@ -283,7 +285,7 @@ export default function SendScreen() {
 
         {/* 최근 송금 내역 */}
         <View style={styles.recentTransfers}>
-          <Text style={styles.sectionTitle}>최근 송금</Text>
+          <Text style={styles.sectionTitle}>{t('common.recentTransfers', { defaultValue: '최근 송금' })}</Text>
           {state.transactions.filter(t => t.type === 'transfer').slice(0, 3).map((transfer, index) => (
             <View key={`transfer-${transfer.transactionId}-${index}`} style={styles.transferItem}>
               <View style={styles.transferIcon}>

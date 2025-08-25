@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 
 interface SecurityConfirmModalProps {
   visible: boolean;
@@ -41,6 +42,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
   securityLevel,
   data
 }) => {
+  const { t } = useTranslation();
   const [acknowledged, setAcknowledged] = useState(false);
   const [step, setStep] = useState(1);
   const maxSteps = securityLevel === 'high_amount' ? 3 : 2;
@@ -51,32 +53,32 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
         return {
           icon: 'warning-outline',
           color: '#FF9500',
-          title: '고액 송금 확인',
-          description: `${data.amount} USDC는 고액 송금입니다.`,
+          title: t('security.highAmount.title', { defaultValue: '고액 송금 확인' }),
+          description: t('security.highAmount.description', { amount: data.amount, defaultValue: `${data.amount} USDC는 고액 송금입니다.` }),
           bgColor: '#FFF3E0'
         };
       case 'suspicious_address':
         return {
           icon: 'shield-outline',
           color: '#FF3B30',
-          title: '주소 보안 경고',
-          description: '이 주소는 의심스러운 패턴을 보입니다.',
+          title: t('security.suspiciousAddress.title', { defaultValue: '주소 보안 경고' }),
+          description: t('security.suspiciousAddress.description', { defaultValue: '이 주소는 의심스러운 패턴을 보입니다.' }),
           bgColor: '#FFEBEE'
         };
       case 'compliance_failed':
         return {
           icon: 'ban-outline',
           color: '#DC3545',
-          title: '컴플라이언스 검사 실패',
-          description: '이 거래는 보안 정책에 위배됩니다.',
+          title: t('security.complianceFailed.title', { defaultValue: '컴플라이언스 검사 실패' }),
+          description: t('security.complianceFailed.description', { defaultValue: '이 거래는 보안 정책에 위배됩니다.' }),
           bgColor: '#F8D7DA'
         };
       default:
         return {
           icon: 'information-circle-outline',
           color: '#007AFF',
-          title: '보안 확인',
-          description: '추가 보안 확인이 필요합니다.',
+          title: t('security.additional.title', { defaultValue: '보안 확인' }),
+          description: t('security.additional.description', { defaultValue: '추가 보안 확인이 필요합니다.' }),
           bgColor: '#E3F2FD'
         };
     }
@@ -95,18 +97,18 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
   const handleConfirm = () => {
     if (!acknowledged) {
       Alert.alert(
-        '확인 필요',
-        '위험을 이해했다는 확인이 필요합니다.',
-        [{ text: '확인', style: 'default' }]
+        t('security.confirmRequired', { defaultValue: '확인 필요' }),
+        t('security.riskAcknowledgmentRequired', { defaultValue: '위험을 이해했다는 확인이 필요합니다.' }),
+        [{ text: t('common.confirm'), style: 'default' }]
       );
       return;
     }
 
     if (securityLevel === 'compliance_failed') {
       Alert.alert(
-        '거래 불가',
-        '컴플라이언스 검사에 실패한 거래는 진행할 수 없습니다.',
-        [{ text: '확인', onPress: onClose }]
+        t('security.transactionBlocked', { defaultValue: '거래 불가' }),
+        t('security.complianceBlockedMessage', { defaultValue: '컴플라이언스 검사에 실패한 거래는 진행할 수 없습니다.' }),
+        [{ text: t('common.confirm'), onPress: onClose }]
       );
       return;
     }
@@ -121,7 +123,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
       case 1:
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>1단계: 정보 확인</Text>
+            <Text style={styles.stepTitle}>{t('security.steps.step1', { defaultValue: '1단계: 정보 확인' })}</Text>
             
             {securityLevel === 'high_amount' && (
               <View style={styles.infoBox}>
@@ -157,7 +159,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
       case 2:
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>2단계: 보안 가이드</Text>
+            <Text style={styles.stepTitle}>{t('security.steps.step2', { defaultValue: '2단계: 보안 가이드' })}</Text>
             
             {data.recommendations && (
               <View style={styles.recommendationsBox}>
@@ -183,7 +185,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
       case 3:
         return (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>3단계: 최종 확인</Text>
+            <Text style={styles.stepTitle}>{t('security.steps.step3', { defaultValue: '3단계: 최종 확인' })}</Text>
             
             <View style={styles.finalConfirmBox}>
               <Ionicons name="shield-checkmark" size={48} color="#34C759" />
@@ -203,7 +205,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
                 color={acknowledged ? "#007AFF" : "#999"} 
               />
               <Text style={styles.checkboxText}>
-                위험을 이해했으며 거래를 진행하겠습니다
+                {t('security.riskAcknowledgment', { defaultValue: '위험을 이해했으며 거래를 진행하겠습니다' })}
               </Text>
             </TouchableOpacity>
           </View>
@@ -266,7 +268,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
           {/* 액션 버튼들 */}
           <View style={styles.actions}>
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>취소</Text>
+              <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -288,7 +290,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
                 style={styles.nextButtonGradient}
               >
                 <Text style={styles.nextButtonText}>
-                  {step === maxSteps ? '확인하고 진행' : '다음'}
+                  {step === maxSteps ? t('security.confirmAndProceed', { defaultValue: '확인하고 진행' }) : t('common.next', { defaultValue: '다음' })}
                 </Text>
                 <Ionicons 
                   name={step === maxSteps ? "checkmark" : "chevron-forward"} 

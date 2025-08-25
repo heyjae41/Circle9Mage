@@ -94,6 +94,7 @@ export interface AppState {
   error: string | null;
   isAuthenticated: boolean;
   accessToken: string | null;
+  currentLanguage: string;
   
   // 토큰 만료 모달 상태
   tokenExpiredModal: {
@@ -130,6 +131,7 @@ export interface AIChatRequest {
   message: string;
   userId: string;
   sessionId?: string;
+  language?: string;
 }
 
 export interface AIChatResponse {

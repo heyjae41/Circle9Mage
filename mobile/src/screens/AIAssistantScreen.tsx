@@ -16,12 +16,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { ChatMessage } from '../types';
 import { aiService } from '../services/aiService';
 
 export default function AIAssistantScreen() {
-  const { state } = useApp();
+  const { t } = useTranslation();
+  const { state, isRTL, getRTLStyle } = useApp();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -65,11 +67,12 @@ export default function AIAssistantScreen() {
           const errorMessage: ChatMessage = {
             id: (Date.now() + 1).toString(),
             type: 'system',
-            content: `죄송합니다. ${error}`,
+            content: `${t('common.sorry', { defaultValue: '죄송합니다' })}. ${error}`,
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, errorMessage]);
-        }
+        },
+        state.currentLanguage // 현재 언어 전달
       );
 
       if (response) {
@@ -95,7 +98,7 @@ export default function AIAssistantScreen() {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         type: 'system',
-        content: '죄송합니다. 네트워크 연결을 확인하고 다시 시도해 주세요.',
+        content: t('common.networkError', { defaultValue: '죄송합니다. 네트워크 연결을 확인하고 다시 시도해 주세요.' }),
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -158,7 +161,7 @@ export default function AIAssistantScreen() {
       
       // 실제 음성 인식은 복잡하므로, 여기서는 시연용으로 간단한 처리
       // 실제 구현시에는 Google Speech-to-Text API나 다른 서비스 필요
-      setInputText('음성으로 입력된 메시지입니다. (음성 인식 기능 개발 중)');
+      setInputText(t('common.voiceInputPlaceholder', { defaultValue: '음성으로 입력된 메시지입니다. (음성 인식 기능 개발 중)' }));
       
       Alert.alert(
         '음성 입력 완료', 
@@ -181,8 +184,24 @@ export default function AIAssistantScreen() {
   const speakText = async (text: string) => {
     try {
       console.log('🔊 TTS 시작:', text.substring(0, 50));
+      // 현재 언어에 맞는 TTS 언어 설정
+      const getTTSLanguage = (lang: string) => {
+        switch (lang) {
+          case 'ko': return 'ko-KR';
+          case 'en': return 'en-US';
+          case 'zh': return 'zh-CN';
+          case 'ar': return 'ar-SA';
+          case 'fr': return 'fr-FR';
+          case 'de': return 'de-DE';
+          case 'es': return 'es-ES';
+          case 'hi': return 'hi-IN';
+          case 'ja': return 'ja-JP';
+          default: return 'ko-KR';
+        }
+      };
+
       await Speech.speak(text, {
-        language: 'ko-KR',
+        language: getTTSLanguage(state.currentLanguage || 'ko'),
         pitch: 1.0,
         rate: 0.9,
       });
@@ -261,6 +280,7 @@ export default function AIAssistantScreen() {
   const renderMessage = (message: ChatMessage) => {
     const isUser = message.type === 'user';
     const isSystem = message.type === 'system';
+    const isRightToLeft = isRTL();
 
     return (
       <View
@@ -268,6 +288,7 @@ export default function AIAssistantScreen() {
         style={[
           styles.messageContainer,
           isUser ? styles.userMessageContainer : styles.aiMessageContainer,
+          isRightToLeft && { flexDirection: 'row-reverse' }
         ]}
       >
         <View
@@ -280,6 +301,7 @@ export default function AIAssistantScreen() {
             style={[
               styles.messageText,
               isUser ? styles.userMessageText : styles.aiMessageText,
+              { textAlign: isRightToLeft ? 'right' : 'left' }
             ]}
           >
             {message.content}
@@ -291,7 +313,7 @@ export default function AIAssistantScreen() {
                 isUser ? styles.userMessageTime : styles.aiMessageTime,
               ]}
             >
-              {message.timestamp.toLocaleTimeString('ko-KR', {
+              {message.timestamp.toLocaleTimeString(state.currentLanguage || 'ko-KR', {
                 hour: '2-digit',
                 minute: '2-digit',
               })}
@@ -321,7 +343,7 @@ export default function AIAssistantScreen() {
         {/* 헤더 영역 */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.headerTitle}>AI 어시스턴트</Text>
+            <Text style={styles.headerTitle}>{t('headers.aiAssistant')}</Text>
             <Text style={styles.headerSubtitle}>
               {aiService.getCurrentSessionId() ? '채팅 중' : '새 세션'}
             </Text>
@@ -331,7 +353,7 @@ export default function AIAssistantScreen() {
             onPress={startNewSession}
           >
             <Ionicons name="add-circle-outline" size={24} color="#007AFF" />
-            <Text style={styles.newSessionText}>새 채팅</Text>
+            <Text style={styles.newSessionText}>{t('common.newChat', { defaultValue: '새 채팅' })}</Text>
           </TouchableOpacity>
         </View>
 
@@ -350,20 +372,20 @@ export default function AIAssistantScreen() {
             <View style={styles.typingContainer}>
               <View style={styles.typingBubble}>
                 <ActivityIndicator size="small" color="#007AFF" />
-                <Text style={styles.typingText}>AI가 답변을 준비 중입니다...</Text>
+                <Text style={styles.typingText}>{t('common.aiTyping', { defaultValue: 'AI가 답변을 준비 중입니다...' })}</Text>
               </View>
             </View>
           )}
         </ScrollView>
 
         {/* 입력 영역 */}
-        <View style={styles.inputContainer}>
+        <View style={[styles.inputContainer, isRTL() && { flexDirection: 'row-reverse' }]}>
           <View style={styles.inputWrapper}>
             <TextInput
-              style={styles.textInput}
+              style={[styles.textInput, { textAlign: isRTL() ? 'right' : 'left' }]}
               value={inputText}
               onChangeText={setInputText}
-              placeholder="메시지를 입력하세요..."
+              placeholder={t('common.typeMessage', { defaultValue: '메시지를 입력하세요...' })}
               placeholderTextColor="#999"
               multiline
               maxLength={500}

@@ -11,11 +11,13 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { Transaction } from '../types';
 import { safeToFixed } from '../utils/formatters';
 
 export default function HistoryScreen() {
+  const { t } = useTranslation();
   const { state, loadTransactions } = useApp();
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'payment' | 'transfer' | 'deposit' | 'received'>('all');
@@ -86,7 +88,7 @@ export default function HistoryScreen() {
       return (
         <View style={styles.syncStatusContainer}>
           <ActivityIndicator size="small" color="#007AFF" />
-          <Text style={styles.syncStatusText}>거래 내역 동기화 중...</Text>
+          <Text style={styles.syncStatusText}>{t('common.syncingTransactions', { defaultValue: '거래 내역 동기화 중...' })}</Text>
         </View>
       );
     }
@@ -148,33 +150,35 @@ export default function HistoryScreen() {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'completed':
-        return '완료';
+        return t('transactions.status.completed');
       case 'pending':
-        return '진행중';
+        return t('transactions.status.pending');
       case 'failed':
-        return '실패';
+        return t('transactions.status.failed');
+      case 'cancelled':
+        return t('transactions.status.cancelled');
       default:
-        return '알 수 없음';
+        return t('common.unknown', { defaultValue: '알 수 없음' });
     }
   };
 
-  // 거래 타입별 한글 표시
+  // 거래 타입별 다국어 표시
   const getTransactionTypeText = (type: string) => {
     switch (type) {
       case 'payment':
-        return '결제';
+        return t('transactions.types.payment');
       case 'sent':
-        return '송금';
+        return t('transactions.types.send');
       case 'received':
-        return '입금';
+        return t('transactions.types.receive');
       case 'transfer':
-        return '송금';
+        return t('transactions.types.send');
       case 'withdrawal':
-        return '출금';
+        return t('transactions.types.withdrawal');
       case 'deposit':
-        return '입금';
+        return t('transactions.types.deposit');
       default:
-        return '거래';
+        return t('common.transaction', { defaultValue: '거래' });
     }
   };
 
@@ -225,12 +229,12 @@ export default function HistoryScreen() {
           
           <View style={styles.transactionFooter}>
             <Text style={styles.transactionDate}>
-              {item.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR') : '날짜 정보 없음'}
+              {item.createdAt ? new Date(item.createdAt).toLocaleString(state.currentLanguage || 'ko-KR') : t('common.noDateInfo', { defaultValue: '날짜 정보 없음' })}
             </Text>
             {item.transactionHash && (
               <TouchableOpacity style={styles.hashButton}>
                 <Ionicons name="link-outline" size={12} color="#007AFF" />
-                <Text style={styles.hashText}>트랜잭션 보기</Text>
+                <Text style={styles.hashText}>{t('common.viewTransaction', { defaultValue: '트랜잭션 보기' })}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -249,7 +253,7 @@ export default function HistoryScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Ionicons name="receipt-outline" size={64} color="#CCC" />
-      <Text style={styles.emptyStateTitle}>거래 내역이 없습니다</Text>
+      <Text style={styles.emptyStateTitle}>{t('common.noTransactionHistory', { defaultValue: '거래 내역이 없습니다' })}</Text>
       <Text style={styles.emptyStateText}>
         {filter === 'all' ? 
           '아직 거래 내역이 없습니다.\n아래로 당겨서 새로고침하거나\n첫 번째 결제나 송금을 시작해보세요!' :
@@ -261,7 +265,7 @@ export default function HistoryScreen() {
       </Text>
       <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
         <Ionicons name="refresh" size={16} color="#007AFF" />
-        <Text style={styles.refreshButtonText}>새로고침</Text>
+        <Text style={styles.refreshButtonText}>{t('common.refresh', { defaultValue: '새로고침' })}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -271,7 +275,7 @@ export default function HistoryScreen() {
       {/* 헤더 */}
       <View style={styles.header}>
         <View>
-          <Text style={styles.title}>거래 내역</Text>
+          <Text style={styles.title}>{t('headers.transactionHistory')}</Text>
           <Text style={styles.subtitle}>
             총 {filteredTransactions.length}건의 거래
           </Text>
@@ -342,7 +346,7 @@ export default function HistoryScreen() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>이번 달 지출</Text>
+              <Text style={styles.summaryLabel}>{t('common.thisMonthSpending', { defaultValue: '이번 달 지출' })}</Text>
               <Text style={styles.summaryValue}>
                 ${safeToFixed(filteredTransactions
                   .filter(t => t.type === 'payment' && new Date(t.createdAt).getMonth() === new Date().getMonth())
@@ -353,7 +357,7 @@ export default function HistoryScreen() {
             <View style={styles.summaryDivider} />
             
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>이번 달 송금</Text>
+              <Text style={styles.summaryLabel}>{t('common.thisMonthSent', { defaultValue: '이번 달 송금' })}</Text>
               <Text style={styles.summaryValue}>
                 ${safeToFixed(filteredTransactions
                   .filter(t => (t.type === 'transfer' || t.type === 'sent') && new Date(t.createdAt).getMonth() === new Date().getMonth())
@@ -364,7 +368,7 @@ export default function HistoryScreen() {
             <View style={styles.summaryDivider} />
             
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>이번 달 입금</Text>
+              <Text style={styles.summaryLabel}>{t('common.thisMonthReceived', { defaultValue: '이번 달 입금' })}</Text>
               <Text style={styles.summaryValue}>
                 ${safeToFixed(filteredTransactions
                   .filter(t => (t.type === 'deposit' || t.type === 'received') && new Date(t.createdAt).getMonth() === new Date().getMonth())

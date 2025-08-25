@@ -13,11 +13,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import * as Clipboard from 'expo-clipboard';
+import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed, safeAdd } from '../utils/formatters';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { state, loadUserData, loadWallets, loadTransactions } = useApp();
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -81,14 +83,14 @@ export default function HomeScreen() {
         
         setLastUpdated(new Date());
         Alert.alert(
-          '새로고침 완료! ✅', 
-          '최신 지갑 잔액과 거래내역을 불러왔습니다.',
-          [{ text: '확인' }]
+          t('common.success'),
+          t('common.refreshComplete', { defaultValue: '최신 지갑 잔액과 거래내역을 불러왔습니다.' }),
+          [{ text: t('common.confirm') }]
         );
       }
     } catch (error) {
       console.error('새로고침 실패:', error);
-      Alert.alert('오류', '데이터를 새로고침할 수 없습니다.\n네트워크 연결을 확인해주세요.');
+      Alert.alert(t('common.error'), t('common.refreshError', { defaultValue: '데이터를 새로고침할 수 없습니다.\n네트워크 연결을 확인해주세요.' }));
     } finally {
       setRefreshing(false);
     }
@@ -106,14 +108,14 @@ export default function HomeScreen() {
       const displayName = walletName || '지갑';
       
       Alert.alert(
-        '복사 완료!',
-        `${displayName} 주소가 클립보드에 복사되었습니다.`,
-        [{ text: '확인' }]
+        t('common.success'),
+        t('common.addressCopied', { walletName: displayName, defaultValue: `${displayName} 주소가 클립보드에 복사되었습니다.` }),
+        [{ text: t('common.confirm') }]
       );
       console.log('📋 지갑 주소 복사 완료:', { address, walletName: displayName });
     } catch (error) {
       console.error('지갑 주소 복사 실패:', error);
-      Alert.alert('오류', '주소 복사에 실패했습니다.');
+      Alert.alert(t('common.error'), t('common.copyError', { defaultValue: '주소 복사에 실패했습니다.' }));
     }
   };
 
@@ -133,33 +135,33 @@ export default function HomeScreen() {
             style={styles.welcomeGradient}
           >
             <Ionicons name="globe" size={64} color="white" />
-            <Text style={styles.welcomeTitle}>CirclePay Global</Text>
+            <Text style={styles.welcomeTitle}>{t('headers.circlePay')}</Text>
             <Text style={styles.welcomeSubtitle}>
-              글로벌 크로스체인 USDC 결제 플랫폼
+              {t('screens.home.appSubtitle')}
             </Text>
           </LinearGradient>
           
           <View style={styles.featuresContainer}>
-            <Text style={styles.featuresTitle}>주요 기능</Text>
+            <Text style={styles.featuresTitle}>{t('screens.home.features.title')}</Text>
             
             <View style={styles.featureItem}>
               <Ionicons name="flash" size={24} color="#28A745" />
-              <Text style={styles.featureText}>빠른 크로스체인 송금</Text>
+              <Text style={styles.featureText}>{t('screens.home.features.fastTransfer')}</Text>
             </View>
             
             <View style={styles.featureItem}>
               <Ionicons name="shield-checkmark" size={24} color="#007AFF" />
-              <Text style={styles.featureText}>안전한 USDC 거래</Text>
+              <Text style={styles.featureText}>{t('screens.home.features.secureUsdc')}</Text>
             </View>
             
             <View style={styles.featureItem}>
               <Ionicons name="card" size={24} color="#FF6B35" />
-              <Text style={styles.featureText}>QR 코드 결제</Text>
+              <Text style={styles.featureText}>{t('screens.home.features.qrPayment')}</Text>
             </View>
             
             <View style={styles.featureItem}>
               <Ionicons name="person-add" size={24} color="#6F42C1" />
-              <Text style={styles.featureText}>간편 KYC 인증</Text>
+              <Text style={styles.featureText}>{t('screens.home.features.simpleKyc')}</Text>
             </View>
           </View>
           
@@ -168,14 +170,14 @@ export default function HomeScreen() {
               style={styles.primaryAuthButton}
               onPress={() => Alert.alert('회원가입', '회원가입 화면으로 이동합니다.')}
             >
-              <Text style={styles.primaryAuthButtonText}>시작하기</Text>
+              <Text style={styles.primaryAuthButtonText}>{t('screens.home.auth.getStarted')}</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
               style={styles.secondaryAuthButton}
               onPress={() => Alert.alert('로그인', '로그인 화면으로 이동합니다.')}
             >
-              <Text style={styles.secondaryAuthButtonText}>이미 계정이 있으신가요?</Text>
+              <Text style={styles.secondaryAuthButtonText}>{t('screens.home.auth.alreadyHaveAccount')}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -193,10 +195,10 @@ export default function HomeScreen() {
       {/* 사용자 환영 섹션 */}
       <View style={styles.welcomeSection}>
         <Text style={styles.welcomeText}>
-          안녕하세요, {state.user?.firstName || '사용자'}님! 👋
+          {t('screens.home.welcome', { name: state.user?.firstName || t('common.user', { defaultValue: '사용자' }) })}
         </Text>
         <Text style={styles.subtitleText}>
-          글로벌 크로스체인 결제가 준비되었습니다
+          {t('screens.home.subtitle')}
         </Text>
       </View>
 
@@ -206,7 +208,7 @@ export default function HomeScreen() {
         style={styles.balanceCard}
       >
         <View style={styles.balanceHeader}>
-          <Text style={styles.balanceLabel}>총 잔액</Text>
+          <Text style={styles.balanceLabel}>{t('screens.home.wallet.totalBalance')}</Text>
           <View style={styles.balanceActions}>
             <TouchableOpacity 
               onPress={onRefresh}
@@ -275,7 +277,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="qr-code" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>QR결제</Text>
+          <Text style={styles.actionText}>{t('navigation.payment')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -292,7 +294,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="storefront" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>쇼핑</Text>
+          <Text style={styles.actionText}>{t('navigation.send')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -309,7 +311,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="flame" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>핫플</Text>
+          <Text style={styles.actionText}>{t('navigation.deposit')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -329,12 +331,12 @@ export default function HomeScreen() {
       {/* 지갑 목록 */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>내 지갑</Text>
+          <Text style={styles.sectionTitle}>{t('screens.home.wallet.mainWallet')}</Text>
                       <TouchableOpacity onPress={() => 
               Alert.alert('지갑 관리', '설정 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)', 
                 [{text: '확인', onPress: () => console.log('지갑 전체보기 클릭')}])
             }>
-              <Text style={styles.seeAllText}>전체보기</Text>
+              <Text style={styles.seeAllText}>{t('common.viewAll', { defaultValue: '전체보기' })}</Text>
             </TouchableOpacity>
         </View>
         
@@ -372,7 +374,7 @@ export default function HomeScreen() {
       {/* 최근 거래 */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>최근 거래</Text>
+          <Text style={styles.sectionTitle}>{t('navigation.history')}</Text>
                       <TouchableOpacity onPress={() => navigation.navigate('History' as never)}>
               <Text style={styles.seeAllText}>전체보기</Text>
             </TouchableOpacity>
@@ -418,8 +420,8 @@ export default function HomeScreen() {
         ) : (
           <View style={styles.emptyState}>
             <Ionicons name="receipt-outline" size={48} color="#CCC" />
-            <Text style={styles.emptyStateText}>아직 거래 내역이 없습니다</Text>
-            <Text style={styles.emptyStateSubtext}>첫 번째 결제나 송금을 시작해보세요!</Text>
+            <Text style={styles.emptyStateText}>{t('common.noTransactions', { defaultValue: '아직 거래 내역이 없습니다' })}</Text>
+            <Text style={styles.emptyStateSubtext}>{t('common.startFirstTransaction', { defaultValue: '첫 번째 결제나 송금을 시작해보세요!' })}</Text>
           </View>
         )}
       </View>

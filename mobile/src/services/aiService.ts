@@ -87,7 +87,8 @@ class AIService {
     userId: string, 
     onTypingStart?: () => void,
     onTypingEnd?: () => void,
-    onError?: (error: string) => void
+    onError?: (error: string) => void,
+    currentLanguage?: string
   ): Promise<AIChatResponse | null> {
     try {
       // 네트워크 상태 확인
@@ -111,7 +112,8 @@ class AIService {
       const requestData: AIChatRequest = {
         message: message.trim(),
         userId: userId,
-        sessionId: this.currentSessionId || undefined
+        sessionId: this.currentSessionId || undefined,
+        language: currentLanguage || 'ko'
       };
 
       // JWT 토큰 가져오기

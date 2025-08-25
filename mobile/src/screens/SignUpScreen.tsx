@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import apiService from '../services/apiService';
 import { useApp } from '../contexts/AppContext';
 import CountryCodePicker from '../components/CountryCodePicker';
@@ -45,6 +46,7 @@ interface VerificationData {
 
 export default function SignUpScreen() {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { setAuthToken } = useApp();
   
   // 폼 단계 관리
@@ -277,7 +279,7 @@ export default function SignUpScreen() {
           style={styles.headerGradient}
         >
           <Ionicons name="person-add" size={48} color="white" />
-          <Text style={styles.headerTitle}>회원가입</Text>
+          <Text style={styles.headerTitle}>{t('screens.signUp.title')}</Text>
           <Text style={styles.headerSubtitle}>
             CirclePay Global에 오신 것을 환영합니다
           </Text>
@@ -287,7 +289,7 @@ export default function SignUpScreen() {
       {/* 입력 폼 */}
       <View style={styles.formSection}>
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>이메일 주소</Text>
+          <Text style={styles.inputLabel}>{t('screens.signUp.email')}</Text>
           <View style={styles.inputContainer}>
             <Ionicons name="mail-outline" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
@@ -303,7 +305,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>전화번호</Text>
+          <Text style={styles.inputLabel}>{t('screens.signUp.phone')}</Text>
           <View style={styles.phoneInputContainer}>
             {/* 국가코드 선택 */}
             <CountryCodePicker
@@ -339,7 +341,7 @@ export default function SignUpScreen() {
 
         <View style={styles.nameInputGroup}>
           <View style={styles.nameInput}>
-            <Text style={styles.inputLabel}>성</Text>
+            <Text style={styles.inputLabel}>{t('screens.signUp.lastName')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.textInput}
@@ -351,7 +353,7 @@ export default function SignUpScreen() {
           </View>
 
           <View style={styles.nameInput}>
-            <Text style={styles.inputLabel}>이름</Text>
+            <Text style={styles.inputLabel}>{t('screens.signUp.firstName')}</Text>
             <View style={styles.inputContainer}>
               <TextInput
                 style={styles.textInput}
@@ -364,7 +366,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>PIN 설정 (6자리 이상)</Text>
+          <Text style={styles.inputLabel}>{t('screens.signUp.pin')}</Text>
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
@@ -379,7 +381,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>PIN 확인</Text>
+          <Text style={styles.inputLabel}>{t('screens.signUp.confirmPin')}</Text>
           <View style={styles.inputContainer}>
             <Ionicons name="lock-closed-outline" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
@@ -408,7 +410,7 @@ export default function SignUpScreen() {
             ) : (
               <>
                 <Ionicons name="checkmark-circle" size={24} color="white" />
-                <Text style={styles.submitText}>회원가입</Text>
+                <Text style={styles.submitText}>{t('screens.signUp.title')}</Text>
               </>
             )}
           </LinearGradient>
@@ -427,7 +429,7 @@ export default function SignUpScreen() {
           style={styles.headerGradient}
         >
           <Ionicons name="shield-checkmark" size={48} color="white" />
-          <Text style={styles.headerTitle}>인증 코드 입력</Text>
+          <Text style={styles.headerTitle}>{t('common.verification', { defaultValue: '인증 코드 입력' })}</Text>
           <Text style={styles.headerSubtitle}>
             이메일과 SMS로 발송된 코드를 입력해주세요
           </Text>
@@ -437,7 +439,7 @@ export default function SignUpScreen() {
       {/* 인증 코드 입력 */}
       <View style={styles.formSection}>
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>이메일 인증 코드</Text>
+          <Text style={styles.inputLabel}>{t('common.emailVerification', { defaultValue: '이메일 인증 코드' })}</Text>
           <View style={styles.inputContainer}>
             <Ionicons name="mail" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
@@ -452,7 +454,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.inputLabel}>SMS 인증 코드</Text>
+          <Text style={styles.inputLabel}>{t('common.smsVerification', { defaultValue: 'SMS 인증 코드' })}</Text>
           <View style={styles.inputContainer}>
             <Ionicons name="chatbubble" size={20} color="#666" style={styles.inputIcon} />
             <TextInput
@@ -472,7 +474,7 @@ export default function SignUpScreen() {
             style={styles.devButton}
             onPress={getDevVerificationCodes}
           >
-            <Text style={styles.devButtonText}>🔧 개발용 코드 가져오기</Text>
+            <Text style={styles.devButtonText}>{t('common.devCode', { defaultValue: '🔧 개발용 코드 가져오기' })}</Text>
           </TouchableOpacity>
         )}
 
@@ -491,7 +493,7 @@ export default function SignUpScreen() {
             ) : (
               <>
                 <Ionicons name="checkmark-done" size={24} color="white" />
-                <Text style={styles.submitText}>인증 완료</Text>
+                <Text style={styles.submitText}>{t('common.completeVerification', { defaultValue: '인증 완료' })}</Text>
               </>
             )}
           </LinearGradient>
@@ -509,7 +511,7 @@ export default function SignUpScreen() {
           style={[styles.headerGradient, { height: 300 }]}
         >
           <Ionicons name="checkmark-circle" size={80} color="white" />
-          <Text style={[styles.headerTitle, { fontSize: 28 }]}>회원가입 완료!</Text>
+          <Text style={[styles.headerTitle, { fontSize: 28 }]}>{t('common.signUpComplete', { defaultValue: '회원가입 완료!' })}</Text>
           <Text style={styles.headerSubtitle}>
             환영합니다! 이제 CirclePay Global을 사용할 수 있습니다.
           </Text>
@@ -517,7 +519,7 @@ export default function SignUpScreen() {
           {signUpResult?.user?.wallet_creation_status === 'success' && (
             <View style={styles.walletInfo}>
               <Ionicons name="wallet" size={24} color="white" />
-              <Text style={styles.walletText}>ETH 지갑이 자동으로 생성되었습니다</Text>
+              <Text style={styles.walletText}>{t('common.walletCreated', { defaultValue: 'ETH 지갑이 자동으로 생성되었습니다' })}</Text>
               {signUpResult?.user?.wallet_info && (
                 <Text style={styles.walletText}>
                   주소: {signUpResult.user.wallet_info.address}
