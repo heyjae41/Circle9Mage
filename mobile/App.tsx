@@ -14,6 +14,7 @@ import HistoryScreen from './src/screens/HistoryScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SignUpScreen from './src/screens/SignUpScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import AIAssistantScreen from './src/screens/AIAssistantScreen';
 
 // 컴포넌트 임포트
 import TokenExpiredModal from './src/components/TokenExpiredModal';
@@ -42,6 +43,8 @@ function AuthenticatedApp() {
                   iconName = focused ? 'add-circle' : 'add-circle-outline';
                 } else if (route.name === 'History') {
                   iconName = focused ? 'list' : 'list-outline';
+                } else if (route.name === 'AIAssistant') {
+                  iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
                 } else if (route.name === 'Profile') {
                   iconName = focused ? 'person' : 'person-outline';
                 } else if (route.name === 'SignUp') {
@@ -103,7 +106,15 @@ function AuthenticatedApp() {
                 headerTitle: '거래 내역'
               }}
             />
-                        <Tab.Screen 
+            <Tab.Screen 
+              name="AIAssistant" 
+              component={AIAssistantScreen} 
+              options={{
+                title: 'AI',
+                headerTitle: 'AI 어시스턴트'
+              }}
+            />
+            <Tab.Screen 
               name="Profile" 
               component={ProfileScreen} 
               options={{

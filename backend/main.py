@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 
 # 로컬 임포트
-from app.api.routes import payments, wallets, compliance, admin, auth, deposits, users
+from app.api.routes import payments, wallets, compliance, admin, auth, deposits, users, ai
 from app.core.config import get_settings
 from app.database.connection import init_db
 
@@ -59,6 +59,7 @@ app.include_router(wallets.router, prefix="/api/v1/wallets", tags=["wallets"])
 app.include_router(deposits.router, prefix="/api/v1/deposits", tags=["deposits"])
 app.include_router(compliance.router, prefix="/api/v1/compliance", tags=["compliance"])
 app.include_router(admin.router, prefix="/api/v1/admin", tags=["admin"])
+app.include_router(ai.router, prefix="/api/v1/ai", tags=["ai"])
 
 @app.get("/")
 async def root():

@@ -109,4 +109,48 @@ export interface AppState {
     visible: boolean;
     hasShownOnce: boolean;
   };
+}
+
+// AI 채팅 관련 타입
+export interface ChatMessage {
+  id: string;
+  type: 'user' | 'ai' | 'system';
+  content: string;
+  timestamp: Date;
+  data?: any; // 추가 데이터 (잔액, 거래정보 등)
+}
+
+export interface AIFunctionCall {
+  function: string;
+  arguments: Record<string, any>;
+  result: Record<string, any>;
+}
+
+export interface AIChatRequest {
+  message: string;
+  userId: string;
+  sessionId?: string;
+}
+
+export interface AIChatResponse {
+  response: string;
+  sessionId: string;
+  functionCalls?: AIFunctionCall[];
+  timestamp: string;
+}
+
+export interface AIChatSession {
+  sessionId: string;
+  userId: string;
+  messages: ChatMessage[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface AIHealthResponse {
+  status: 'healthy' | 'unhealthy';
+  openaiModel?: string;
+  apiKeyConfigured?: boolean;
+  timestamp: string;
+  error?: string;
 } 

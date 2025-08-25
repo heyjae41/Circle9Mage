@@ -314,11 +314,7 @@ export default function HomeScreen() {
 
         <TouchableOpacity 
           style={styles.actionButton}
-          onPress={() => Alert.alert(
-            'AI 금융 서비스 준비중 🤖',
-            'AI 기반 투자 상담 및 개인 맞춤형 금융 서비스를 준비 중입니다.',
-            [{ text: '확인' }]
-          )}
+          onPress={() => navigation.navigate('AIAssistant' as never)}
         >
           <LinearGradient
             colors={['#DC3545', '#C82333']}

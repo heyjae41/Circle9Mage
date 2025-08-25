@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
+    # OpenAI API 설정
+    openai_api_key: str = os.getenv("OPENAI_API_KEY")
+    openai_model: str = "gpt-4o-mini"  # gpt-4.1-mini 변경도 고려
+    openai_max_tokens: int = 1000
+    openai_temperature: float = 0.7
+    
     # 앱 설정
     debug: bool = True
     environment: str = "development"
