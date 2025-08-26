@@ -26,7 +26,9 @@
     "aiAssistant": "الذكي",
     "profile": "الملف الشخصي",
     "login": "تسجيل الدخول",
-    "signUp": "التسجيل"
+    "signUp": "التسجيل",
+    "shopping": "التسوق",
+    "hotplace": "المكان الساخن"
   },
   "headers": {
     "circlePay": "CirclePay Global",

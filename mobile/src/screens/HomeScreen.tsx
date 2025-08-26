@@ -294,7 +294,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="storefront" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>{t('navigation.send')}</Text>
+          <Text style={styles.actionText}>{t('navigation.shopping')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 
@@ -311,7 +311,7 @@ export default function HomeScreen() {
           >
             <Ionicons name="flame" size={24} color="white" />
           </LinearGradient>
-          <Text style={styles.actionText}>{t('navigation.deposit')}</Text>
+          <Text style={styles.actionText}>{t('navigation.hotplace')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity 

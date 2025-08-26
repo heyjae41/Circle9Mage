@@ -26,7 +26,9 @@
     "aiAssistant": "AI",
     "profile": "个人资料",
     "login": "登录",
-    "signUp": "注册"
+    "signUp": "注册",
+    "shopping": "购物",
+    "hotplace": "热门"
   },
   "headers": {
     "circlePay": "CirclePay Global",

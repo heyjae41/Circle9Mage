@@ -26,7 +26,9 @@
     "aiAssistant": "KI",
     "profile": "Profil",
     "login": "Anmelden",
-    "signUp": "Registrieren"
+    "signUp": "Registrieren",
+    "shopping": "Shopping",
+    "hotplace": "Hotplace"
   },
   "headers": {
     "circlePay": "CirclePay Global",
