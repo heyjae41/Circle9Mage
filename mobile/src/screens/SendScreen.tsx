@@ -27,6 +27,7 @@ export default function SendScreen() {
   });
   const [selectedSourceWallet, setSelectedSourceWallet] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [useFastTransfer, setUseFastTransfer] = useState(true); // Fast Transfer 기본 활성화
 
   // 총 잔액 계산 (안전한 처리)
   const totalBalance = state.wallets.reduce((sum, wallet) => safeAdd(sum, wallet.usdcBalance), 0);
@@ -63,6 +64,7 @@ export default function SendScreen() {
         amount: parseFloat(sendData.amount),
         sourceChain: sourceWallet.blockchain.toLowerCase(),
         targetChain: sendData.targetChain || sourceWallet.blockchain.toLowerCase(),
+        useFastTransfer: useFastTransfer,
         notes: sendData.notes,
       });
 
@@ -237,6 +239,30 @@ export default function SendScreen() {
             multiline
             numberOfLines={3}
           />
+        </View>
+
+        {/* Fast Transfer 옵션 */}
+        <View style={styles.fastTransferSection}>
+          <View style={styles.fastTransferHeader}>
+            <Text style={styles.fastTransferTitle}>⚡ Fast Transfer</Text>
+            <TouchableOpacity
+              style={[styles.toggleSwitch, useFastTransfer && styles.toggleSwitchActive]}
+              onPress={() => setUseFastTransfer(!useFastTransfer)}
+            >
+              <View style={[styles.toggleKnob, useFastTransfer && styles.toggleKnobActive]} />
+            </TouchableOpacity>
+          </View>
+          <Text style={styles.fastTransferDescription}>
+            {useFastTransfer 
+              ? "15-45초 내 빠른 전송 (최소 1 USDC 이상)"
+              : "일반 전송 (2-3분 소요)"
+            }
+          </Text>
+          {useFastTransfer && parseFloat(sendData.amount || '0') < 1.0 && sendData.amount !== '' && (
+            <Text style={styles.fastTransferWarning}>
+              ⚠️ Fast Transfer는 최소 1 USDC 이상 필요합니다
+            </Text>
+          )}
         </View>
 
         {/* 수수료 정보 */}
@@ -615,5 +641,58 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: 'bold',
     color: '#007AFF',
+  },
+
+  // Fast Transfer 스타일
+  fastTransferSection: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E1E5E9',
+  },
+  fastTransferHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  fastTransferTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#1A1A1A',
+  },
+  fastTransferDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  fastTransferWarning: {
+    fontSize: 12,
+    color: '#FF6B35',
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  toggleSwitch: {
+    width: 48,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#E1E5E9',
+    justifyContent: 'center',
+    padding: 2,
+  },
+  toggleSwitchActive: {
+    backgroundColor: '#007AFF',
+  },
+  toggleKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'white',
+    alignSelf: 'flex-start',
+  },
+  toggleKnobActive: {
+    alignSelf: 'flex-end',
   },
 }); 

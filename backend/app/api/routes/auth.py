@@ -151,72 +151,103 @@ async def register_user(
         await db.commit()
         await db.refresh(new_user)
         
-        # 4. Circle Wallets로 ETH 지갑 자동 생성 (재시도 로직 포함)
+        # 4. Circle Wallets로 멀티체인 지갑 자동 생성 (Ethereum + Base)
         wallet_creation_success = False
         wallet_error_msg = None
+        created_wallets = []
         
         try:
-            print(f"🔄 사용자 {new_user.id}의 ETH 지갑 생성 시작...")
+            print(f"🔄 사용자 {new_user.id}의 멀티체인 지갑 생성 시작 (Ethereum + Base)...")
             
             # 1. 먼저 WalletSet 생성 또는 조회
             wallet_set_id = await circle_wallet_service.get_or_create_wallet_set(str(new_user.id))
             print(f"✅ WalletSet 준비 완료: {wallet_set_id}")
             
-            # 2. 재시도 로직이 포함된 지갑 생성 호출 (Sepolia 테스트넷)
-            wallet_response = await circle_wallet_service.create_wallet_with_retry(
-                wallet_set_id=wallet_set_id,
-                blockchain="ethereum"  # → ETH-SEPOLIA로 매핑됨
+            # User 모델에 WalletSet ID 저장
+            new_user.circle_wallet_set_id = wallet_set_id
+            
+            # 2. 멀티체인 지갑 병렬 생성 (Ethereum + Base)
+            multichain_result = await circle_wallet_service.create_multichain_wallets_parallel(
+                user_id=str(new_user.id),
+                wallet_set_id=wallet_set_id
             )
             
-            # 지갑 정보 저장
-            if wallet_response.get("data") and wallet_response["data"].get("wallets"):
-                wallet_data = wallet_response["data"]["wallets"][0]
-                
-                # 지갑 주소 유효성 재검증
+            # 3. 생성된 지갑들을 데이터베이스에 저장
+            primary_wallet_id = None
+            
+            for wallet_data in multichain_result["wallets"]:
+                # 지갑 주소 유효성 검증
                 wallet_address = wallet_data["address"]
                 if not circle_wallet_service.is_valid_ethereum_address(wallet_address):
-                    raise ValueError(f"생성된 지갑 주소가 유효하지 않습니다: {wallet_address}")
+                    print(f"⚠️ 유효하지 않은 지갑 주소 스킵: {wallet_address}")
+                    continue
                 
-                # User 모델에 Circle 정보 업데이트
-                new_user.circle_wallet_id = wallet_data["id"]
-                # circle_entity_id가 빈 문자열이면 NULL로 저장
-                entity_id = wallet_data.get("entityId", "")
-                new_user.circle_entity_id = entity_id if entity_id else None
-                
-                # 체인 ID 동적 설정
+                # 체인 정보 설정
+                chain_type = wallet_data.get("chain_type", "ethereum")
                 wallet_blockchain = wallet_data.get("blockchain", "ETH-SEPOLIA")
                 chain_id = circle_wallet_service.get_chain_id_from_blockchain(wallet_blockchain)
-                print(f"🔗 회원가입 지갑 체인 ID: {wallet_blockchain} → {chain_id}")
+                
+                print(f"🔗 {chain_type} 지갑 체인 ID: {wallet_blockchain} → {chain_id}")
                 
                 # Wallet 모델에 지갑 정보 저장
                 new_wallet = Wallet(
                     user_id=new_user.id,
                     circle_wallet_id=wallet_data["id"],
                     wallet_address=wallet_address,
-                    chain_id=chain_id,  # 동적 체인 ID
-                    chain_name="ethereum",
-                    usdc_balance=0.0
+                    chain_id=chain_id,
+                    chain_name=chain_type,
+                    usdc_balance=0.0,
+                    is_active=True
                 )
                 
                 db.add(new_wallet)
-                await db.commit()
+                created_wallets.append({
+                    "wallet_id": wallet_data["id"],
+                    "address": wallet_address,
+                    "chain": chain_type,
+                    "chain_id": chain_id
+                })
                 
+                # 첫 번째 지갑(Ethereum)을 기본 지갑으로 설정
+                if chain_type == "ethereum" and not primary_wallet_id:
+                    primary_wallet_id = wallet_data["id"]
+                    new_user.circle_wallet_id = wallet_data["id"]  # 호환성 유지
+                    entity_id = wallet_data.get("entityId", "")
+                    new_user.circle_entity_id = entity_id if entity_id else None
+            
+            # 기본 지갑 설정
+            if primary_wallet_id:
+                new_user.primary_wallet_id = primary_wallet_id
+            elif created_wallets:
+                # Ethereum이 없으면 첫 번째 지갑을 기본으로
+                new_user.primary_wallet_id = created_wallets[0]["wallet_id"]
+                new_user.circle_wallet_id = created_wallets[0]["wallet_id"]
+            
+            await db.commit()
+            
+            # 성공 여부 판단
+            if len(created_wallets) > 0:
                 wallet_creation_success = True
-                print(f"✅ ETH 지갑 생성 성공: {wallet_address}")
+                success_chains = [w["chain"] for w in created_wallets]
+                print(f"✅ 멀티체인 지갑 생성 성공: {success_chains}")
+                print(f"📋 생성된 지갑 수: {len(created_wallets)}/{multichain_result['total_count']}")
                 
+                if multichain_result.get("is_partial_success"):
+                    print(f"⚠️ 부분 성공: 일부 체인 지갑 생성 실패 - {multichain_result['errors']}")
             else:
-                raise ValueError("Circle API 응답에서 지갑 데이터를 찾을 수 없습니다")
+                raise ValueError("모든 체인 지갑 생성 실패")
                 
         except Exception as wallet_error:
             wallet_error_msg = str(wallet_error)
-            print(f"❌ 지갑 생성 실패: {wallet_error_msg}")
+            print(f"❌ 멀티체인 지갑 생성 실패: {wallet_error_msg}")
             
             # 사용자 메타데이터에 지갑 생성 실패 정보 저장
             import json
             new_user.extra_metadata = json.dumps({
                 "wallet_creation_failed": True,
                 "wallet_error": wallet_error_msg,
-                "failed_at": datetime.utcnow().isoformat()
+                "failed_at": datetime.utcnow().isoformat(),
+                "multichain_attempt": True
             })
             await db.commit()
         
@@ -288,24 +319,35 @@ async def register_user(
             "email": new_user.email
         })
         
-        # 지갑 정보 조회
-        wallet_info = None
-        if wallet_creation_success and new_user.circle_wallet_id:
+        # 멀티체인 지갑 정보 조회
+        wallets_info = []
+        primary_wallet_info = None
+        
+        if wallet_creation_success and len(created_wallets) > 0:
             try:
+                # 사용자의 모든 지갑 조회
                 result = await db.execute(
-                    select(Wallet).where(Wallet.circle_wallet_id == new_user.circle_wallet_id)
+                    select(Wallet).where(Wallet.user_id == new_user.id)
                 )
-                wallet = result.scalar_one_or_none()
-                if wallet:
-                    wallet_info = {
+                user_wallets = result.scalars().all()
+                
+                for wallet in user_wallets:
+                    wallet_data = {
                         "wallet_id": wallet.circle_wallet_id,
                         "address": wallet.wallet_address,
                         "chain_id": wallet.chain_id,
                         "chain_name": wallet.chain_name,
-                        "usdc_balance": wallet.usdc_balance
+                        "usdc_balance": float(wallet.usdc_balance),
+                        "is_active": wallet.is_active
                     }
+                    wallets_info.append(wallet_data)
+                    
+                    # 기본 지갑 정보 설정
+                    if wallet.circle_wallet_id == new_user.primary_wallet_id:
+                        primary_wallet_info = wallet_data
+                        
             except Exception as e:
-                print(f"⚠️ 지갑 정보 조회 실패: {e}")
+                print(f"⚠️ 멀티체인 지갑 정보 조회 실패: {e}")
         
         return AuthResponse(
             access_token=access_token,
@@ -321,9 +363,13 @@ async def register_user(
                 "kyc_status": new_user.kyc_status,
                 "wallet_creation_status": "success" if wallet_creation_success else "failed",
                 "wallet_error": wallet_error_msg if not wallet_creation_success else None,
-                "wallet_info": wallet_info,
+                "primary_wallet": primary_wallet_info,
+                "wallets": wallets_info,
+                "multichain_enabled": True,
+                "supported_chains": ["ethereum", "base"],
                 "circle_wallet_id": new_user.circle_wallet_id,
-                "circle_entity_id": new_user.circle_entity_id
+                "circle_entity_id": new_user.circle_entity_id,
+                "primary_wallet_id": new_user.primary_wallet_id
             }
         )
         

@@ -16,6 +16,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { safeToFixed, safeAdd } from '../utils/formatters';
+import ChainWalletCard from '../components/ChainWalletCard';
 
 export default function HomeScreen() {
   const navigation = useNavigation();
@@ -24,6 +25,34 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+
+  // 체인별 지갑 그룹화
+  const groupWalletsByChain = () => {
+    if (!state.wallets || state.wallets.length === 0) {
+      return [];
+    }
+
+    return state.wallets.map(wallet => ({
+      chainName: wallet.chainName || 'ethereum',
+      balance: wallet.usdcBalance || 0,
+      address: wallet.address,
+      walletId: wallet.walletId,
+      chainId: wallet.chainId || 1,
+    }));
+  };
+
+  // 총 잔액 계산 (모든 체인 합계)
+  const calculateTotalBalance = () => {
+    if (!state.wallets || state.wallets.length === 0) {
+      return 0;
+    }
+    
+    return state.wallets.reduce((total, wallet) => {
+      return safeAdd(total, wallet.usdcBalance || 0);
+    }, 0);
+  };
+
+  const chainWallets = groupWalletsByChain();
 
   // 컴포넌트 마운트 시 데이터 로드
   useEffect(() => {
@@ -96,8 +125,8 @@ export default function HomeScreen() {
     }
   };
 
-  // 총 잔액 계산 (안전한 처리)
-  const totalBalance = state.wallets.reduce((sum, wallet) => safeAdd(sum, wallet.usdcBalance), 0);
+  // 총 잔액 계산 (멀티체인 합계)
+  const totalBalance = calculateTotalBalance();
 
   // 지갑 주소 복사 함수
   const copyWalletAddress = async (address: string, walletName: string) => {
@@ -117,6 +146,31 @@ export default function HomeScreen() {
       console.error('지갑 주소 복사 실패:', error);
       Alert.alert(t('common.error'), t('common.copyError', { defaultValue: '주소 복사에 실패했습니다.' }));
     }
+  };
+
+  // 크로스체인 송금 핸들러
+  const handleCrossChainSend = (fromChain: string, walletId: string) => {
+    console.log(`🔄 크로스체인 송금 시작: ${fromChain} → 다른 체인`);
+    
+    // 사용 가능한 대상 체인 결정
+    const availableTargetChains = chainWallets
+      .filter(wallet => wallet.chainName !== fromChain)
+      .map(wallet => wallet.chainName);
+    
+    if (availableTargetChains.length === 0) {
+      Alert.alert(
+        t('chains.noTargetChain', { defaultValue: '대상 체인 없음' }),
+        t('chains.needMultipleChains', { defaultValue: '크로스체인 송금을 위해서는 최소 2개 이상의 체인 지갑이 필요합니다.' })
+      );
+      return;
+    }
+
+    // 송금 화면으로 이동 (파라미터와 함께)
+    (navigation as any).navigate('Send', {
+      sourceChain: fromChain,
+      sourceWalletId: walletId,
+      targetChains: availableTargetChains,
+    });
   };
 
   // 최근 거래 가져오기 (최대 3개)
@@ -328,47 +382,46 @@ export default function HomeScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* 지갑 목록 */}
+      {/* 멀티체인 지갑 대시보드 */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t('screens.home.wallet.mainWallet')}</Text>
-                      <TouchableOpacity onPress={() => 
-              Alert.alert('지갑 관리', '설정 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)', 
-                [{text: '확인', onPress: () => console.log('지갑 전체보기 클릭')}])
+          <Text style={styles.sectionTitle}>
+            {t('screens.home.wallet.multiChain', { defaultValue: '멀티체인 지갑' })}
+          </Text>
+          <TouchableOpacity onPress={() => 
+              Alert.alert(
+                t('screens.home.wallet.manage', { defaultValue: '지갑 관리' }), 
+                t('screens.home.wallet.manageDescription', { 
+                  defaultValue: '설정 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)' 
+                }), 
+                [{text: t('common.confirm', { defaultValue: '확인' }), onPress: () => console.log('지갑 전체보기 클릭')}]
+              )
             }>
               <Text style={styles.seeAllText}>{t('common.viewAll', { defaultValue: '전체보기' })}</Text>
             </TouchableOpacity>
         </View>
         
-        {state.wallets.map((wallet, index) => (
-          <View key={`wallet-${wallet.walletId}-${index}`} style={styles.walletItem}>
-            <View style={styles.walletIcon}>
-              <Ionicons 
-                name="wallet" 
-                size={24} 
-                color="#007AFF" 
-              />
-            </View>
-            <View style={styles.walletInfo}>
-              <Text style={styles.walletName}>{wallet.chainName}</Text>
-              <TouchableOpacity 
-                onPress={() => copyWalletAddress(wallet.address, wallet.chainName)}
-                style={styles.walletAddressContainer}
-              >
-                <Text style={styles.walletAddress}>
-                  {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-                </Text>
-                <Ionicons name="copy-outline" size={14} color="#666" style={styles.copyIconSmall} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.walletBalance}>
-              <Text style={styles.walletBalanceAmount}>
-                {isBalanceHidden ? '****' : `$${safeToFixed(wallet.usdcBalance)}`}
-              </Text>
-              <Text style={styles.walletBalanceCurrency}>USDC</Text>
-            </View>
+        {chainWallets.length > 0 ? (
+          chainWallets.map((wallet, index) => (
+            <ChainWalletCard
+              key={`chain-wallet-${wallet.chainName}-${index}`}
+              wallet={wallet}
+              isBalanceHidden={isBalanceHidden}
+              onCopyAddress={copyWalletAddress}
+              onCrossChainSend={handleCrossChainSend}
+            />
+          ))
+        ) : (
+          <View style={styles.emptyWalletState}>
+            <Ionicons name="wallet-outline" size={48} color="#CCC" />
+            <Text style={styles.emptyStateText}>
+              {t('screens.home.wallet.noWallets', { defaultValue: '지갑이 없습니다' })}
+            </Text>
+            <Text style={styles.emptyStateSubtext}>
+              {t('screens.home.wallet.createWallet', { defaultValue: '첫 번째 지갑을 생성해보세요!' })}
+            </Text>
           </View>
-        ))}
+        )}
       </View>
 
       {/* 최근 거래 */}
@@ -781,5 +834,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#CCC',
     marginTop: 4,
+  },
+  emptyWalletState: {
+    alignItems: 'center',
+    paddingVertical: 40,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    marginVertical: 8,
   },
 }); 

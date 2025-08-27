@@ -187,8 +187,8 @@ class CircleWalletService(CircleAPIClient):
     
     def __init__(self, use_sandbox: bool = None):
         # 환경에 따라 자동으로 sandbox 결정
+        settings = get_settings()
         if use_sandbox is None:
-            settings = get_settings()
             use_sandbox = settings.environment == "development"
         
         super().__init__(use_sandbox)
@@ -374,6 +374,62 @@ class CircleWalletService(CircleAPIClient):
         except Exception as e:
             print(f"❌ WalletSet 생성 실패: {e}")
             raise
+
+    async def create_multichain_wallets_parallel(self, user_id: str, wallet_set_id: str) -> dict:
+        """멀티체인 지갑을 병렬로 생성 (Ethereum + Base)"""
+        try:
+            print(f"🚀 사용자 {user_id}의 멀티체인 지갑 생성 시작 (Ethereum + Base)...")
+            
+            # 병렬 처리로 동시에 두 체인 지갑 생성
+            tasks = [
+                self.create_wallet_with_retry(wallet_set_id, "ethereum"),
+                self.create_wallet_with_retry(wallet_set_id, "base")
+            ]
+            
+            # 예외 포함하여 모든 결과 수집
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            # 결과 처리
+            created_wallets = []
+            errors = []
+            
+            chain_names = ["ethereum", "base"]
+            for i, result in enumerate(results):
+                chain_name = chain_names[i]
+                
+                if isinstance(result, Exception):
+                    error_msg = f"{chain_name} 체인 지갑 생성 실패: {str(result)}"
+                    print(f"❌ {error_msg}")
+                    errors.append({"chain": chain_name, "error": error_msg})
+                else:
+                    if result.get("data") and result["data"].get("wallets"):
+                        wallet_data = result["data"]["wallets"][0]
+                        wallet_data["chain_type"] = chain_name  # 체인 타입 추가
+                        created_wallets.append(wallet_data)
+                        print(f"✅ {chain_name} 체인 지갑 생성 성공: {wallet_data['address']}")
+                    else:
+                        error_msg = f"{chain_name} 체인 응답 형식 오류: {result}"
+                        print(f"❌ {error_msg}")
+                        errors.append({"chain": chain_name, "error": error_msg})
+            
+            # 결과 반환
+            result_data = {
+                "success_count": len(created_wallets),
+                "total_count": len(tasks),
+                "wallets": created_wallets,
+                "errors": errors,
+                "is_partial_success": len(created_wallets) > 0 and len(errors) > 0
+            }
+            
+            if len(created_wallets) == 0:
+                raise Exception(f"모든 체인 지갑 생성 실패: {errors}")
+            
+            print(f"🎉 멀티체인 지갑 생성 완료: {len(created_wallets)}/{len(tasks)} 성공")
+            return result_data
+            
+        except Exception as e:
+            print(f"❌ 멀티체인 지갑 생성 실패: {str(e)}")
+            raise
     
     async def create_wallet_set(self, user_id: str, name: str = None) -> Dict[str, Any]:
         """
@@ -407,6 +463,7 @@ class CircleWalletService(CircleAPIClient):
                 "ETH-SEPOLIA": "ETH-SEPOLIA", 
                 "ethereum": "ETH-SEPOLIA",
                 "BASE": "BASE-SEPOLIA",
+                "BASE-SEPOLIA": "BASE-SEPOLIA",
                 "base": "BASE-SEPOLIA",
                 "ARBITRUM": "ARB-SEPOLIA", 
                 "ARB": "ARB-SEPOLIA",
@@ -513,13 +570,24 @@ class CircleWalletService(CircleAPIClient):
 class CircleCCTPService(CircleAPIClient):
     """Circle Cross-Chain Transfer Protocol 서비스"""
     
+    def _get_usdc_token_id(self, chain: str) -> str:
+        """체인별 USDC 토큰 ID 반환"""
+        token_mapping = {
+            "ethereum": "5797fbd6-3795-519d-84ca-ec4c5f80c3b1",  # ETH-SEPOLIA USDC
+            "base": "7bf22cd8-5d13-5b8e-9fc6-12e5b15e93e5",     # BASE-SEPOLIA USDC
+            "arbitrum": "8c4d5f7e-6a9b-4e2f-8d3c-1a7b9e0f5c2d", # ARB-SEPOLIA USDC (예시)
+            "avalanche": "9d5e6f8f-7b0c-5f3e-9e4d-2b8c0f1e6d3e" # AVAX-FUJI USDC (예시)
+        }
+        return token_mapping.get(chain.lower(), token_mapping["ethereum"])
+    
     async def create_cross_chain_transfer(
         self,
         source_wallet_id: str,
         amount: str,
         source_chain: str,
         target_chain: str,
-        target_address: str
+        target_address: str,
+        use_fast_transfer: bool = False
     ) -> Dict[str, Any]:
         """CCTP V2를 통한 크로스체인 USDC 전송"""
         # Circle Developer Controlled Wallets API 구조 (공식 문서 기준)
@@ -527,11 +595,19 @@ class CircleCCTPService(CircleAPIClient):
             "idempotencyKey": str(uuid.uuid4()),  # UUID v4 (중복 처리 방지)
             "walletId": source_wallet_id,         # 보내는 지갑의 ID
             "destinationAddress": target_address,  # 받는 블록체인 주소
-            "tokenId": "5797fbd6-3795-519d-84ca-ec4c5f80c3b1",  # USDC 토큰 ID (ETH-SEPOLIA)
+            "tokenId": self._get_usdc_token_id(source_chain),  # 소스 체인의 USDC 토큰 ID
             "amounts": [amount],                  # 송금 금액 (배열 형태)
             "feeLevel": "MEDIUM",                # LOW, MEDIUM, HIGH 중 선택
             "nftTokenIds": [],                   # NFT 토큰 ID (빈 배열로 설정)
         }
+        
+        # Fast Transfer 옵션 추가
+        if use_fast_transfer:
+            data["minFinalityThreshold"] = 1000  # Fast Transfer - 1000 블록 확인
+            print("⚡ Fast Transfer 모드 활성화 - 15-45초 내 완료 예상")
+        
+        print(f"🔄 크로스체인 전송: {source_chain.upper()} → {target_chain.upper()}")
+        print(f"💰 송금 금액: {amount} USDC")
         
         # Entity Secret을 매번 새로 암호화 (사용자 제시 방식 적용)
         if self.settings.circle_entity_secret:

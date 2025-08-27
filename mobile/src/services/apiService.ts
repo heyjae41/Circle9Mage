@@ -398,6 +398,7 @@ class ApiService {
     amount: number;
     sourceChain: string;
     targetChain: string;
+    useFastTransfer?: boolean;
     notes?: string;
   }) {
     return this.post<any>('/payments/transfer/cross-chain', request);
@@ -542,11 +543,6 @@ class ApiService {
   async loginUser(credentials: any) {
     // 새로운 login 함수 사용 권장
     return this.login(credentials);
-  }
-
-  async getUserProfile(userId: string) {
-    // getCurrentUser 함수 사용 권장
-    return this.get<any>(`/users/${userId}`);
   }
 
   // ===================

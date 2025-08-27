@@ -640,7 +640,7 @@ After (CirclePay Global):
 
 *마지막 업데이트: 2025년 8월 22일*  
 *검토자: CirclePay Global 개발팀*  
-*프로젝트 상태: **실제 전송 성공 (S+ 등급)** - 해커톤 우승 확정 🏆*  
+*프로젝트 상태: Submitted  🏆*
 *참조: [Circle Developer Bounties Hackathon](https://buildoncircle.dev/hackathon/?utm_source=partnerships&utm_medium=49&utm_campaign=launch)* 
 
-**🌍 CirclePay Global: The Future of Cross-Chain Global Payments** 🚀 
+**🌍 CirclePay Global: The Future of Cross-Chain Global Payments** 🚀

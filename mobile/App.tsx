@@ -22,6 +22,7 @@ import AIAssistantScreen from './src/screens/AIAssistantScreen';
 // 컴포넌트 임포트
 import TokenExpiredModal from './src/components/TokenExpiredModal';
 import { OfflineModal } from './src/components/NetworkStatus';
+import BottomNotification from './src/components/BottomNotification';
 
 // 컨텍스트 임포트
 import { AppProvider, useApp } from './src/contexts/AppContext';
@@ -182,7 +183,7 @@ function UnauthenticatedApp() {
 
 // 앱 내비게이션 관리자
 function AppNavigator() {
-  const { state, hideTokenExpiredModal, hideOfflineModal } = useApp();
+  const { state, dispatch, hideTokenExpiredModal, hideOfflineModal } = useApp();
   
   // 상태 변경 로깅 (디버깅용)
   React.useEffect(() => {
@@ -222,6 +223,18 @@ function AppNavigator() {
       <OfflineModal
         visible={state.offlineModal.visible}
         onClose={hideOfflineModal}
+      />
+      
+      {/* CCTP 실시간 알림 */}
+      <BottomNotification
+        visible={state.cctpNotification.visible}
+        notification={state.cctpNotification.notification}
+        onClose={() => dispatch({ type: 'HIDE_CCTP_NOTIFICATION' })}
+        onPress={() => {
+          // 알림 클릭 시 거래 내역으로 이동 등의 액션
+          console.log('📱 CCTP 알림 클릭:', state.cctpNotification.notification);
+          dispatch({ type: 'HIDE_CCTP_NOTIFICATION' });
+        }}
       />
     </>
   );

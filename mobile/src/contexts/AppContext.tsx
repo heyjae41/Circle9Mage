@@ -8,6 +8,7 @@ import { biometricAuthManager } from '../utils/biometricAuth';
 import { networkService, NetworkState } from '../services/networkService';
 import { offlineStorage } from '../services/offlineStorage';
 import { syncService, SyncResult } from '../services/syncService';
+import { webSocketService, CCTPNotification } from '../services/websocketService';
 import i18n from '../i18n';
 
 // 액션 타입 정의
@@ -27,7 +28,9 @@ type AppAction =
   | { type: 'HIDE_TOKEN_EXPIRED_MODAL' }
   | { type: 'SET_NETWORK_STATE'; payload: NetworkState }
   | { type: 'SHOW_OFFLINE_MODAL' }
-  | { type: 'HIDE_OFFLINE_MODAL' };
+  | { type: 'HIDE_OFFLINE_MODAL' }
+  | { type: 'SHOW_CCTP_NOTIFICATION'; payload: CCTPNotification }
+  | { type: 'HIDE_CCTP_NOTIFICATION' };
 
 // 초기 상태
 const initialState: AppState = {
@@ -50,6 +53,10 @@ const initialState: AppState = {
   offlineModal: {
     visible: false,
     hasShownOnce: false,
+  },
+  cctpNotification: {
+    visible: false,
+    notification: null,
   },
 };
 
@@ -125,6 +132,22 @@ function appReducer(state: AppState, action: AppAction): AppState {
         offlineModal: {
           ...state.offlineModal,
           visible: false,
+        },
+      };
+    case 'SHOW_CCTP_NOTIFICATION':
+      return {
+        ...state,
+        cctpNotification: {
+          visible: true,
+          notification: action.payload,
+        },
+      };
+    case 'HIDE_CCTP_NOTIFICATION':
+      return {
+        ...state,
+        cctpNotification: {
+          visible: false,
+          notification: null,
         },
       };
     default:
@@ -927,6 +950,34 @@ export function AppProvider({ children }: AppProviderProps) {
     
     loadSupportedChains();
   }, []);
+
+  // 인증 상태 변경 시 WebSocket 연결 관리
+  useEffect(() => {
+    if (state.isAuthenticated && state.user?.id) {
+      console.log('🔌 사용자 인증됨 - WebSocket 연결 시작:', state.user.id);
+      
+      // WebSocket 연결
+      webSocketService.connect(state.user.id);
+      
+      // CCTP 알림 핸들러 등록
+      const notificationHandler = (notification: CCTPNotification) => {
+        console.log('📱 CCTP 알림 수신:', notification);
+        dispatch({ type: 'SHOW_CCTP_NOTIFICATION', payload: notification });
+      };
+      
+      webSocketService.addNotificationHandler(notificationHandler);
+      
+      // 컴포넌트 언마운트 시 정리
+      return () => {
+        console.log('🔌 WebSocket 연결 해제');
+        webSocketService.removeNotificationHandler(notificationHandler);
+        webSocketService.disconnect();
+      };
+    } else {
+      // 인증되지 않은 경우 WebSocket 연결 해제
+      webSocketService.disconnect();
+    }
+  }, [state.isAuthenticated, state.user?.id]);
 
   const contextValue: AppContextType = {
     state,

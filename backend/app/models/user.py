@@ -2,7 +2,7 @@
 사용자 관련 데이터 모델
 """
 
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, Text, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, Numeric, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.database.connection import Base
@@ -23,6 +23,7 @@ class User(Base):
     circle_wallet_id = Column(String(255), unique=True, index=True)  # 기본 지갑 ID (호환성 유지)
     circle_entity_id = Column(String(255), unique=True, index=True)  # Circle Entity ID
     circle_wallet_set_id = Column(String(255), unique=True, index=True)  # Circle WalletSet ID (사용자별 하나)
+    primary_wallet_id = Column(String(255), index=True)  # 주요 지갑 ID (멀티체인 중 기본 지갑)
     
     # 인증 정보
     is_verified = Column(Boolean, default=False)
@@ -52,7 +53,7 @@ class Wallet(Base):
     
     # Circle Wallet 정보
     circle_wallet_id = Column(String(255), unique=True, nullable=False)
-    wallet_address = Column(String(42), unique=True, index=True)  # Ethereum 주소
+    wallet_address = Column(String(42), index=True)  # Ethereum 주소 (같은 주소가 여러 체인에서 사용 가능)
     chain_id = Column(Integer, nullable=False)  # 1: Ethereum, 8453: Base 등
     chain_name = Column(String(50), nullable=False)  # ethereum, base, arbitrum 등
     
@@ -69,6 +70,11 @@ class Wallet(Base):
     
     # 관계
     user = relationship("User", back_populates="wallets")
+    
+    # 테이블 제약 조건
+    __table_args__ = (
+        UniqueConstraint('user_id', 'chain_id', name='uq_user_chain'),
+    )
 
 class Transaction(Base):
     """거래 모델"""

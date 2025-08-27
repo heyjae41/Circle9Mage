@@ -110,6 +110,12 @@ export interface AppState {
     visible: boolean;
     hasShownOnce: boolean;
   };
+  
+  // CCTP 실시간 알림 상태
+  cctpNotification: {
+    visible: boolean;
+    notification: any | null; // CCTPNotification 타입
+  };
 }
 
 // AI 채팅 관련 타입

@@ -11,6 +11,7 @@ import qrcode
 import io
 import base64
 from app.services.circle_client import circle_cctp_service, circle_paymaster_service, circle_compliance_service
+from app.services.cctp_hooks_service import cctp_hooks_service
 from app.database.connection import get_db, get_redis
 import asyncio
 
@@ -33,6 +34,7 @@ class CrossChainTransferRequest(BaseModel):
     amount: float = Field(..., gt=0, description="전송 금액")
     source_chain: str = Field(..., alias="sourceChain", description="소스 체인")
     target_chain: str = Field(..., alias="targetChain", description="목표 체인")
+    use_fast_transfer: bool = Field(default=False, alias="useFastTransfer", description="Fast Transfer 사용 여부")
     notes: Optional[str] = Field(None, description="전송 메모")
     
     class Config:
@@ -197,7 +199,8 @@ async def create_cross_chain_transfer(
 ):
     """크로스체인 USDC 전송"""
     try:
-        print(f"🚀 크로스체인 전송 요청: source_wallet_id='{request.source_wallet_id}' target_address='{request.target_address}' amount={request.amount} source_chain='{request.source_chain}' target_chain='{request.target_chain}' notes='{request.notes}'")
+        fast_mode = "⚡ Fast Transfer" if request.use_fast_transfer else "🐌 Regular Transfer"
+        print(f"🚀 크로스체인 전송 요청 ({fast_mode}): source_wallet_id='{request.source_wallet_id}' target_address='{request.target_address}' amount={request.amount} source_chain='{request.source_chain}' target_chain='{request.target_chain}' notes='{request.notes}'")
         
         # 간단한 유효성 검사
         if not request.source_wallet_id or not request.target_address:
@@ -212,26 +215,34 @@ async def create_cross_chain_transfer(
                 detail="전송 금액은 0보다 커야 합니다"
             )
         
+        # Fast Transfer의 최소 금액 검사 (예: 1 USDC 이상)
+        if request.use_fast_transfer and request.amount < 1.0:
+            raise HTTPException(
+                status_code=400,
+                detail="Fast Transfer는 최소 1 USDC 이상만 가능합니다"
+            )
+        
         # 1. Compliance 검사
         print(f"🔍 컴플라이언스 검사 시작...")
         # TODO: 실제 Compliance API 호출
         print(f"✅ 컴플라이언스 검사 통과")
         
         # 2. Circle API를 통한 실제 크로스체인 전송
-        print(f"🌐 Circle API 크로스체인 전송 시작...")
+        print(f"🌐 Circle API 크로스체인 전송 시작 ({fast_mode})...")
         
         try:
             # Circle CCTP 서비스 인스턴스 생성 (올바른 클래스 사용)
             from app.services.circle_client import CircleCCTPService
             circle_client = CircleCCTPService(use_sandbox=True)
             
-            # 실제 Circle CCTP API 호출
+            # 실제 Circle CCTP API 호출 (Fast Transfer 옵션 포함)
             transfer_response = await circle_client.create_cross_chain_transfer(
                 source_wallet_id=request.source_wallet_id,
                 amount=str(request.amount),
                 source_chain=request.source_chain,
                 target_chain=request.target_chain,
-                target_address=request.target_address
+                target_address=request.target_address,
+                use_fast_transfer=request.use_fast_transfer
             )
             
             # Circle CCTP API 응답 구조에 맞춰 수정
@@ -254,6 +265,19 @@ async def create_cross_chain_transfer(
             estimated_time = "15-45 seconds"  # CCTP V2는 빠른 전송
             
             print(f"✅ Circle API 크로스체인 전송 생성 성공: {transfer_id}")
+            
+            # CCTP Hooks 시뮬레이션 트리거 (비동기)
+            background_tasks.add_task(
+                cctp_hooks_service.simulate_cctp_hooks,
+                {
+                    "id": transfer_id,
+                    "sender_id": "current_user_id",  # 실제 구현에서는 JWT에서 추출
+                    "recipient_id": None,  # 수신자 ID가 있다면 여기에 설정
+                    "amount": request.amount,
+                    "source_chain": request.source_chain,
+                    "target_chain": request.target_chain
+                }
+            )
             
         except Exception as circle_error:
             print(f"⚠️ Circle API 호출 실패, Mock 응답으로 처리: {str(circle_error)}")

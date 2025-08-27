@@ -30,6 +30,16 @@
     "shopping": "쇼핑",
     "hotplace": "핫플"
   },
+  "chains": {
+    "ethereum": "이더리움",
+    "base": "베이스",
+    "arbitrum": "아비트럼",
+    "avalanche": "아발란체",
+    "crossChainSend": "크로스체인 송금",
+    "selectTarget": "{{chain}}에서 다른 체인으로 송금하시겠습니까?",
+    "noTargetChain": "대상 체인 없음",
+    "needMultipleChains": "크로스체인 송금을 위해서는 최소 2개 이상의 체인 지갑이 필요합니다."
+  },
   "headers": {
     "circlePay": "CirclePay Global",
     "qrPayment": "QR 결제",
@@ -59,7 +69,12 @@
       "wallet": {
         "totalBalance": "총 잔액",
         "mainWallet": "메인 지갑",
-        "quickActions": "빠른 실행"
+        "multiChain": "멀티체인 지갑",
+        "quickActions": "빠른 실행",
+        "manage": "지갑 관리",
+        "manageDescription": "설정 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)",
+        "noWallets": "지갑이 없습니다",
+        "createWallet": "첫 번째 지갑을 생성해보세요!"
       }
     },
     "login": {

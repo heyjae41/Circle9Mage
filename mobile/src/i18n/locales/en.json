@@ -30,6 +30,16 @@
     "shopping": "Shopping",
     "hotplace": "Hotplace"
   },
+  "chains": {
+    "ethereum": "Ethereum",
+    "base": "Base",
+    "arbitrum": "Arbitrum",
+    "avalanche": "Avalanche",
+    "crossChainSend": "Cross-Chain Send",
+    "selectTarget": "Would you like to send from {{chain}} to another chain?",
+    "noTargetChain": "No Target Chain",
+    "needMultipleChains": "At least 2 chain wallets are required for cross-chain transfers."
+  },
   "headers": {
     "circlePay": "CirclePay Global",
     "qrPayment": "QR Payment",
@@ -59,7 +69,12 @@
       "wallet": {
         "totalBalance": "Total Balance",
         "mainWallet": "Main Wallet",
-        "quickActions": "Quick Actions"
+        "multiChain": "Multi-Chain Wallets",
+        "quickActions": "Quick Actions",
+        "manage": "Wallet Management",
+        "manageDescription": "Navigate to settings screen.\n(Navigation feature is connected)",
+        "noWallets": "No wallets available",
+        "createWallet": "Create your first wallet!"
       }
     },
     "login": {
