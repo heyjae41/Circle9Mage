@@ -25,52 +25,67 @@
     "history": "Historial",
     "aiAssistant": "IA",
     "profile": "Perfil",
-    "login": "Iniciar Sesión",
+    "login": "Iniciar sesión",
     "signUp": "Registrarse",
     "shopping": "Compras",
-    "hotplace": "Hotplace"
+    "hotplace": "Lugar de moda"
+  },
+  "chains": {
+    "ethereum": "Ethereum",
+    "base": "Base",
+    "arbitrum": "Arbitrum",
+    "avalanche": "Avalanche",
+    "crossChainSend": "Envío entre cadenas",
+    "selectTarget": "¿Enviar desde {{chain}} a otra cadena?",
+    "noTargetChain": "Sin cadena objetivo",
+    "needMultipleChains": "Se requieren al menos 2 billeteras de cadena para transferencias entre cadenas."
   },
   "headers": {
     "circlePay": "CirclePay Global",
     "qrPayment": "Pago QR",
-    "crossChainSend": "Envío Cross-Chain",
+    "crossChainSend": "Envío entre cadenas",
     "usdcDeposit": "Depósito USDC",
-    "transactionHistory": "Historial de Transacciones",
+    "transactionHistory": "Historial de transacciones",
     "aiAssistant": "Asistente IA",
     "profileKyc": "Perfil y KYC"
   },
   "screens": {
     "home": {
       "welcome": "¡Hola, {{name}}! 👋",
-      "subtitle": "Los pagos cross-chain globales están listos",
+      "subtitle": "El pago global entre cadenas está listo",
       "appTitle": "CirclePay Global",
-      "appSubtitle": "Plataforma Global de Pagos USDC Cross-Chain",
+      "appSubtitle": "Plataforma global de pagos USDC entre cadenas",
       "features": {
-        "title": "Características Principales",
-        "fastTransfer": "Transferencias Cross-Chain Rápidas",
-        "secureUsdc": "Transacciones USDC Seguras",
-        "qrPayment": "Pagos con Código QR",
-        "simpleKyc": "Verificación KYC Simple"
+        "title": "Características principales",
+        "fastTransfer": "Transferencia rápida entre cadenas",
+        "secureUsdc": "Transacciones USDC seguras",
+        "qrPayment": "Pago con código QR",
+        "simpleKyc": "Verificación KYC simple"
       },
       "auth": {
         "getStarted": "Comenzar",
         "alreadyHaveAccount": "¿Ya tienes una cuenta?"
       },
       "wallet": {
-        "totalBalance": "Saldo Total",
-        "mainWallet": "Billetera Principal",
-        "quickActions": "Acciones Rápidas"
+        "totalBalance": "Saldo total",
+        "mainWallet": "Billetera principal",
+        "multiChain": "Billeteras multi-cadena",
+        "quickActions": "Acciones rápidas",
+        "manage": "Gestión de billetera",
+        "manageDescription": "Navegar a la pantalla de configuración.\n(Función de navegación conectada)",
+        "noWallets": "No hay billeteras disponibles",
+        "createWallet": "¡Crea tu primera billetera!"
       }
     },
     "login": {
-      "title": "Iniciar Sesión",
-      "subtitle": "Bienvenido de vuelta a CirclePay Global",
-      "email": "Dirección de Correo",
+      "title": "Iniciar sesión",
+      "subtitle": "Bienvenido de nuevo a CirclePay Global",
+      "email": "Dirección de correo electrónico",
       "pin": "Número PIN",
-      "biometric": "Autenticación Biométrica",
-      "forgotPin": "¿Olvidaste tu PIN?",
-      "loginSuccess": "¡Inicio de Sesión Exitoso!",
-      "loginFailed": "Error al Iniciar Sesión",
+      "biometric": "Autenticación biométrica",
+      "forgotPin": "¿Olvidaste el PIN?",
+      "loginSuccess": "¡Inicio de sesión exitoso!",
+      "loginFailed": "Error al iniciar sesión",
       "welcome": "¡Bienvenido!",
       "errorMessage": "Ocurrió un error durante el inicio de sesión."
     },
@@ -79,54 +94,54 @@
       "subtitle": "Únete a CirclePay Global",
       "firstName": "Nombre",
       "lastName": "Apellido",
-      "email": "Correo Electrónico",
+      "email": "Correo electrónico",
       "pin": "Número PIN",
       "confirmPin": "Confirmar PIN",
-      "phone": "Número de Teléfono",
+      "phone": "Número de teléfono",
       "country": "País",
-      "agreeTerms": "Acepto los Términos de Servicio",
-      "agreePrivacy": "Acepto la Política de Privacidad"
+      "agreeTerms": "Acepto los términos de servicio",
+      "agreePrivacy": "Acepto la política de privacidad"
     },
     "profile": {
       "title": "Perfil y KYC",
-      "subtitle": "Gestión de Información Personal y Verificación de Identidad",
-      "personalInfo": "Información Personal",
-      "editProfile": "Editar Perfil",
-      "kycStatus": "Estado de Verificación KYC",
-      "documents": "Documentos Enviados",
+      "subtitle": "Gestión de información personal y verificación de identidad",
+      "personalInfo": "Información personal",
+      "editProfile": "Editar perfil",
+      "kycStatus": "Estado de verificación KYC",
+      "documents": "Documentos enviados",
       "loadingKyc": "Cargando información KYC...",
       "loadingProfile": "Cargando información del perfil...",
-      "logout": "Cerrar Sesión",
-      "riskScore": "Puntuación de Riesgo: {{score}}%",
-      "language": "Configuración de Idioma",
-      "selectLanguage": "Seleccionar Idioma"
+      "logout": "Cerrar sesión",
+      "riskScore": "Puntuación de riesgo: {{score}}%",
+      "language": "Configuración de idioma",
+      "selectLanguage": "Seleccionar idioma"
     },
     "ai": {
       "title": "Asistente IA",
       "placeholder": "Escribe un mensaje...",
       "listeningIndicator": "Escuchando...",
-      "sendMessage": "Enviar Mensaje",
-      "voiceInput": "Entrada de Voz",
-      "speakResponse": "Escuchar Respuesta"
+      "sendMessage": "Enviar mensaje",
+      "voiceInput": "Entrada de voz",
+      "speakResponse": "Escuchar respuesta"
     },
     "settings": {
       "title": "Configuración",
       "account": "Cuenta",
       "security": "Seguridad",
       "notifications": "Notificaciones",
-      "autoConvert": "Conversión Automática",
-      "autoConvertDesc": "Conversión automática a USDC durante pagos",
+      "autoConvert": "Conversión automática",
+      "autoConvertDesc": "Conversión automática de USDC durante pagos",
       "language": "Idioma",
       "theme": "Tema",
-      "themeLight": "Modo Claro",
+      "themeLight": "Modo claro",
       "support": "Soporte",
       "help": "Ayuda",
       "helpDesc": "Preguntas frecuentes y guías de uso",
-      "customerSupport": "Atención al Cliente",
+      "customerSupport": "Soporte al cliente",
       "customerSupportDesc": "Soporte de chat 24/7",
-      "terms": "Términos de Servicio",
+      "terms": "Términos de servicio",
       "termsDesc": "Términos de servicio y política de privacidad",
-      "rateApp": "Calificar App",
+      "rateApp": "Calificar app",
       "rateAppDesc": "Califícanos en el App Store"
     }
   },
@@ -135,13 +150,13 @@
       "pending": "Pendiente",
       "approved": "Aprobado",
       "rejected": "Rechazado",
-      "review": "En Revisión"
+      "review": "En revisión"
     },
     "documentTypes": {
       "passport": "Pasaporte",
-      "driverLicense": "Licencia de Conducir",
-      "nationalId": "Cédula de Identidad",
-      "utilityBill": "Factura de Servicios"
+      "driverLicense": "Licencia de conducir",
+      "nationalId": "Cédula de identidad",
+      "utilityBill": "Factura de servicios públicos"
     }
   },
   "transactions": {
@@ -161,24 +176,24 @@
   },
   "security": {
     "highAmount": {
-      "title": "Confirmación de Transferencia de Alto Monto",
+      "title": "Confirmación de transferencia alta",
       "description": "{{amount}} USDC es una transferencia de alto monto.",
       "warning": "{{amount}} USDC es una transferencia de alto monto. Se requiere verificación de seguridad adicional.",
       "recommendations": [
-        "Por favor verifica nuevamente la dirección del destinatario",
+        "Por favor, verifica nuevamente la dirección del destinatario",
         "Reconfirma el propósito de la transferencia y el destinatario",
-        "Esta transacción no se puede revertir una vez completada",
-        "Di 'confirmar transferencia de alto monto' si estás seguro"
+        "La transacción no se puede revertir una vez completada",
+        "Di 'confirmar transferencia alta' si estás seguro"
       ]
     },
     "suspiciousAddress": {
-      "title": "Advertencia de Seguridad de Dirección",
+      "title": "Advertencia de seguridad de dirección",
       "description": "Esta dirección muestra patrones sospechosos.",
       "warning": "Advertencia: Esta dirección muestra patrones sospechosos.",
       "recommendations": [
-        "Por favor verifica nuevamente la dirección",
+        "Por favor, verifica nuevamente la dirección",
         "Contacta directamente al destinatario para reconfirmar la dirección",
-        "Intenta primero una pequeña transferencia de prueba"
+        "Prueba primero una transferencia pequeña de prueba"
       ]
     }
   },

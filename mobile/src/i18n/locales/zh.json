@@ -30,6 +30,16 @@
     "shopping": "购物",
     "hotplace": "热门"
   },
+  "chains": {
+    "ethereum": "以太坊",
+    "base": "Base",
+    "arbitrum": "Arbitrum",
+    "avalanche": "Avalanche",
+    "crossChainSend": "跨链转账",
+    "selectTarget": "您想从{{chain}}转账到其他链吗？",
+    "noTargetChain": "无目标链",
+    "needMultipleChains": "跨链转账至少需要2个链钱包。"
+  },
   "headers": {
     "circlePay": "CirclePay Global",
     "qrPayment": "二维码支付",
@@ -59,7 +69,12 @@
       "wallet": {
         "totalBalance": "总余额",
         "mainWallet": "主钱包",
-        "quickActions": "快速操作"
+        "multiChain": "多链钱包",
+        "quickActions": "快速操作",
+        "manage": "钱包管理",
+        "manageDescription": "导航到设置屏幕。\n(导航功能已连接)",
+        "noWallets": "无可用钱包",
+        "createWallet": "创建您的第一个钱包！"
       }
     },
     "login": {
@@ -104,7 +119,7 @@
     "ai": {
       "title": "AI助手",
       "placeholder": "输入消息...",
-      "listeningIndicator": "正在听取...",
+      "listeningIndicator": "语音识别中...",
       "sendMessage": "发送消息",
       "voiceInput": "语音输入",
       "speakResponse": "语音播放"
@@ -114,8 +129,8 @@
       "account": "账户",
       "security": "安全",
       "notifications": "通知",
-      "autoConvert": "自动转换",
-      "autoConvertDesc": "支付时自动转换为USDC",
+      "autoConvert": "自动兑换",
+      "autoConvertDesc": "支付时自动USDC转换",
       "language": "语言",
       "theme": "主题",
       "themeLight": "浅色模式",
@@ -126,8 +141,8 @@
       "customerSupportDesc": "24小时聊天支持",
       "terms": "服务条款",
       "termsDesc": "服务条款和隐私政策",
-      "rateApp": "评价应用",
-      "rateAppDesc": "在App Store中评价我们"
+      "rateApp": "应用评分",
+      "rateAppDesc": "在App Store评分"
     }
   },
   "kyc": {
@@ -162,10 +177,10 @@
   "security": {
     "highAmount": {
       "title": "大额转账确认",
-      "description": "{{amount}} USDC为大额转账。",
-      "warning": "{{amount}} USDC为大额转账。需要额外的安全验证。",
+      "description": "{{amount}} USDC是大额转账。",
+      "warning": "{{amount}} USDC是大额转账。需要额外的安全验证。",
       "recommendations": [
-        "请再次检查收款地址",
+        "请再次确认收款地址",
         "重新确认转账目的和收款人",
         "交易完成后无法撤销",
         "如果确定，请说'确认大额转账'"
@@ -176,9 +191,9 @@
       "description": "此地址显示可疑模式。",
       "warning": "警告：此地址显示可疑模式。",
       "recommendations": [
-        "请再次检查地址",
+        "请再次确认地址",
         "直接联系收款人重新确认地址",
-        "建议先进行小额测试转账"
+        "先尝试小额测试转账"
       ]
     }
   },

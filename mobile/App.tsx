@@ -183,6 +183,15 @@ function UnauthenticatedApp() {
 
 // 앱 내비게이션 관리자
 function AppNavigator() {
+  return (
+    <AppProvider>
+      <AppNavigatorContent />
+    </AppProvider>
+  );
+}
+
+// AppProvider 내부에서 사용할 컴포넌트
+function AppNavigatorContent() {
   const { state, dispatch, hideTokenExpiredModal, hideOfflineModal } = useApp();
   
   // 상태 변경 로깅 (디버깅용)
@@ -244,12 +253,10 @@ function AppNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <NavigationContainer>
-          <StatusBar style="dark" />
-          <AppNavigator />
-        </NavigationContainer>
-      </AppProvider>
+      <NavigationContainer>
+        <StatusBar style="dark" />
+        <AppNavigator />
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }

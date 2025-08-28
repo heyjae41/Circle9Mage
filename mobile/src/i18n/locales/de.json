@@ -1,6 +1,6 @@
 {
   "common": {
-    "loading": "Lädt...",
+    "loading": "Laden...",
     "processing": "Verarbeitung...",
     "confirm": "Bestätigen",
     "cancel": "Abbrechen",
@@ -27,13 +27,23 @@
     "profile": "Profil",
     "login": "Anmelden",
     "signUp": "Registrieren",
-    "shopping": "Shopping",
-    "hotplace": "Hotplace"
+    "shopping": "Einkaufen",
+    "hotplace": "Angesagter Ort"
+  },
+  "chains": {
+    "ethereum": "Ethereum",
+    "base": "Base",
+    "arbitrum": "Arbitrum",
+    "avalanche": "Avalanche",
+    "crossChainSend": "Cross-Chain-Übertragung",
+    "selectTarget": "Von {{chain}} zu einer anderen Kette senden?",
+    "noTargetChain": "Keine Zielkette",
+    "needMultipleChains": "Mindestens 2 Ketten-Wallets für Cross-Chain-Transfers erforderlich."
   },
   "headers": {
     "circlePay": "CirclePay Global",
     "qrPayment": "QR-Zahlung",
-    "crossChainSend": "Cross-Chain-Überweisung",
+    "crossChainSend": "Cross-Chain-Übertragung",
     "usdcDeposit": "USDC-Einzahlung",
     "transactionHistory": "Transaktionsverlauf",
     "aiAssistant": "KI-Assistent",
@@ -44,12 +54,12 @@
       "welcome": "Hallo, {{name}}! 👋",
       "subtitle": "Globale Cross-Chain-Zahlungen sind bereit",
       "appTitle": "CirclePay Global",
-      "appSubtitle": "Globale Cross-Chain-USDC-Zahlungsplattform",
+      "appSubtitle": "Globale Cross-Chain USDC-Zahlungsplattform",
       "features": {
-        "title": "Hauptmerkmale",
-        "fastTransfer": "Schnelle Cross-Chain-Überweisungen",
+        "title": "Hauptfunktionen",
+        "fastTransfer": "Schnelle Cross-Chain-Übertragung",
         "secureUsdc": "Sichere USDC-Transaktionen",
-        "qrPayment": "QR-Code-Zahlungen",
+        "qrPayment": "QR-Code-Zahlung",
         "simpleKyc": "Einfache KYC-Verifizierung"
       },
       "auth": {
@@ -59,7 +69,12 @@
       "wallet": {
         "totalBalance": "Gesamtguthaben",
         "mainWallet": "Haupt-Wallet",
-        "quickActions": "Schnellaktionen"
+        "multiChain": "Multi-Chain-Wallets",
+        "quickActions": "Schnellaktionen",
+        "manage": "Wallet-Verwaltung",
+        "manageDescription": "Zu Einstellungsbildschirm navigieren.\n(Navigationsfunktion verbunden)",
+        "noWallets": "Keine Wallets verfügbar",
+        "createWallet": "Erstellen Sie Ihr erstes Wallet!"
       }
     },
     "login": {
@@ -72,11 +87,11 @@
       "loginSuccess": "Anmeldung erfolgreich!",
       "loginFailed": "Anmeldung fehlgeschlagen",
       "welcome": "Willkommen!",
-      "errorMessage": "Bei der Anmeldung ist ein Fehler aufgetreten."
+      "errorMessage": "Ein Fehler ist bei der Anmeldung aufgetreten."
     },
     "signUp": {
       "title": "Registrieren",
-      "subtitle": "Bei CirclePay Global anmelden",
+      "subtitle": "Treten Sie CirclePay Global bei",
       "firstName": "Vorname",
       "lastName": "Nachname",
       "email": "E-Mail",
@@ -89,7 +104,7 @@
     },
     "profile": {
       "title": "Profil & KYC",
-      "subtitle": "Verwaltung persönlicher Informationen & Identitätsverifizierung",
+      "subtitle": "Verwaltung persönlicher Daten und Identitätsverifizierung",
       "personalInfo": "Persönliche Informationen",
       "editProfile": "Profil bearbeiten",
       "kycStatus": "KYC-Verifizierungsstatus",
@@ -97,7 +112,7 @@
       "loadingKyc": "KYC-Informationen werden geladen...",
       "loadingProfile": "Profilinformationen werden geladen...",
       "logout": "Abmelden",
-      "riskScore": "Risikobewertung: {{score}}%",
+      "riskScore": "Risikoscore: {{score}}%",
       "language": "Spracheinstellungen",
       "selectLanguage": "Sprache auswählen"
     },
@@ -114,18 +129,18 @@
       "account": "Konto",
       "security": "Sicherheit",
       "notifications": "Benachrichtigungen",
-      "autoConvert": "Automatische Umwandlung",
-      "autoConvertDesc": "Automatische USDC-Umwandlung bei Zahlungen",
+      "autoConvert": "Automatische Konvertierung",
+      "autoConvertDesc": "Automatische USDC-Konvertierung bei Zahlungen",
       "language": "Sprache",
       "theme": "Design",
       "themeLight": "Heller Modus",
       "support": "Support",
       "help": "Hilfe",
-      "helpDesc": "FAQs und Nutzungsanleitungen",
+      "helpDesc": "FAQ und Benutzerhandbücher",
       "customerSupport": "Kundensupport",
-      "customerSupportDesc": "24/7 Chat-Support",
+      "customerSupportDesc": "24/7-Chat-Support",
       "terms": "Nutzungsbedingungen",
-      "termsDesc": "Servicebedingungen und Datenschutzrichtlinie",
+      "termsDesc": "Nutzungsbedingungen und Datenschutzrichtlinie",
       "rateApp": "App bewerten",
       "rateAppDesc": "Bewerten Sie uns im App Store"
     }
@@ -141,7 +156,7 @@
       "passport": "Reisepass",
       "driverLicense": "Führerschein",
       "nationalId": "Personalausweis",
-      "utilityBill": "Versorgungsrechnung"
+      "utilityBill": "Stromrechnung"
     }
   },
   "transactions": {
@@ -149,7 +164,7 @@
       "pending": "Ausstehend",
       "completed": "Abgeschlossen",
       "failed": "Fehlgeschlagen",
-      "cancelled": "Abgebrochen"
+      "cancelled": "Storniert"
     },
     "types": {
       "send": "Senden",
@@ -161,14 +176,14 @@
   },
   "security": {
     "highAmount": {
-      "title": "Bestätigung für hohe Überweisungssumme",
-      "description": "{{amount}} USDC ist eine hohe Überweisungssumme.",
-      "warning": "{{amount}} USDC ist eine hohe Überweisungssumme. Eine zusätzliche Sicherheitsverifizierung ist erforderlich.",
+      "title": "Bestätigung hoher Übertragung",
+      "description": "{{amount}} USDC ist eine hohe Übertragung.",
+      "warning": "{{amount}} USDC ist eine hohe Übertragung. Zusätzliche Sicherheitsüberprüfung erforderlich.",
       "recommendations": [
         "Bitte überprüfen Sie die Empfängeradresse erneut",
-        "Bestätigen Sie den Überweisungszweck und Empfänger erneut",
-        "Diese Transaktion kann nach Abschluss nicht rückgängig gemacht werden",
-        "Sagen Sie 'hohe Überweisung bestätigen', wenn Sie sicher sind"
+        "Bestätigen Sie den Übertragungszweck und Empfänger erneut",
+        "Die Transaktion kann nach Abschluss nicht rückgängig gemacht werden",
+        "Sagen Sie 'hohe Übertragung bestätigen', wenn Sie sicher sind"
       ]
     },
     "suspiciousAddress": {
@@ -177,8 +192,8 @@
       "warning": "Warnung: Diese Adresse zeigt verdächtige Muster.",
       "recommendations": [
         "Bitte überprüfen Sie die Adresse erneut",
-        "Kontaktieren Sie den Empfänger direkt, um die Adresse zu bestätigen",
-        "Versuchen Sie zuerst eine kleine Testüberweisung"
+        "Kontaktieren Sie den Empfänger direkt zur Adressbestätigung",
+        "Versuchen Sie zuerst eine kleine Testübertragung"
       ]
     }
   },

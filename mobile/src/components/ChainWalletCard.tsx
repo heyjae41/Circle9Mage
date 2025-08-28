@@ -9,7 +9,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { useAppContext } from '../contexts/AppContext';
+import { useApp } from '../contexts/AppContext';
 import { safeToFixed } from '../utils/formatters';
 
 interface ChainWallet {
@@ -34,7 +34,6 @@ const ChainWalletCard: React.FC<ChainWalletCardProps> = ({
   onCrossChainSend,
 }) => {
   const { t } = useTranslation();
-  const { isRTL, getRTLStyle } = useAppContext();
 
   // 체인별 설정
   const getChainConfig = (chainName: string) => {
@@ -67,7 +66,6 @@ const ChainWalletCard: React.FC<ChainWalletCardProps> = ({
   };
 
   const chainConfig = getChainConfig(wallet.chainName);
-  const rtlStyle = getRTLStyle();
 
   const handleCrossChainSend = () => {
     Alert.alert(
@@ -92,12 +90,12 @@ const ChainWalletCard: React.FC<ChainWalletCardProps> = ({
   return (
     <View style={[styles.cardContainer, { backgroundColor: chainConfig.bgColor }]}>
       {/* 체인 헤더 */}
-      <View style={[styles.cardHeader, rtlStyle]}>
-        <View style={[styles.chainInfo, rtlStyle]}>
-          <LinearGradient
-            colors={chainConfig.colors}
-            style={styles.chainIconContainer}
-          >
+      <View style={styles.cardHeader}>
+        <View style={styles.chainInfo}>
+                  <LinearGradient
+          colors={chainConfig.colors as [string, string]}
+          style={styles.chainIconContainer}
+        >
             <Ionicons 
               name={chainConfig.icon as any}
               size={20} 
@@ -129,18 +127,18 @@ const ChainWalletCard: React.FC<ChainWalletCardProps> = ({
 
       {/* 지갑 주소 */}
       <TouchableOpacity 
-        style={[styles.addressSection, rtlStyle]}
+        style={styles.addressSection}
         onPress={() => onCopyAddress(wallet.address, wallet.chainName)}
       >
         <Ionicons name="wallet-outline" size={14} color="#666" />
-        <Text style={[styles.walletAddress, { textAlign: isRTL() ? 'right' : 'left' }]}>
+        <Text style={styles.walletAddress}>
           {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
         </Text>
         <Ionicons name="copy-outline" size={14} color="#666" />
       </TouchableOpacity>
 
       {/* 체인 상태 인디케이터 */}
-      <View style={[styles.statusSection, rtlStyle]}>
+      <View style={styles.statusSection}>
         <View style={[styles.statusDot, { backgroundColor: chainConfig.colors[0] }]} />
         <Text style={styles.statusText}>
           {t('common.active', { defaultValue: '활성' })}

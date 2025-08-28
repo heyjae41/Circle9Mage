@@ -319,6 +319,25 @@ cp env.example .env
 nano .env
 ```
 
+**필수 환경 변수:**
+```bash
+# Circle API 설정 (필수)
+CIRCLE_SANDBOX_API_KEY=your_circle_sandbox_api_key_here
+CIRCLE_ENTITY_SECRET=your_32_byte_entity_secret_here
+
+# 데이터베이스 설정
+DATABASE_URL=postgresql://postgres:password@localhost:5432/circlepay_db
+REDIS_URL=redis://localhost:6379
+
+# 보안 키
+SECRET_KEY=your_super_secret_key_here
+JWT_SECRET_KEY=your_jwt_secret_key_here
+
+# 환경 설정
+ENVIRONMENT=development
+DEBUG=true
+```
+
 ⚠️ **중요**: `.env` 파일은 절대로 Git에 커밋하지 마세요! `.gitignore`에 의해 자동 제외됩니다.
 
 ### 🔧 설치 및 실행
@@ -329,7 +348,66 @@ git clone https://github.com/your-username/circle9mage.git
 cd circle9mage
 ```
 
-#### 2️⃣ 백엔드 실행
+#### 2️⃣ 데이터베이스 설정 (PostgreSQL + Redis)
+
+##### 🐳 Docker로 빠른 시작 (권장)
+```bash
+# PostgreSQL + Redis 컨테이너 시작
+docker-compose up -d postgres redis
+
+# 상태 확인
+docker-compose ps
+
+# 로그 확인
+docker-compose logs postgres
+docker-compose logs redis
+```
+
+##### 🔧 수동 설치
+
+**PostgreSQL 설치:**
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install postgresql postgresql-contrib
+
+# macOS
+brew install postgresql
+
+# 서비스 시작
+sudo systemctl start postgresql  # Linux
+brew services start postgresql    # macOS
+
+# 데이터베이스 생성
+sudo -u postgres createdb circlepay_db
+```
+
+**Redis 설치:**
+```bash
+# Ubuntu/Debian
+sudo apt install redis-server
+
+# macOS
+brew install redis
+
+# 서비스 시작
+sudo systemctl start redis-server  # Linux
+brew services start redis          # macOS
+
+# 연결 테스트
+redis-cli ping  # PONG 응답 확인
+```
+
+##### 📊 데이터베이스 초기화
+```bash
+# 초기화 스크립트 실행
+psql -U postgres -d circlepay_db -f scripts/init-db.sql
+
+# 또는 Docker 컨테이너에서 실행
+docker exec -i circlepay-postgres psql -U postgres -d circlepay_db < scripts/init-db.sql
+```
+
+#### 3️⃣ 백엔드 실행
 ```bash
 cd backend
 
@@ -1112,6 +1190,27 @@ docker exec -it circle9mage-postgres-1 psql -U postgres -d circle9mage
 
 # Redis 접속
 docker exec -it circle9mage-redis-1 redis-cli
+
+# 데이터베이스 백업
+docker exec circle9mage-postgres-1 pg_dump -U postgres circle9mage > backup.sql
+
+# 데이터베이스 복원
+docker exec -i circle9mage-postgres-1 psql -U postgres -d circle9mage < backup.sql
+
+# Redis 데이터 백업
+docker exec circle9mage-redis-1 redis-cli SAVE
+docker cp circle9mage-redis-1:/data/dump.rdb ./redis_backup.rdb
+```
+
+**데이터베이스 모니터링:**
+```bash
+# PostgreSQL 상태 확인
+docker exec circle9mage-postgres-1 psql -U postgres -d circle9mage -c "SELECT version();"
+docker exec circle9mage-postgres-1 psql -U postgres -d circle9mage -c "SELECT count(*) FROM users;"
+
+# Redis 상태 확인
+docker exec circle9mage-redis-1 redis-cli info server
+docker exec circle9mage-redis-1 redis-cli info memory
 ```
 
 ---
@@ -1538,6 +1637,57 @@ Completion Time: 15-45 seconds
 
 ### 🚀 **다음 단계**
 - 다른 체인으로 크로스체인 전송 확장 (Ethereum → Base, Arbitrum 등)
+
+---
+
+## 🗄️ 데이터베이스 이관 가이드
+
+### 📋 이관 준비사항
+
+**필요한 문서:**
+- `docs/DATABASE_SCHEMA.md` - 완전한 스키마 및 설정 가이드
+- `docker-compose.yml` - Docker 환경 설정
+- `scripts/init-db.sql` - 데이터베이스 초기화 스크립트
+
+### 🚀 빠른 이관 단계
+
+#### 1️⃣ 새 서버에서 데이터베이스 구축
+```bash
+# 프로젝트 클론
+git clone https://github.com/your-username/circle9mage.git
+cd circle9mage
+
+# Docker로 데이터베이스 시작
+docker-compose up -d postgres redis
+
+# 데이터베이스 초기화
+docker exec -i circlepay-postgres psql -U postgres -d circlepay_db < scripts/init-db.sql
+```
+
+#### 2️⃣ 기존 데이터 마이그레이션
+```bash
+# 기존 데이터베이스 백업
+pg_dump -h old-server -U username -d old_db > migration_backup.sql
+
+# 새 데이터베이스로 복원
+psql -h localhost -U postgres -d circlepay_db < migration_backup.sql
+```
+
+#### 3️⃣ 환경 변수 업데이트
+```bash
+# .env 파일 수정
+DATABASE_URL=postgresql://postgres:password@localhost:5432/circlepay_db
+REDIS_URL=redis://localhost:6379
+```
+
+### 🔧 문제 해결
+
+**자주 발생하는 문제:**
+- **포트 충돌**: `docker-compose.yml`에서 포트 변경
+- **권한 문제**: PostgreSQL 사용자 권한 확인
+- **연결 실패**: 방화벽 및 네트워크 설정 확인
+
+**상세 가이드는 `docs/DATABASE_SCHEMA.md`를 참조하세요.**
 - Circle Paymaster 가스리스 결제 실제 구현
 - 대시보드 UI/UX 최적화
 - 프로덕션 배포 준비

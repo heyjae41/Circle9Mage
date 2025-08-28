@@ -35,15 +35,15 @@
     "base": "Base",
     "arbitrum": "Arbitrum",
     "avalanche": "Avalanche",
-    "crossChainSend": "Cross-Chain Send",
-    "selectTarget": "Would you like to send from {{chain}} to another chain?",
+    "crossChainSend": "Cross-chain Send",
+    "selectTarget": "Send from {{chain}} to another chain?",
     "noTargetChain": "No Target Chain",
-    "needMultipleChains": "At least 2 chain wallets are required for cross-chain transfers."
+    "needMultipleChains": "At least 2 chain wallets required for cross-chain transfers."
   },
   "headers": {
     "circlePay": "CirclePay Global",
     "qrPayment": "QR Payment",
-    "crossChainSend": "Cross-Chain Send",
+    "crossChainSend": "Cross-chain Send",
     "usdcDeposit": "USDC Deposit",
     "transactionHistory": "Transaction History",
     "aiAssistant": "AI Assistant",
@@ -52,14 +52,14 @@
   "screens": {
     "home": {
       "welcome": "Hello, {{name}}! 👋",
-      "subtitle": "Global cross-chain payments are ready",
+      "subtitle": "Global cross-chain payment is ready",
       "appTitle": "CirclePay Global",
-      "appSubtitle": "Global Cross-Chain USDC Payment Platform",
+      "appSubtitle": "Global Cross-chain USDC Payment Platform",
       "features": {
         "title": "Key Features",
-        "fastTransfer": "Fast Cross-Chain Transfers",
+        "fastTransfer": "Fast Cross-chain Transfer",
         "secureUsdc": "Secure USDC Transactions",
-        "qrPayment": "QR Code Payments",
+        "qrPayment": "QR Code Payment",
         "simpleKyc": "Simple KYC Verification"
       },
       "auth": {
@@ -69,10 +69,10 @@
       "wallet": {
         "totalBalance": "Total Balance",
         "mainWallet": "Main Wallet",
-        "multiChain": "Multi-Chain Wallets",
+        "multiChain": "Multi-chain Wallets",
         "quickActions": "Quick Actions",
         "manage": "Wallet Management",
-        "manageDescription": "Navigate to settings screen.\n(Navigation feature is connected)",
+        "manageDescription": "Navigate to settings screen.\n(Navigation feature connected)",
         "noWallets": "No wallets available",
         "createWallet": "Create your first wallet!"
       }
@@ -83,9 +83,9 @@
       "email": "Email Address",
       "pin": "PIN Number",
       "biometric": "Biometric Authentication",
-      "forgotPin": "Forgot your PIN?",
-      "loginSuccess": "Login Successful!",
-      "loginFailed": "Login Failed",
+      "forgotPin": "Forgot PIN?",
+      "loginSuccess": "Login successful!",
+      "loginFailed": "Login failed",
       "welcome": "Welcome!",
       "errorMessage": "An error occurred during login."
     },
@@ -178,12 +178,12 @@
     "highAmount": {
       "title": "High Amount Transfer Confirmation",
       "description": "{{amount}} USDC is a high-amount transfer.",
-      "warning": "{{amount}} USDC is a high-amount transfer. Additional security verification is required.",
+      "warning": "{{amount}} USDC is a high-amount transfer. Additional security verification required.",
       "recommendations": [
         "Please double-check the recipient address",
-        "Reconfirm the transfer purpose and recipient",
-        "This transaction cannot be reversed once completed",
-        "Say 'confirm high amount transfer' if you're sure"
+        "Reconfirm transfer purpose and recipient",
+        "Transaction cannot be reversed once completed",
+        "Say 'confirm high amount transfer' if you are sure"
       ]
     },
     "suspiciousAddress": {
@@ -192,7 +192,7 @@
       "warning": "Warning: This address shows suspicious patterns.",
       "recommendations": [
         "Please double-check the address",
-        "Contact the recipient directly to reconfirm the address",
+        "Contact recipient directly to reconfirm address",
         "Try a small test transfer first"
       ]
     }
