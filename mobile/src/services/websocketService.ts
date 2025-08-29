@@ -180,14 +180,21 @@ class WebSocketService {
         const data: CCTPNotification = JSON.parse(event.data);
         console.log('📱 WebSocket 메시지 수신:', data);
         
-        // 알림 핸들러들에게 전달
-        this.notificationHandlers.forEach(handler => {
-          try {
-            handler(data);
-          } catch (error) {
-            console.error('❌ 알림 핸들러 오류:', error);
-          }
-        });
+        // 메시지 유효성 검사
+        if (data && data.type && data.title && data.message) {
+          console.log('✅ 유효한 WebSocket 메시지 - 핸들러에게 전달');
+          
+          // 알림 핸들러들에게 전달
+          this.notificationHandlers.forEach(handler => {
+            try {
+              handler(data);
+            } catch (error) {
+              console.error('❌ 알림 핸들러 오류:', error);
+            }
+          });
+        } else {
+          console.log('⚠️ 유효하지 않은 WebSocket 메시지 - 무시:', data);
+        }
         
       } catch (error) {
         console.error('❌ WebSocket 메시지 파싱 오류:', error);

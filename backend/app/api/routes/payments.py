@@ -230,6 +230,9 @@ async def create_cross_chain_transfer(
         # 2. Circle API를 통한 실제 크로스체인 전송
         print(f"🌐 Circle API 크로스체인 전송 시작 ({fast_mode})...")
         
+        # source_wallet_id 변수 정의
+        source_wallet_id = request.source_wallet_id
+        
         try:
             # Circle CCTP 서비스 인스턴스 생성 (올바른 클래스 사용)
             from app.services.circle_client import CircleCCTPService
@@ -245,8 +248,20 @@ async def create_cross_chain_transfer(
                 use_fast_transfer=request.use_fast_transfer
             )
             
-            # Circle CCTP API 응답 구조에 맞춰 수정
-            transfer_data = transfer_response.get("data", {})
+            # Circle CCTP API 응답 구조에 맞춰 수정 (응답이 최상위에 직접 있는 경우 처리)
+            print(f"🔍 Circle API 응답 구조: {transfer_response}")
+            
+            # 응답 구조 확인 및 데이터 추출
+            if isinstance(transfer_response, dict):
+                if "data" in transfer_response:
+                    # 기존 구조: {"data": {"id": "...", "state": "..."}}
+                    transfer_data = transfer_response.get("data", {})
+                else:
+                    # 새로운 구조: {"id": "...", "state": "..."} (최상위에 직접)
+                    transfer_data = transfer_response
+            else:
+                transfer_data = {}
+            
             transfer_id = transfer_data.get("id", f"transfer_{uuid.uuid4()}")
             
             # Circle API는 "state" 필드를 사용 (PENDING_RISK_SCREENING, CONFIRMED, COMPLETE 등)
@@ -266,48 +281,93 @@ async def create_cross_chain_transfer(
             
             print(f"✅ Circle API 크로스체인 전송 생성 성공: {transfer_id}")
             
-            # CCTP Hooks 시뮬레이션 트리거 (비동기)
-            background_tasks.add_task(
-                cctp_hooks_service.simulate_cctp_hooks,
-                {
-                    "id": transfer_id,
-                    "sender_id": "current_user_id",  # 실제 구현에서는 JWT에서 추출
-                    "recipient_id": None,  # 수신자 ID가 있다면 여기에 설정
-                    "amount": request.amount,
-                    "source_chain": request.source_chain,
-                    "target_chain": request.target_chain
-                }
-            )
+            # CCTP Hooks 시뮬레이션 트리거 (비동기) - 임시로 주석 처리
+            # TODO: cctp_hooks_service 구현 후 활성화
+            # background_tasks.add_task(
+            #     cctp_hooks_service.simulate_cctp_hooks,
+            #     {
+            #         "id": transfer_id,
+            #         "sender_id": "current_user_id",  # 실제 구현에서는 JWT에서 추출
+            #         "recipient_id": None,  # 수신자 ID가 있다면 여기에 설정
+            #         "amount": request.amount,
+            #         "source_chain": request.source_chain,
+            #         "target_chain": request.target_chain
+            #     }
+            # )
             
         except Exception as circle_error:
-            print(f"⚠️ Circle API 호출 실패, Mock 응답으로 처리: {str(circle_error)}")
-            # Circle API 실패 시 Mock 응답으로 대체
-            transfer_id = f"transfer_{uuid.uuid4()}"
-            transfer_status = "processing"
-            estimated_time = "8-20 seconds"
-            print(f"✅ Mock 크로스체인 전송 생성: {transfer_id}")
-        
-        # 백그라운드에서 전송 상태 모니터링
-        background_tasks.add_task(
-            monitor_transfer_status,
-            transfer_id
-        )
-        
-        print(f"크로스체인 전송 완료: {transfer_id}")
-        
-        return PaymentResponse(
-            payment_id=transfer_id,
-            status=transfer_status,
-            transaction_hash=None,  # 아직 블록체인에 포함되지 않음
-            amount=request.amount,
-            currency="USDC",
-            estimated_completion_time=estimated_time,
-            fees={
-                "gas_fee": "2.50",
-                "bridge_fee": "0.50",
-                "total_fee": "3.00"
+            print(f"❌ Circle API 호출 실패: {str(circle_error)}")
+            # API 실패 시 상세 오류 정보와 함께 HTTP 500 응답
+            error_detail = {
+                "error": "Circle API 호출 실패",
+                "details": str(circle_error),
+                "timestamp": datetime.utcnow().isoformat(),
+                "request": {
+                    "source_chain": request.source_chain,
+                    "target_chain": request.target_chain,
+                    "amount": request.amount,
+                    "wallet_id": source_wallet_id
+                }
             }
-        )
+            
+            print(f"❌ 크로스체인 전송 실패 상세: {error_detail}")
+            raise HTTPException(
+                status_code=500, 
+                detail={
+                    "message": "Circle API 호출 실패로 인한 크로스체인 전송 실패",
+                    "error": str(circle_error),
+                    "suggestions": [
+                        "Circle API 키와 Entity Secret을 확인하세요",
+                        "토큰 ID가 올바른지 확인하세요",
+                        "지갑 ID가 유효한지 확인하세요"
+                    ]
+                }
+            )
+        
+        # Circle API 성공 시에만 백그라운드 모니터링 시작
+        print(f"🔍 Circle API 응답 검증: {transfer_data}")
+        
+        if transfer_data and isinstance(transfer_data, dict):
+            # transfer_data 자체가 이미 올바른 구조 ({"id": "...", "state": "..."})
+            transfer_id = transfer_data.get("id", f"transfer_{uuid.uuid4()}")
+            transfer_status = transfer_data.get("state", "PENDING_RISK_SCREENING")
+            
+            # 백그라운드에서 전송 상태 모니터링
+            background_tasks.add_task(
+                monitor_transfer_status,
+                transfer_id
+            )
+            
+            print(f"✅ 크로스체인 전송 성공: {transfer_id}")
+            
+            return PaymentResponse(
+                payment_id=transfer_id,
+                status=transfer_status,
+                transaction_hash=None,  # 아직 블록체인에 포함되지 않음
+                amount=request.amount,
+                currency="USDC",
+                estimated_completion_time="15-45 seconds" if request.use_fast_transfer else "8-20 minutes",
+                fees={
+                    "gas_fee": "2.50",
+                    "bridge_fee": "0.50",
+                    "total_fee": "3.00"
+                }
+            )
+        else:
+            # Circle API 응답이 예상과 다른 경우
+            print(f"⚠️ Circle API 응답 형식 오류: {transfer_data}")
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "message": "Circle API 응답 형식 오류",
+                    "response": transfer_data,
+                    "suggestions": [
+                        "Circle API 응답 구조를 확인하세요",
+                        "API 버전이 올바른지 확인하세요",
+                        "지원하지 않는 체인 조합인지 확인하세요"
+                    ]
+                }
+            )
         
     except HTTPException:
         raise

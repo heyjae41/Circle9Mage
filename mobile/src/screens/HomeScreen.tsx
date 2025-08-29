@@ -25,6 +25,7 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [isBalanceHidden, setIsBalanceHidden] = useState(false);
+  const [currentChainIndex, setCurrentChainIndex] = useState(0); // 현재 표시할 체인 인덱스
 
   // 체인별 지갑 그룹화
   const groupWalletsByChain = () => {
@@ -171,6 +172,24 @@ export default function HomeScreen() {
       sourceWalletId: walletId,
       targetChains: availableTargetChains,
     });
+  };
+
+  // 체인 전환 함수
+  const handleChainSwitch = () => {
+    console.log('🔄 체인 전환 버튼 클릭됨');
+    console.log('현재 체인 인덱스:', currentChainIndex);
+    console.log('사용 가능한 체인들:', chainWallets.map(w => w.chainName));
+    
+    if (chainWallets.length > 1) {
+      const currentChain = chainWallets[currentChainIndex];
+      const nextIndex = (currentChainIndex + 1) % chainWallets.length;
+      const nextChain = chainWallets[nextIndex];
+      
+      console.log(`🔄 체인 전환: ${currentChain.chainName} → ${nextChain.chainName}`);
+      setCurrentChainIndex(nextIndex);
+    } else {
+      console.log('⚠️ 체인 전환 불가: 체인이 1개 이하');
+    }
   };
 
   // 최근 거래 가져오기 (최대 3개)
@@ -388,29 +407,33 @@ export default function HomeScreen() {
           <Text style={styles.sectionTitle}>
             {t('screens.home.wallet.multiChain', { defaultValue: '멀티체인 지갑' })}
           </Text>
-          <TouchableOpacity onPress={() => 
-              Alert.alert(
-                t('screens.home.wallet.manage', { defaultValue: '지갑 관리' }), 
-                t('screens.home.wallet.manageDescription', { 
-                  defaultValue: '설정 화면으로 이동합니다.\n(네비게이션 기능이 연결됨을 확인)' 
-                }), 
-                [{text: t('common.confirm', { defaultValue: '확인' }), onPress: () => console.log('지갑 전체보기 클릭')}]
-              )
-            }>
-              <Text style={styles.seeAllText}>{t('common.viewAll', { defaultValue: '전체보기' })}</Text>
+          {chainWallets.length > 1 && (
+            <TouchableOpacity onPress={handleChainSwitch}>
+              <Text style={styles.chainSwitchText}>
+                {(() => {
+                  const nextIndex = (currentChainIndex + 1) % chainWallets.length;
+                  const nextChain = chainWallets[nextIndex];
+                  return t('chains.switchTo', { 
+                    defaultValue: '{{chain}}로 전환',
+                    chain: nextChain?.chainName || '다른 체인'
+                  });
+                })()}
+              </Text>
             </TouchableOpacity>
+          )}
         </View>
         
         {chainWallets.length > 0 ? (
-          chainWallets.map((wallet, index) => (
-            <ChainWalletCard
-              key={`chain-wallet-${wallet.chainName}-${index}`}
-              wallet={wallet}
-              isBalanceHidden={isBalanceHidden}
-              onCopyAddress={copyWalletAddress}
-              onCrossChainSend={handleCrossChainSend}
-            />
-          ))
+          // 현재 선택된 체인만 표시
+          <ChainWalletCard
+            key={`chain-wallet-${chainWallets[currentChainIndex]?.chainName}-${currentChainIndex}`}
+            wallet={chainWallets[currentChainIndex]}
+            isBalanceHidden={isBalanceHidden}
+            onCopyAddress={copyWalletAddress}
+            onCrossChainSend={handleCrossChainSend}
+            onChainSwitch={handleChainSwitch}
+            showChainSwitch={chainWallets.length > 1}
+          />
         ) : (
           <View style={styles.emptyWalletState}>
             <Ionicons name="wallet-outline" size={48} color="#CCC" />
@@ -704,6 +727,11 @@ const styles = StyleSheet.create({
   seeAllText: {
     fontSize: 14,
     color: '#007AFF',
+    fontWeight: '500',
+  },
+  chainSwitchText: {
+    fontSize: 14,
+    color: '#28A745',
     fontWeight: '500',
   },
   walletItem: {

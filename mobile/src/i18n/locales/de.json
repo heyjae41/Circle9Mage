@@ -1,7 +1,7 @@
 {
   "common": {
-    "loading": "Laden...",
-    "processing": "Verarbeitung...",
+    "loading": "Wird geladen...",
+    "processing": "Wird verarbeitet...",
     "confirm": "Bestätigen",
     "cancel": "Abbrechen",
     "save": "Speichern",
@@ -15,10 +15,29 @@
     "error": "Fehler",
     "success": "Erfolg",
     "warning": "Warnung",
-    "info": "Information"
+    "info": "Information",
+    "refreshComplete": "Neueste Wallet-Salden und Transaktionsverlauf wurden aktualisiert.",
+    "refreshError": "Daten können nicht aktualisiert werden.\nBitte überprüfen Sie Ihre Internetverbindung.",
+    "addressCopied": "{{walletName}}-Adresse wurde in die Zwischenablage kopiert.",
+    "copyError": "Adresse konnte nicht kopiert werden.",
+    "viewTransaction": "Transaktion anzeigen",
+    "newChat": "Neuer Chat",
+    "typeMessage": "Nachricht eingeben...",
+    "user": "Benutzer",
+    "viewAll": "Alle anzeigen",
+    "active": "Aktiv",
+    "thisMonthSpending": "Ausgaben diesen Monat",
+    "thisMonthSent": "Diesen Monat gesendet",
+    "thisMonthReceived": "Diesen Monat erhalten",
+    "email": "E-Mail",
+    "name": "Name",
+    "phone": "Telefon",
+    "preferredCurrency": "Bevorzugte Währung",
+    "country": "Land",
+    "logout": "Abmelden"
   },
   "navigation": {
-    "home": "Start",
+    "home": "Startseite",
     "payment": "Zahlung",
     "send": "Senden",
     "deposit": "Einzahlung",
@@ -28,14 +47,14 @@
     "login": "Anmelden",
     "signUp": "Registrieren",
     "shopping": "Einkaufen",
-    "hotplace": "Angesagter Ort"
+    "hotplace": "Trendiger Ort"
   },
   "chains": {
     "ethereum": "Ethereum",
     "base": "Base",
     "arbitrum": "Arbitrum",
     "avalanche": "Avalanche",
-    "crossChainSend": "Cross-Chain-Übertragung",
+    "crossChainSend": "Cross-Chain senden",
     "selectTarget": "Von {{chain}} zu einer anderen Kette senden?",
     "noTargetChain": "Keine Zielkette",
     "needMultipleChains": "Mindestens 2 Ketten-Wallets für Cross-Chain-Transfers erforderlich."
@@ -43,7 +62,7 @@
   "headers": {
     "circlePay": "CirclePay Global",
     "qrPayment": "QR-Zahlung",
-    "crossChainSend": "Cross-Chain-Übertragung",
+    "crossChainSend": "Cross-Chain senden",
     "usdcDeposit": "USDC-Einzahlung",
     "transactionHistory": "Transaktionsverlauf",
     "aiAssistant": "KI-Assistent",
@@ -51,13 +70,13 @@
   },
   "screens": {
     "home": {
-      "welcome": "Hallo, {{name}}! 👋",
-      "subtitle": "Globale Cross-Chain-Zahlungen sind bereit",
+      "welcome": "Hallo {{name}}! 👋",
+      "subtitle": "Globales Cross-Chain-Zahlen ist bereit",
       "appTitle": "CirclePay Global",
       "appSubtitle": "Globale Cross-Chain USDC-Zahlungsplattform",
       "features": {
         "title": "Hauptfunktionen",
-        "fastTransfer": "Schnelle Cross-Chain-Übertragung",
+        "fastTransfer": "Schneller Cross-Chain-Transfer",
         "secureUsdc": "Sichere USDC-Transaktionen",
         "qrPayment": "QR-Code-Zahlung",
         "simpleKyc": "Einfache KYC-Verifizierung"
@@ -67,59 +86,108 @@
         "alreadyHaveAccount": "Haben Sie bereits ein Konto?"
       },
       "wallet": {
-        "totalBalance": "Gesamtguthaben",
+        "totalBalance": "Gesamtsaldo",
         "mainWallet": "Haupt-Wallet",
         "multiChain": "Multi-Chain-Wallets",
         "quickActions": "Schnellaktionen",
         "manage": "Wallet-Verwaltung",
-        "manageDescription": "Zu Einstellungsbildschirm navigieren.\n(Navigationsfunktion verbunden)",
+        "manageDescription": "Navigieren Sie zum Einstellungsbildschirm.\n(Navigationsfunktion verbunden)",
         "noWallets": "Keine Wallets verfügbar",
         "createWallet": "Erstellen Sie Ihr erstes Wallet!"
       }
     },
     "login": {
       "title": "Anmelden",
-      "subtitle": "Willkommen zurück bei CirclePay Global",
-      "email": "E-Mail-Adresse",
-      "pin": "PIN-Nummer",
-      "biometric": "Biometrische Authentifizierung",
-      "forgotPin": "PIN vergessen?",
+      "subtitle": "Willkommen bei CirclePay Global",
+      "email": "E-Mail",
+      "password": "Passwort",
+      "loginButton": "Anmelden",
+      "forgotPassword": "Passwort vergessen?",
+      "noAccount": "Haben Sie kein Konto?",
+      "signUpLink": "Registrieren",
       "loginSuccess": "Anmeldung erfolgreich!",
-      "loginFailed": "Anmeldung fehlgeschlagen",
-      "welcome": "Willkommen!",
-      "errorMessage": "Ein Fehler ist bei der Anmeldung aufgetreten."
+      "loginError": "Anmeldung fehlgeschlagen. Bitte überprüfen Sie E-Mail und Passwort.",
+      "networkError": "Netzwerkfehler aufgetreten. Bitte überprüfen Sie Ihre Internetverbindung."
     },
     "signUp": {
       "title": "Registrieren",
-      "subtitle": "Treten Sie CirclePay Global bei",
-      "firstName": "Vorname",
-      "lastName": "Nachname",
+      "subtitle": "Erstellen Sie Ihr CirclePay Global-Konto",
+      "fullName": "Vollständiger Name",
       "email": "E-Mail",
-      "pin": "PIN-Nummer",
-      "confirmPin": "PIN bestätigen",
-      "phone": "Telefonnummer",
-      "country": "Land",
-      "agreeTerms": "Ich stimme den Nutzungsbedingungen zu",
-      "agreePrivacy": "Ich stimme der Datenschutzrichtlinie zu"
+      "password": "Passwort",
+      "confirmPassword": "Passwort bestätigen",
+      "agreeTerms": "Ich stimme den Nutzungsbedingungen und Datenschutzrichtlinien zu",
+      "signUpButton": "Registrieren",
+      "alreadyHaveAccount": "Haben Sie bereits ein Konto?",
+      "loginLink": "Anmelden",
+      "signUpSuccess": "Registrierung erfolgreich! Bitte überprüfen Sie Ihre E-Mail zur Kontoaktivierung.",
+      "signUpError": "Registrierung fehlgeschlagen. Bitte überprüfen Sie die eingegebenen Informationen.",
+      "passwordMismatch": "Passwörter stimmen nicht überein.",
+      "termsRequired": "Sie müssen den Nutzungsbedingungen zustimmen."
     },
-    "profile": {
-      "title": "Profil & KYC",
-      "subtitle": "Verwaltung persönlicher Daten und Identitätsverifizierung",
-      "personalInfo": "Persönliche Informationen",
-      "editProfile": "Profil bearbeiten",
-      "kycStatus": "KYC-Verifizierungsstatus",
-      "documents": "Eingereichte Dokumente",
-      "loadingKyc": "KYC-Informationen werden geladen...",
-      "loadingProfile": "Profilinformationen werden geladen...",
-      "logout": "Abmelden",
-      "riskScore": "Risikoscore: {{score}}%",
-      "language": "Spracheinstellungen",
-      "selectLanguage": "Sprache auswählen"
+    "payment": {
+      "title": "QR-Zahlung",
+      "subtitle": "Scannen Sie den QR-Code zum Zahlen",
+      "scanQR": "QR-Code scannen",
+      "enterAmount": "Zahlungsbetrag eingeben",
+      "amount": "Betrag",
+      "currency": "Währung",
+      "recipient": "Empfänger",
+      "memo": "Notiz",
+      "payButton": "Zahlen",
+      "paymentSuccess": "Zahlung erfolgreich!",
+      "paymentError": "Zahlung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "insufficientBalance": "Unzureichender Saldo. Bitte zahlen Sie ein und versuchen Sie es erneut."
+    },
+    "send": {
+      "title": "Senden",
+      "subtitle": "Senden Sie USDC an einen anderen Benutzer",
+      "recipient": "Empfängeradresse",
+      "amount": "Sendebetrag",
+      "memo": "Notiz (optional)",
+      "fee": "Gebühr",
+      "total": "Gesamt",
+      "sendButton": "Senden",
+      "sendSuccess": "Sendung erfolgreich!",
+      "sendError": "Sendung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+      "invalidAddress": "Ungültige Adresse. Bitte überprüfen Sie."
+    },
+    "deposit": {
+      "title": "USDC-Einzahlung",
+      "subtitle": "Zahlen Sie USDC in Ihr Wallet ein",
+      "depositMethods": "Einzahlungsmethoden",
+      "wireTransfer": "Banküberweisung",
+      "cryptoTransfer": "Krypto-Transfer",
+      "depositAddress": "Einzahlungsadresse",
+      "copyAddress": "Adresse kopieren",
+      "qrCode": "QR-Code",
+      "minimumAmount": "Mindesteinzahlung: 10 USDC",
+      "processingTime": "Verarbeitungszeit: 1-3 Werktage",
+      "depositSuccess": "Einzahlungsanfrage erfolgreich!",
+      "depositError": "Einzahlungsanfrage fehlgeschlagen. Bitte versuchen Sie es erneut."
+    },
+    "history": {
+      "title": "Transaktionsverlauf",
+      "subtitle": "Überprüfen Sie alle Ihre Transaktionen",
+      "allTransactions": "Alle Transaktionen",
+      "sent": "Gesendet",
+      "received": "Erhalten",
+      "deposits": "Einzahlungen",
+      "withdrawals": "Auszahlungen",
+      "payments": "Zahlungen",
+      "noTransactions": "Keine Transaktionen",
+      "transactionDetails": "Transaktionsdetails",
+      "status": "Status",
+      "date": "Datum",
+      "amount": "Betrag",
+      "fee": "Gebühr",
+      "hash": "Transaktions-Hash",
+      "blockNumber": "Blocknummer"
     },
     "ai": {
       "title": "KI-Assistent",
       "placeholder": "Nachricht eingeben...",
-      "listeningIndicator": "Zuhören...",
+      "listeningIndicator": "Spracherkennung...",
       "sendMessage": "Nachricht senden",
       "voiceInput": "Spracheingabe",
       "speakResponse": "Antwort anhören"
@@ -136,11 +204,11 @@
       "themeLight": "Heller Modus",
       "support": "Support",
       "help": "Hilfe",
-      "helpDesc": "FAQ und Benutzerhandbücher",
+      "helpDesc": "FAQ und Nutzungsanleitungen",
       "customerSupport": "Kundensupport",
-      "customerSupportDesc": "24/7-Chat-Support",
+      "customerSupportDesc": "24/7 Chat-Support",
       "terms": "Nutzungsbedingungen",
-      "termsDesc": "Nutzungsbedingungen und Datenschutzrichtlinie",
+      "termsDesc": "Servicebedingungen und Datenschutzrichtlinien",
       "rateApp": "App bewerten",
       "rateAppDesc": "Bewerten Sie uns im App Store"
     }
@@ -150,13 +218,13 @@
       "pending": "Ausstehend",
       "approved": "Genehmigt",
       "rejected": "Abgelehnt",
-      "review": "In Überprüfung"
+      "review": "In Prüfung"
     },
     "documentTypes": {
       "passport": "Reisepass",
       "driverLicense": "Führerschein",
       "nationalId": "Personalausweis",
-      "utilityBill": "Stromrechnung"
+      "utilityBill": "Nebenkostenabrechnung"
     }
   },
   "transactions": {
@@ -164,38 +232,44 @@
       "pending": "Ausstehend",
       "completed": "Abgeschlossen",
       "failed": "Fehlgeschlagen",
-      "cancelled": "Storniert"
+      "cancelled": "Abgebrochen"
     },
     "types": {
       "send": "Senden",
       "receive": "Empfangen",
       "deposit": "Einzahlung",
-      "withdrawal": "Abhebung",
+      "withdrawal": "Auszahlung",
       "payment": "Zahlung"
     }
   },
   "security": {
     "highAmount": {
-      "title": "Bestätigung hoher Übertragung",
-      "description": "{{amount}} USDC ist eine hohe Übertragung.",
-      "warning": "{{amount}} USDC ist eine hohe Übertragung. Zusätzliche Sicherheitsüberprüfung erforderlich.",
+      "title": "Bestätigung für hohen Überweisungsbetrag",
+      "description": "{{amount}} USDC ist eine Überweisung mit hohem Betrag.",
+      "warning": "{{amount}} USDC ist eine Überweisung mit hohem Betrag. Zusätzliche Sicherheitsüberprüfung erforderlich.",
       "recommendations": [
         "Bitte überprüfen Sie die Empfängeradresse erneut",
-        "Bestätigen Sie den Übertragungszweck und Empfänger erneut",
+        "Bestätigen Sie den Überweisungszweck und Empfänger erneut",
         "Die Transaktion kann nach Abschluss nicht rückgängig gemacht werden",
-        "Sagen Sie 'hohe Übertragung bestätigen', wenn Sie sicher sind"
+        "Sagen Sie 'hohen Überweisungsbetrag bestätigen', wenn Sie sicher sind"
       ]
     },
     "suspiciousAddress": {
-      "title": "Adress-Sicherheitswarnung",
+      "title": "Adresssicherheitswarnung",
       "description": "Diese Adresse zeigt verdächtige Muster.",
       "warning": "Warnung: Diese Adresse zeigt verdächtige Muster.",
       "recommendations": [
         "Bitte überprüfen Sie die Adresse erneut",
         "Kontaktieren Sie den Empfänger direkt zur Adressbestätigung",
-        "Versuchen Sie zuerst eine kleine Testübertragung"
+        "Versuchen Sie zuerst eine kleine Testüberweisung"
       ]
     }
+  },
+  "auth": {
+    "sessionExpired": "Sitzung abgelaufen",
+    "sessionExpiredMessage": "Die Sitzung wurde aus Sicherheitsgründen automatisch beendet. Bitte melden Sie sich erneut an.",
+    "login": "Anmelden",
+    "needHelp": "Benötigen Sie Hilfe?"
   },
   "languages": {
     "korean": "한국어",

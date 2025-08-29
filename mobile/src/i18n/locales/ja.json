@@ -15,7 +15,26 @@
     "error": "エラー",
     "success": "成功",
     "warning": "警告",
-    "info": "情報"
+    "info": "情報",
+    "refreshComplete": "最新のウォレット残高と取引履歴を更新しました。",
+    "refreshError": "データを更新できません。\nインターネット接続を確認してください。",
+    "addressCopied": "{{walletName}}のアドレスがクリップボードにコピーされました。",
+    "copyError": "アドレスのコピーに失敗しました。",
+    "viewTransaction": "取引を表示",
+    "newChat": "新しいチャット",
+    "typeMessage": "メッセージを入力してください...",
+    "user": "ユーザー",
+    "viewAll": "すべて表示",
+    "active": "アクティブ",
+    "thisMonthSpending": "今月の支出",
+    "thisMonthSent": "今月送信",
+    "thisMonthReceived": "今月受信",
+    "email": "メール",
+    "name": "名前",
+    "phone": "電話",
+    "preferredCurrency": "希望通貨",
+    "country": "国",
+    "logout": "ログアウト"
   },
   "navigation": {
     "home": "ホーム",
@@ -196,6 +215,12 @@
         "まず小額のテスト送金を試してください"
       ]
     }
+  },
+  "auth": {
+    "sessionExpired": "セッションが期限切れです",
+    "sessionExpiredMessage": "セキュリティのため、セッションが自動的に期限切れになりました。再度ログインしてください。",
+    "login": "ログイン",
+    "needHelp": "ヘルプが必要ですか？"
   },
   "languages": {
     "korean": "한국어",

@@ -15,7 +15,26 @@
     "error": "Error",
     "success": "Éxito",
     "warning": "Advertencia",
-    "info": "Información"
+    "info": "Información",
+    "refreshComplete": "Se han actualizado los últimos saldos de billetera e historial de transacciones.",
+    "refreshError": "No se pueden actualizar los datos.\nVerifique su conexión a Internet.",
+    "addressCopied": "La dirección {{walletName}} se ha copiado al portapapeles.",
+    "copyError": "Error al copiar la dirección.",
+    "viewTransaction": "Ver transacción",
+    "newChat": "Nuevo chat",
+    "typeMessage": "Escriba un mensaje...",
+    "user": "Usuario",
+    "viewAll": "Ver todo",
+    "active": "Activo",
+    "thisMonthSpending": "Gastos de este mes",
+    "thisMonthSent": "Enviado este mes",
+    "thisMonthReceived": "Recibido este mes",
+    "email": "Correo electrónico",
+    "name": "Nombre",
+    "phone": "Teléfono",
+    "preferredCurrency": "Moneda preferida",
+    "country": "País",
+    "logout": "Cerrar sesión"
   },
   "navigation": {
     "home": "Inicio",
@@ -196,6 +215,12 @@
         "Prueba primero una transferencia pequeña de prueba"
       ]
     }
+  },
+  "auth": {
+    "sessionExpired": "La sesión ha expirado",
+    "sessionExpiredMessage": "La sesión ha expirado automáticamente por seguridad. Por favor, inicie sesión nuevamente.",
+    "login": "Iniciar sesión",
+    "needHelp": "¿Necesita ayuda?"
   },
   "languages": {
     "korean": "한국어",

@@ -163,6 +163,7 @@ interface AppContextType {
   loadUserData: () => Promise<void>;
   loadWallets: (userId: string) => Promise<void>;
   loadTransactions: (walletId: string) => Promise<void>;
+  loadAllTransactions: (userId: string) => Promise<any>;
   createPayment: (request: any) => Promise<any>;
   createTransfer: (request: any) => Promise<any>;
   // 인증 관련 함수들
@@ -352,13 +353,25 @@ export function AppProvider({ children }: AppProviderProps) {
     }
   };
 
-  // 거래 내역 로드
+  // 거래 내역 로드 (특정 지갑)
   const loadTransactions = async (walletId: string) => {
     try {
       const response = await apiService.getWalletTransactions(walletId);
       dispatch({ type: 'SET_TRANSACTIONS', payload: response.transactions });
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: '거래 내역 로드 실패' });
+    }
+  };
+
+  // 사용자의 모든 체인 거래 내역 로드
+  const loadAllTransactions = async (userId: string) => {
+    try {
+      const response = await apiService.getUserAllTransactions(userId);
+      dispatch({ type: 'SET_TRANSACTIONS', payload: response.transactions });
+      return response;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: '전체 거래 내역 로드 실패' });
+      throw error;
     }
   };
 
@@ -863,13 +876,17 @@ export function AppProvider({ children }: AppProviderProps) {
       await AsyncStorage.setItem('user_language', languageCode);
       console.log('💾 AsyncStorage에 언어 설정 저장 완료');
       
-      // i18n 언어 변경
+      // i18n 언어 변경 (강제 적용)
       await i18n.changeLanguage(languageCode);
       console.log('🔄 i18n 언어 변경 완료');
       
       // 상태 업데이트
       dispatch({ type: 'SET_LANGUAGE', payload: languageCode });
       console.log('✅ 언어 변경 완료:', languageCode);
+      
+      // 언어 변경 후 즉시 i18n 상태 확인
+      console.log('🔍 현재 i18n 언어:', i18n.language);
+      console.log('🔍 현재 i18n 리소스:', Object.keys(i18n.store.data));
       
     } catch (error) {
       console.error('❌ 언어 변경 실패:', error);
@@ -920,14 +937,30 @@ export function AppProvider({ children }: AppProviderProps) {
       const savedLanguage = await AsyncStorage.getItem('user_language');
       if (savedLanguage) {
         console.log('💾 저장된 언어 설정 발견:', savedLanguage);
+        
+        // i18n 언어 변경 (강제 적용)
         await i18n.changeLanguage(savedLanguage);
+        console.log('🔄 i18n 언어 변경 완료:', savedLanguage);
+        
+        // 상태 업데이트
         dispatch({ type: 'SET_LANGUAGE', payload: savedLanguage });
         console.log('✅ 저장된 언어 설정 적용 완료');
+        
+        // 언어 변경 후 즉시 i18n 상태 확인
+        console.log('🔍 현재 i18n 언어:', i18n.language);
+        console.log('🔍 현재 i18n 리소스:', Object.keys(i18n.store.data));
+        
       } else {
         console.log('📱 저장된 언어 설정 없음, 기본값(ko) 사용');
+        // 기본값도 i18n에 적용
+        await i18n.changeLanguage('ko');
+        dispatch({ type: 'SET_LANGUAGE', payload: 'ko' });
       }
     } catch (error) {
       console.error('❌ 언어 설정 로드 실패:', error);
+      // 오류 발생 시 기본값 사용
+      await i18n.changeLanguage('ko');
+      dispatch({ type: 'SET_LANGUAGE', payload: 'ko' });
     }
   };
 
@@ -951,6 +984,14 @@ export function AppProvider({ children }: AppProviderProps) {
     loadSupportedChains();
   }, []);
 
+  // 사용자 인증 상태 변경 시 언어 설정 재로드
+  useEffect(() => {
+    if (state.isAuthenticated && state.user) {
+      // 사용자가 로그인한 후 저장된 언어 설정을 다시 로드
+      loadSavedLanguage();
+    }
+  }, [state.isAuthenticated, state.user]);
+
   // 인증 상태 변경 시 WebSocket 연결 관리
   useEffect(() => {
     if (state.isAuthenticated && state.user?.id) {
@@ -962,7 +1003,14 @@ export function AppProvider({ children }: AppProviderProps) {
       // CCTP 알림 핸들러 등록
       const notificationHandler = (notification: CCTPNotification) => {
         console.log('📱 CCTP 알림 수신:', notification);
-        dispatch({ type: 'SHOW_CCTP_NOTIFICATION', payload: notification });
+        
+        // 알림 유효성 검사: 필수 필드가 있는 경우에만 표시
+        if (notification && notification.title && notification.message) {
+          console.log('✅ 유효한 CCTP 알림 - 표시:', notification.title);
+          dispatch({ type: 'SHOW_CCTP_NOTIFICATION', payload: notification });
+        } else {
+          console.log('⚠️ 유효하지 않은 CCTP 알림 - 무시:', notification);
+        }
       };
       
       webSocketService.addNotificationHandler(notificationHandler);
@@ -985,6 +1033,7 @@ export function AppProvider({ children }: AppProviderProps) {
     loadUserData,
     loadWallets,
     loadTransactions,
+    loadAllTransactions,
     createPayment,
     createTransfer,
     // USDC 충전 관련 함수들

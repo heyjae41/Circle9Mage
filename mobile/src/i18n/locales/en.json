@@ -15,7 +15,26 @@
     "error": "Error",
     "success": "Success",
     "warning": "Warning",
-    "info": "Info"
+    "info": "Info",
+    "refreshComplete": "Latest wallet balance and transaction history have been loaded.",
+    "refreshError": "Unable to refresh data.\nPlease check your network connection.",
+    "addressCopied": "{{walletName}} address has been copied to clipboard.",
+    "copyError": "Failed to copy address.",
+    "viewTransaction": "View Transaction",
+    "newChat": "New Chat",
+    "typeMessage": "Type a message...",
+    "user": "User",
+    "viewAll": "View All",
+    "active": "Active",
+    "thisMonthSpending": "This Month Spending",
+    "thisMonthSent": "This Month Sent",
+    "thisMonthReceived": "This Month Received",
+    "email": "Email",
+    "name": "Name",
+    "phone": "Phone",
+    "preferredCurrency": "Preferred Currency",
+    "country": "Country",
+    "logout": "Logout"
   },
   "navigation": {
     "home": "Home",
@@ -38,7 +57,9 @@
     "crossChainSend": "Cross-chain Send",
     "selectTarget": "Send from {{chain}} to another chain?",
     "noTargetChain": "No Target Chain",
-    "needMultipleChains": "At least 2 chain wallets required for cross-chain transfers."
+    "needMultipleChains": "At least 2 chain wallets required for cross-chain transfers.",
+    "switchChain": "Switch Chain",
+    "switchTo": "Switch to {{chain}}"
   },
   "headers": {
     "circlePay": "CirclePay Global",
@@ -196,6 +217,12 @@
         "Try a small test transfer first"
       ]
     }
+  },
+  "auth": {
+    "sessionExpired": "Session Expired",
+    "sessionExpiredMessage": "Your session has been automatically expired for security reasons. Please log in again.",
+    "login": "Login",
+    "needHelp": "Need Help?"
   },
   "languages": {
     "korean": "한국어",

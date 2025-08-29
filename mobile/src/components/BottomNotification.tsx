@@ -136,7 +136,8 @@ const BottomNotification: React.FC<BottomNotificationProps> = ({
     }
   };
 
-  if (!visible || !notification) {
+  // 알림이 없거나 필수 필드가 누락된 경우 표시하지 않음
+  if (!visible || !notification || !notification.title || !notification.message) {
     return null;
   }
 

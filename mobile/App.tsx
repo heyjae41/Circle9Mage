@@ -234,17 +234,19 @@ function AppNavigatorContent() {
         onClose={hideOfflineModal}
       />
       
-      {/* CCTP 실시간 알림 */}
-      <BottomNotification
-        visible={state.cctpNotification.visible}
-        notification={state.cctpNotification.notification}
-        onClose={() => dispatch({ type: 'HIDE_CCTP_NOTIFICATION' })}
-        onPress={() => {
-          // 알림 클릭 시 거래 내역으로 이동 등의 액션
-          console.log('📱 CCTP 알림 클릭:', state.cctpNotification.notification);
-          dispatch({ type: 'HIDE_CCTP_NOTIFICATION' });
-        }}
-      />
+      {/* CCTP 실시간 알림 - 유효한 알림이 있을 때만 표시 */}
+      {state.cctpNotification.notification && (
+        <BottomNotification
+          visible={state.cctpNotification.visible}
+          notification={state.cctpNotification.notification}
+          onClose={() => dispatch({ type: 'HIDE_CCTP_NOTIFICATION' })}
+          onPress={() => {
+            // 알림 클릭 시 거래 내역으로 이동 등의 액션
+            console.log('📱 CCTP 알림 클릭:', state.cctpNotification.notification);
+            dispatch({ type: 'HIDE_CCTP_NOTIFICATION' });
+          }}
+        />
+      )}
     </>
   );
 }

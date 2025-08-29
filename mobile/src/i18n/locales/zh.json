@@ -15,43 +15,62 @@
     "error": "错误",
     "success": "成功",
     "warning": "警告",
-    "info": "信息"
+    "info": "信息",
+    "refreshComplete": "已刷新最新钱包余额和交易记录。",
+    "refreshError": "无法刷新数据。\n请检查网络连接。",
+    "addressCopied": "{{walletName}}地址已复制到剪贴板。",
+    "copyError": "地址复制失败。",
+    "viewTransaction": "查看交易",
+    "newChat": "新聊天",
+    "typeMessage": "输入消息...",
+    "user": "用户",
+    "viewAll": "查看全部",
+    "active": "活跃",
+    "thisMonthSpending": "本月支出",
+    "thisMonthSent": "本月发送",
+    "thisMonthReceived": "本月接收",
+    "email": "邮箱",
+    "name": "姓名",
+    "phone": "电话",
+    "preferredCurrency": "首选货币",
+    "country": "国家",
+    "logout": "退出登录"
   },
   "navigation": {
     "home": "首页",
     "payment": "支付",
-    "send": "转账",
+    "send": "发送",
     "deposit": "充值",
-    "history": "历史",
+    "history": "记录",
     "aiAssistant": "AI",
     "profile": "个人资料",
     "login": "登录",
     "signUp": "注册",
     "shopping": "购物",
-    "hotplace": "热门"
+    "hotplace": "热门地点"
   },
   "chains": {
     "ethereum": "以太坊",
     "base": "Base",
     "arbitrum": "Arbitrum",
     "avalanche": "Avalanche",
-    "crossChainSend": "跨链转账",
-    "selectTarget": "您想从{{chain}}转账到其他链吗？",
+    "crossChainSend": "跨链发送",
+    "selectTarget": "从{{chain}}发送到另一个链？",
     "noTargetChain": "无目标链",
-    "needMultipleChains": "跨链转账至少需要2个链钱包。"
+    "needMultipleChains": "跨链转账需要至少2个链钱包。"
   },
   "headers": {
     "circlePay": "CirclePay Global",
-    "qrPayment": "二维码支付",
-    "crossChainSend": "跨链转账",
+    "qrPayment": "QR支付",
+    "crossChainSend": "跨链发送",
     "usdcDeposit": "USDC充值",
-    "transactionHistory": "交易历史",
+    "transactionHistory": "交易记录",
     "aiAssistant": "AI助手",
-    "profileKyc": "个人资料与KYC"
+    "profileKyc": "个人资料和KYC"
   },
   "screens": {
     "home": {
-      "welcome": "您好，{{name}}！👋",
+      "welcome": "你好，{{name}}！👋",
       "subtitle": "全球跨链支付已准备就绪",
       "appTitle": "CirclePay Global",
       "appSubtitle": "全球跨链USDC支付平台",
@@ -59,8 +78,8 @@
         "title": "主要功能",
         "fastTransfer": "快速跨链转账",
         "secureUsdc": "安全USDC交易",
-        "qrPayment": "二维码支付",
-        "simpleKyc": "简单KYC验证"
+        "qrPayment": "QR码支付",
+        "simpleKyc": "简单KYC认证"
       },
       "auth": {
         "getStarted": "开始使用",
@@ -72,130 +91,185 @@
         "multiChain": "多链钱包",
         "quickActions": "快速操作",
         "manage": "钱包管理",
-        "manageDescription": "导航到设置屏幕。\n(导航功能已连接)",
-        "noWallets": "无可用钱包",
+        "manageDescription": "导航到设置屏幕。\n（导航功能已连接）",
+        "noWallets": "没有可用的钱包",
         "createWallet": "创建您的第一个钱包！"
       }
     },
     "login": {
       "title": "登录",
-      "subtitle": "欢迎回到CirclePay Global",
-      "email": "邮箱地址",
-      "pin": "PIN码",
-      "biometric": "生物识别认证",
-      "forgotPin": "忘记PIN码？",
-      "loginSuccess": "登录成功！",
-      "loginFailed": "登录失败",
-      "welcome": "欢迎！",
-      "errorMessage": "登录时发生错误。"
+      "subtitle": "CirclePay Global에 오신 것을 환영합니다",
+      "email": "이메일",
+      "password": "비밀번호",
+      "loginButton": "로그인",
+      "forgotPassword": "비밀번호를 잊으셨나요?",
+      "noAccount": "계정이 없으신가요?",
+      "signUpLink": "회원가입",
+      "loginSuccess": "로그인 성공!",
+      "loginError": "로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.",
+      "networkError": "네트워크 오류가 발생했습니다. 인터넷 연결을 확인해주세요."
     },
     "signUp": {
-      "title": "注册",
-      "subtitle": "加入CirclePay Global",
-      "firstName": "名",
-      "lastName": "姓",
-      "email": "邮箱",
-      "pin": "PIN码",
-      "confirmPin": "确认PIN码",
-      "phone": "电话号码",
-      "country": "国家",
-      "agreeTerms": "我同意服务条款",
-      "agreePrivacy": "我同意隐私政策"
+      "title": "회원가입",
+      "subtitle": "CirclePay Global 계정을 생성하세요",
+      "fullName": "전체 이름",
+      "email": "이메일",
+      "password": "비밀번호",
+      "confirmPassword": "비밀번호 확인",
+      "agreeTerms": "이용약관 및 개인정보 처리방침에 동의합니다",
+      "signUpButton": "회원가입",
+      "alreadyHaveAccount": "이미 계정이 있으신가요?",
+      "loginLink": "로그인",
+      "signUpSuccess": "회원가입 성공! 이메일을 확인하여 계정을 활성화해주세요.",
+      "signUpError": "회원가입에 실패했습니다. 입력 정보를 확인해주세요.",
+      "passwordMismatch": "비밀번호가 일치하지 않습니다.",
+      "termsRequired": "이용약관에 동의해야 합니다."
     },
-    "profile": {
-      "title": "个人资料与KYC",
-      "subtitle": "个人信息管理与身份验证",
-      "personalInfo": "个人信息",
-      "editProfile": "编辑个人资料",
-      "kycStatus": "KYC验证状态",
-      "documents": "已提交文件",
-      "loadingKyc": "正在加载KYC信息...",
-      "loadingProfile": "正在加载个人资料信息...",
-      "logout": "登出",
-      "riskScore": "风险评分：{{score}}%",
-      "language": "语言设置",
-      "selectLanguage": "选择语言"
+    "payment": {
+      "title": "QR 결제",
+      "subtitle": "QR 코드를 스캔하여 결제하세요",
+      "scanQR": "QR 코드 스캔",
+      "enterAmount": "결제 금액 입력",
+      "amount": "금액",
+      "currency": "통화",
+      "recipient": "수취인",
+      "memo": "메모",
+      "payButton": "결제하기",
+      "paymentSuccess": "결제가 완료되었습니다!",
+      "paymentError": "결제에 실패했습니다. 다시 시도해주세요.",
+      "insufficientBalance": "잔액이 부족합니다. 충전 후 다시 시도해주세요."
+    },
+    "send": {
+      "title": "송금",
+      "subtitle": "USDC를 다른 사용자에게 송금하세요",
+      "recipient": "수취인 주소",
+      "amount": "송금 금액",
+      "memo": "메모 (선택사항)",
+      "fee": "수수료",
+      "total": "총액",
+      "sendButton": "송금하기",
+      "sendSuccess": "송금이 완료되었습니다!",
+      "sendError": "송금에 실패했습니다. 다시 시도해주세요.",
+      "invalidAddress": "유효하지 않은 주소입니다. 다시 확인해주세요."
+    },
+    "deposit": {
+      "title": "USDC 충전",
+      "subtitle": "지갑에 USDC를 충전하세요",
+      "depositMethods": "충전 방법",
+      "wireTransfer": "전신환",
+      "cryptoTransfer": "암호화폐 전송",
+      "depositAddress": "충전 주소",
+      "copyAddress": "주소 복사",
+      "qrCode": "QR 코드",
+      "minimumAmount": "최소 충전 금액: 10 USDC",
+      "processingTime": "처리 시간: 1-3 영업일",
+      "depositSuccess": "충전 요청이 완료되었습니다!",
+      "depositError": "충전 요청에 실패했습니다. 다시 시도해주세요."
+    },
+    "history": {
+      "title": "거래 내역",
+      "subtitle": "모든 거래 내역을 확인하세요",
+      "allTransactions": "전체 거래",
+      "sent": "송금",
+      "received": "수신",
+      "deposits": "충전",
+      "withdrawals": "출금",
+      "payments": "결제",
+      "noTransactions": "거래 내역이 없습니다",
+      "transactionDetails": "거래 상세",
+      "status": "상태",
+      "date": "날짜",
+      "amount": "금액",
+      "fee": "수수료",
+      "hash": "트랜잭션 해시",
+      "blockNumber": "블록 번호"
     },
     "ai": {
-      "title": "AI助手",
-      "placeholder": "输入消息...",
-      "listeningIndicator": "语音识别中...",
-      "sendMessage": "发送消息",
-      "voiceInput": "语音输入",
-      "speakResponse": "语音播放"
+      "title": "AI 어시스턴트",
+      "placeholder": "메시지를 입력하세요...",
+      "listeningIndicator": "음성 인식 중...",
+      "sendMessage": "메시지 전송",
+      "voiceInput": "음성 입력",
+      "speakResponse": "음성으로 듣기"
     },
     "settings": {
-      "title": "设置",
-      "account": "账户",
-      "security": "安全",
-      "notifications": "通知",
-      "autoConvert": "自动兑换",
-      "autoConvertDesc": "支付时自动USDC转换",
-      "language": "语言",
-      "theme": "主题",
-      "themeLight": "浅色模式",
-      "support": "支持",
-      "help": "帮助",
-      "helpDesc": "常见问题和使用指南",
-      "customerSupport": "客户支持",
-      "customerSupportDesc": "24小时聊天支持",
-      "terms": "服务条款",
-      "termsDesc": "服务条款和隐私政策",
-      "rateApp": "应用评分",
-      "rateAppDesc": "在App Store评分"
+      "title": "설정",
+      "account": "계정",
+      "security": "보안",
+      "notifications": "알림",
+      "autoConvert": "자동 환전",
+      "autoConvertDesc": "결제 시 자동 USDC 변환",
+      "language": "언어",
+      "theme": "테마",
+      "themeLight": "라이트 모드",
+      "support": "지원",
+      "help": "도움말",
+      "helpDesc": "자주 묻는 질문, 사용법",
+      "customerSupport": "고객 지원",
+      "customerSupportDesc": "24시간 채팅 상담",
+      "terms": "이용약관",
+      "termsDesc": "서비스 약관 및 개인정보 처리방침",
+      "rateApp": "앱 평가",
+      "rateAppDesc": "App Store에서 평가하기"
     }
   },
   "kyc": {
     "status": {
-      "pending": "待处理",
-      "approved": "已批准",
-      "rejected": "已拒绝",
-      "review": "审核中"
+      "pending": "대기 중",
+      "approved": "승인됨",
+      "rejected": "거부됨",
+      "review": "검토 중"
     },
     "documentTypes": {
-      "passport": "护照",
-      "driverLicense": "驾驶执照",
-      "nationalId": "身份证",
-      "utilityBill": "水电费账单"
+      "passport": "여권",
+      "driverLicense": "운전면허증",
+      "nationalId": "주민등록증",
+      "utilityBill": "공과금 고지서"
     }
   },
   "transactions": {
     "status": {
-      "pending": "待处理",
-      "completed": "已完成",
-      "failed": "失败",
-      "cancelled": "已取消"
+      "pending": "대기 중",
+      "completed": "완료됨",
+      "failed": "실패",
+      "cancelled": "취소됨"
     },
     "types": {
-      "send": "发送",
-      "receive": "接收",
-      "deposit": "存款",
-      "withdrawal": "提款",
-      "payment": "支付"
+      "send": "송금",
+      "receive": "수신",
+      "deposit": "입금",
+      "withdrawal": "출금",
+      "payment": "결제"
     }
   },
   "security": {
     "highAmount": {
-      "title": "大额转账确认",
-      "description": "{{amount}} USDC是大额转账。",
-      "warning": "{{amount}} USDC是大额转账。需要额外的安全验证。",
+      "title": "고액 송금 확인",
+      "description": "{{amount}} USDC는 고액 송금입니다.",
+      "warning": "{{amount}} USDC는 고액 송금입니다. 추가 보안 확인이 필요합니다.",
       "recommendations": [
-        "请再次确认收款地址",
-        "重新确认转账目的和收款人",
-        "交易完成后无法撤销",
-        "如果确定，请说'确认大额转账'"
+        "받는 주소를 다시 한 번 확인해 주세요",
+        "송금 목적과 수취인을 재확인해 주세요",
+        "거래가 완료되면 취소할 수 없습니다",
+        "확실하다면 '고액 송금 확인'을 말씀해 주세요"
       ]
     },
     "suspiciousAddress": {
-      "title": "地址安全警告",
-      "description": "此地址显示可疑模式。",
-      "warning": "警告：此地址显示可疑模式。",
+      "title": "주소 보안 경고",
+      "description": "이 주소는 의심스러운 패턴을 보입니다.",
+      "warning": "주의: 이 주소는 의심스러운 패턴을 보입니다.",
       "recommendations": [
-        "请再次确认地址",
-        "直接联系收款人重新确认地址",
-        "先尝试小额测试转账"
+        "주소를 다시 한 번 확인해 주세요",
+        "수취인과 직접 연락하여 주소를 재확인하세요",
+        "소액으로 테스트 송금을 먼저 시도해 보세요"
       ]
     }
+  },
+  "auth": {
+    "sessionExpired": "세션이 만료되었습니다",
+    "sessionExpiredMessage": "보안을 위해 세션이 자동으로 만료되었습니다. 다시 로그인해주세요.",
+    "login": "로그인하기",
+    "needHelp": "도움이 필요하신가요?"
   },
   "languages": {
     "korean": "한국어",

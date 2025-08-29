@@ -25,6 +25,8 @@ interface ChainWalletCardProps {
   isBalanceHidden: boolean;
   onCopyAddress: (address: string, chainName: string) => void;
   onCrossChainSend: (fromChain: string, walletId: string) => void;
+  onChainSwitch?: () => void;
+  showChainSwitch?: boolean;
 }
 
 const ChainWalletCard: React.FC<ChainWalletCardProps> = ({
@@ -32,6 +34,8 @@ const ChainWalletCard: React.FC<ChainWalletCardProps> = ({
   isBalanceHidden,
   onCopyAddress,
   onCrossChainSend,
+  onChainSwitch,
+  showChainSwitch = false,
 }) => {
   const { t } = useTranslation();
 
@@ -108,10 +112,10 @@ const ChainWalletCard: React.FC<ChainWalletCardProps> = ({
           </View>
         </View>
         
-        {/* 크로스체인 송금 버튼 */}
+        {/* 체인 전환 버튼 */}
         <TouchableOpacity
           style={styles.crossChainButton}
-          onPress={handleCrossChainSend}
+          onPress={onChainSwitch || handleCrossChainSend}
         >
           <Ionicons name="swap-horizontal" size={16} color={chainConfig.colors[0]} />
         </TouchableOpacity>

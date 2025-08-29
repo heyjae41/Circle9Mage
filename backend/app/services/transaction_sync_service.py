@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, or_
 from sqlalchemy.dialects.postgresql import insert
 
 from app.models.user import Transaction, Wallet
@@ -123,6 +123,18 @@ class TransactionSyncService:
     ) -> Dict[str, Any]:
         """Circle API 거래 내역을 로컬 DB와 동기화"""
         
+        # 🔧 핵심 수정: Circle API wallet_id를 로컬 DB wallet.id로 변환
+        local_wallet_id = await self._get_local_wallet_id(wallet_id, user_id, db)
+        if not local_wallet_id:
+            print(f"❌ 로컬 지갑 ID를 찾을 수 없습니다: Circle ID={wallet_id}, User ID={user_id}")
+            return {
+                "success": False,
+                "error": f"로컬 지갑 ID를 찾을 수 없습니다: {wallet_id}",
+                "message": "지갑 정보를 찾을 수 없습니다"
+            }
+        
+        print(f"✅ wallet_id 매핑: Circle ID {wallet_id} → Local ID {local_wallet_id}")
+        
         new_count = 0
         updated_count = 0
         
@@ -132,7 +144,7 @@ class TransactionSyncService:
                 
                 # Circle API 응답을 로컬 DB 모델에 매핑
                 mapped_transaction = self._map_circle_to_local_transaction(
-                    circle_tx, user_id, wallet_id
+                    circle_tx, user_id, local_wallet_id  # 🔧 수정: wallet_id → local_wallet_id
                 )
                 
                 if not mapped_transaction:
@@ -167,11 +179,37 @@ class TransactionSyncService:
             "message": f"동기화 완료: {new_count}개 신규, {updated_count}개 업데이트"
         }
     
+    async def _get_local_wallet_id(self, circle_wallet_id: str, user_id: int, db: AsyncSession) -> Optional[int]:
+        """Circle API wallet_id를 로컬 DB wallet.id로 변환"""
+        try:
+            from sqlalchemy import select
+            from app.models.user import Wallet
+            
+            # Circle wallet_id로 로컬 지갑 찾기
+            wallet_query = select(Wallet.id).where(
+                Wallet.circle_wallet_id == circle_wallet_id,
+                Wallet.user_id == user_id,
+                Wallet.is_active == True
+            )
+            wallet_result = await db.execute(wallet_query)
+            local_wallet_id = wallet_result.scalar_one_or_none()
+            
+            if local_wallet_id:
+                print(f"✅ 지갑 ID 매핑 성공: {circle_wallet_id} → {local_wallet_id}")
+                return local_wallet_id
+            else:
+                print(f"❌ 지갑 ID 매핑 실패: {circle_wallet_id} (User: {user_id})")
+                return None
+                
+        except Exception as e:
+            print(f"❌ 지갑 ID 매핑 중 오류: {e}")
+            return None
+    
     def _map_circle_to_local_transaction(
         self, 
         circle_tx: Dict[str, Any], 
         user_id: int, 
-        wallet_id: str
+        local_wallet_id: int  # 🔧 수정: wallet_id → local_wallet_id
     ) -> Optional[Dict[str, Any]]:
         """Circle API 응답을 로컬 DB 모델에 매핑"""
         try:
@@ -191,6 +229,7 @@ class TransactionSyncService:
             
             mapped = {
                 "user_id": user_id,
+                "wallet_id": local_wallet_id,  # ✅ 지갑 ID 추가 (local_wallet_id 사용)
                 "transaction_id": circle_tx.get("id"),  # Circle 거래 ID
                 "transaction_hash": circle_tx.get("txHash"),  # 블록체인 해시
                 "transaction_type": transaction_type,
@@ -205,7 +244,7 @@ class TransactionSyncService:
                 "completed_at": self._parse_datetime(circle_tx.get("firstConfirmDate")),
                 "extra_metadata": json.dumps({
                     "circle_transaction_id": circle_tx.get("id"),
-                    "circle_wallet_id": wallet_id,
+                    "circle_wallet_id": local_wallet_id,  # ✅ local_wallet_id 사용
                     "circle_status": circle_tx.get("state"),
                     "circle_type": circle_tx.get("transactionType"),
                     "circle_operation": circle_tx.get("operation"),
@@ -281,14 +320,25 @@ class TransactionSyncService:
     ) -> str:
         """거래 데이터를 DB에 저장하거나 업데이트 (중복 방지)"""
         try:
-            # 기존 거래 확인
-            existing_query = select(Transaction).where(
-                Transaction.transaction_id == transaction_data["transaction_id"]
-            )
+            # 🔧 핵심 수정: transaction_hash 기반으로도 중복 확인 (None이 아닌 경우만)
+            transaction_hash = transaction_data.get("transaction_hash")
+            if transaction_hash:
+                existing_query = select(Transaction).where(
+                    or_(
+                        Transaction.transaction_id == transaction_data["transaction_id"],
+                        Transaction.transaction_hash == transaction_hash
+                    )
+                )
+            else:
+                # transaction_hash가 없는 경우 transaction_id만으로 확인
+                existing_query = select(Transaction).where(
+                    Transaction.transaction_id == transaction_data["transaction_id"]
+                )
             existing_result = await db.execute(existing_query)
             existing_transaction = existing_result.scalar_one_or_none()
             
             if existing_transaction:
+                print(f"🔄 기존 거래 발견: ID={existing_transaction.transaction_id}, Hash={existing_transaction.transaction_hash}")
                 # 기존 거래 업데이트
                 await self._update_existing_transaction(
                     existing_transaction, transaction_data, db
@@ -296,6 +346,8 @@ class TransactionSyncService:
                 return "updated"
             else:
                 # 새 거래 저장
+                hash_info = f", Hash={transaction_hash}" if transaction_hash else ""
+                print(f"💾 새 거래 저장: ID={transaction_data['transaction_id']}{hash_info}")
                 await self._insert_new_transaction(transaction_data, db)
                 return "new"
                 

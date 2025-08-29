@@ -374,6 +374,10 @@ class ApiService {
     return this.get<any>(`/wallets/${walletId}/transactions?limit=${limit}&offset=${offset}`);
   }
 
+  async getUserAllTransactions(userId: string, limit = 50, offset = 0) {
+    return this.get<any>(`/wallets/user/${userId}/all-transactions?limit=${limit}&offset=${offset}`);
+  }
+
   // ===================
   // 결제 관련 API
   // ===================

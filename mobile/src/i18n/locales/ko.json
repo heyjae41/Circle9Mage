@@ -15,7 +15,26 @@
     "error": "오류",
     "success": "성공",
     "warning": "경고",
-    "info": "정보"
+    "info": "정보",
+    "refreshComplete": "최신 지갑 잔액과 거래내역을 불러왔습니다.",
+    "refreshError": "데이터를 새로고침할 수 없습니다.\n네트워크 연결을 확인해주세요.",
+    "addressCopied": "{{walletName}} 주소가 클립보드에 복사되었습니다.",
+    "copyError": "주소 복사에 실패했습니다.",
+    "viewTransaction": "거래 보기",
+    "newChat": "새 채팅",
+    "typeMessage": "메시지를 입력하세요...",
+    "user": "사용자",
+    "viewAll": "전체보기",
+    "active": "활성",
+    "thisMonthSpending": "이번 달 지출",
+    "thisMonthSent": "이번 달 송금",
+    "thisMonthReceived": "이번 달 입금",
+    "email": "이메일",
+    "name": "이름",
+    "phone": "전화번호",
+    "preferredCurrency": "선호 통화",
+    "country": "국가",
+    "logout": "로그아웃"
   },
   "navigation": {
     "home": "홈",
@@ -38,7 +57,9 @@
     "crossChainSend": "크로스체인 송금",
     "selectTarget": "{{chain}}에서 다른 체인으로 송금하시겠습니까?",
     "noTargetChain": "대상 체인 없음",
-    "needMultipleChains": "크로스체인 송금을 위해서는 최소 2개 이상의 체인 지갑이 필요합니다."
+    "needMultipleChains": "크로스체인 송금을 위해서는 최소 2개 이상의 체인 지갑이 필요합니다.",
+    "switchChain": "체인 전환",
+    "switchTo": "{{chain}}로 전환"
   },
   "headers": {
     "circlePay": "CirclePay Global",
@@ -196,6 +217,12 @@
         "소액으로 테스트 송금을 먼저 시도해 보세요"
       ]
     }
+  },
+  "auth": {
+    "sessionExpired": "세션이 만료되었습니다",
+    "sessionExpiredMessage": "보안을 위해 세션이 자동으로 만료되었습니다. 다시 로그인해주세요.",
+    "login": "로그인하기",
+    "needHelp": "도움이 필요하신가요?"
   },
   "languages": {
     "korean": "한국어",

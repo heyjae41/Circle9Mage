@@ -503,18 +503,30 @@ async def get_wallet_transactions(
                     "message": "자동 동기화 실패, 기존 데이터로 응답"
                 }
         
-        # 4. 동기화 후 최신 거래 내역 조회
+        # 4. 동기화 후 최신 거래 내역 조회 (체인별 구분)
+        print(f"🔍 거래 내역 조회 디버깅:")
+        print(f"   - wallet.user_id: {wallet.user_id}")
+        print(f"   - wallet.id: {wallet.id}")
+        print(f"   - wallet.circle_wallet_id: {wallet.circle_wallet_id}")
+        
         transaction_query = select(Transaction).where(
-            Transaction.user_id == wallet.user_id
+            Transaction.user_id == wallet.user_id,
+            Transaction.wallet_id == wallet.id  # 특정 지갑(체인)의 거래만 조회
         ).order_by(Transaction.created_at.desc()).offset(offset).limit(limit)
         
         transaction_result = await db.execute(transaction_query)
         transactions = transaction_result.scalars().all()
         
-        # 5. 전체 거래 수 조회 (동기화 후)
-        total_query = select(func.count(Transaction.id)).where(Transaction.user_id == wallet.user_id)
+        # 5. 전체 거래 수 조회 (동기화 후) - 체인별
+        total_query = select(func.count(Transaction.id)).where(
+            Transaction.user_id == wallet.user_id,
+            Transaction.wallet_id == wallet.id  # 특정 지갑(체인)의 거래만 카운트
+        )
         total_result = await db.execute(total_query)
         total_transactions = total_result.scalar()
+        
+        print(f"   - 조회된 거래 수: {len(transactions)}건")
+        print(f"   - 전체 거래 수: {total_transactions}건")
         
         # 6. 응답 데이터 구성
         transaction_list = []
@@ -534,9 +546,15 @@ async def get_wallet_transactions(
                 "notes": transaction.notes
             })
         
-        # 7. 응답에 동기화 상태 포함
+        # 7. 응답에 체인 정보와 동기화 상태 포함
         response_data = {
             "wallet_id": wallet_id,
+            "wallet_info": {
+                "address": wallet.wallet_address,
+                "blockchain": wallet.chain_name,
+                "chain_name": wallet.chain_name.upper(),
+                "chain_id": wallet.chain_id
+            },
             "total_transactions": total_transactions,
             "page": {
                 "limit": limit,
@@ -560,7 +578,110 @@ async def get_wallet_transactions(
         raise
     except Exception as e:
         print(f"❌ 거래 내역 조회 실패: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"거래 내역 조회 실패: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"거래 내역 조회 실패: {str(e)}")
+
+@router.get("/user/{user_id}/all-transactions")
+async def get_user_all_transactions(
+    user_id: str,
+    limit: int = 50,
+    offset: int = 0,
+    db: AsyncSession = Depends(get_db)
+):
+    """사용자의 모든 체인 거래 내역 조회 (체인별 구분)"""
+    try:
+        from sqlalchemy import select, func
+        from app.models.user import Transaction, Wallet
+        
+        # 1. 사용자의 모든 활성 지갑 조회
+        wallets_query = select(Wallet).where(
+            Wallet.user_id == user_id,
+            Wallet.is_active == True
+        )
+        wallets_result = await db.execute(wallets_query)
+        wallets = wallets_result.scalars().all()
+        
+        if not wallets:
+            return {
+                "user_id": user_id,
+                "total_transactions": 0,
+                "chains": [],
+                "transactions": []
+            }
+        
+        # 2. 각 체인별 거래 내역 조회
+        all_transactions = []
+        chain_summary = []
+        
+        for wallet in wallets:
+            # 체인별 거래 수 조회
+            chain_count_query = select(func.count(Transaction.id)).where(
+                Transaction.wallet_id == wallet.id
+            )
+            chain_count_result = await db.execute(chain_count_query)
+            chain_transaction_count = chain_count_result.scalar()
+            
+            # 체인별 최근 거래 조회
+            chain_transactions_query = select(Transaction).where(
+                Transaction.wallet_id == wallet.id
+            ).order_by(Transaction.created_at.desc()).limit(limit)
+            
+            chain_transactions_result = await db.execute(chain_transactions_query)
+            chain_transactions = chain_transactions_result.scalars().all()
+            
+            # 체인 요약 정보
+            chain_summary.append({
+                "chain": wallet.chain_name,
+                "chain_name": wallet.chain_name.upper(),
+                "chain_id": wallet.chain_id,
+                "wallet_address": wallet.wallet_address,
+                "transaction_count": chain_transaction_count
+            })
+            
+            # 체인별 거래 내역
+            for transaction in chain_transactions:
+                all_transactions.append({
+                    "transactionId": transaction.transaction_id,
+                    "type": transaction.transaction_type,
+                    "amount": float(transaction.amount),
+                    "currency": transaction.currency,
+                    "status": transaction.status,
+                    "fromAddress": transaction.source_address,
+                    "toAddress": transaction.target_address,
+                    "transactionHash": transaction.transaction_hash,
+                    "createdAt": transaction.created_at.isoformat() if transaction.created_at else None,
+                    "completedAt": transaction.completed_at.isoformat() if transaction.completed_at else None,
+                    "merchantName": transaction.merchant_name,
+                    "notes": transaction.notes,
+                    "chain": wallet.chain_name,
+                    "chain_name": wallet.chain_name.upper(),
+                    "wallet_address": wallet.wallet_address
+                })
+        
+        # 3. 전체 거래를 시간순으로 정렬
+        all_transactions.sort(key=lambda x: x["createdAt"], reverse=True)
+        
+        # 4. 페이지네이션 적용
+        total_transactions = len(all_transactions)
+        paginated_transactions = all_transactions[offset:offset + limit]
+        
+        response_data = {
+            "user_id": user_id,
+            "total_transactions": total_transactions,
+            "chains": chain_summary,
+            "page": {
+                "limit": limit,
+                "offset": offset,
+                "has_more": offset + limit < total_transactions
+            },
+            "transactions": paginated_transactions
+        }
+        
+        print(f"✅ 사용자 전체 거래 내역 조회 완료: 총 {total_transactions}건, 체인 수: {len(chain_summary)}")
+        return response_data
+        
+    except Exception as e:
+        print(f"❌ 사용자 전체 거래 내역 조회 실패: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"사용자 전체 거래 내역 조회 실패: {str(e)}") 
 
 @router.post("/{wallet_id}/sync-transactions")
 async def sync_wallet_transactions(

@@ -373,9 +373,15 @@ export default function SignUpScreen() {
               style={styles.textInput}
               placeholder="••••••"
               value={formData.pin}
-              onChangeText={(text) => setFormData({...formData, pin: text})}
+              onChangeText={(text) => {
+                console.log('🔍 PIN 입력 변경:', text, '길이:', text.length);
+                setFormData({...formData, pin: text});
+              }}
+              onFocus={() => console.log('🔍 PIN 입력 포커스')}
+              onBlur={() => console.log('🔍 PIN 입력 블러')}
               secureTextEntry
               maxLength={20}
+              keyboardType="number-pad"
             />
           </View>
         </View>
@@ -388,9 +394,15 @@ export default function SignUpScreen() {
               style={styles.textInput}
               placeholder="••••••"
               value={formData.confirmPin}
-              onChangeText={(text) => setFormData({...formData, confirmPin: text})}
+              onChangeText={(text) => {
+                console.log('🔍 Confirm PIN 입력 변경:', text, '길이:', text.length);
+                setFormData({...formData, confirmPin: text});
+              }}
+              onFocus={() => console.log('🔍 Confirm PIN 입력 포커스')}
+              onBlur={() => console.log('🔍 Confirm PIN 입력 블러')}
               secureTextEntry
               maxLength={20}
+              keyboardType="number-pad"
             />
           </View>
         </View>

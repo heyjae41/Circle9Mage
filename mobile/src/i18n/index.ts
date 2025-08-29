@@ -39,8 +39,15 @@ i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: defaultLanguage, // 기기 언어 또는 한국어 기본
+    lng: 'en', // 기본값을 영어로 고정 (사용자 선택 언어는 AppContext에서 관리)
     fallbackLng: 'en', // 번역이 없을 경우 영어로 폴백
+    
+    // React Native 호환성 설정
+    compatibilityJSON: 'v3',
+    
+    // 추가 호환성 설정
+    pluralSeparator: '_',
+    contextSeparator: '_',
     
     interpolation: {
       escapeValue: false, // React에서는 XSS 보호가 기본 제공됨

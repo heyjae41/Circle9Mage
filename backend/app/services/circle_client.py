@@ -571,14 +571,81 @@ class CircleCCTPService(CircleAPIClient):
     """Circle Cross-Chain Transfer Protocol 서비스"""
     
     def _get_usdc_token_id(self, chain: str) -> str:
-        """체인별 USDC 토큰 ID 반환"""
-        token_mapping = {
+        """체인별 USDC 토큰 ID 반환 (Circle 공식 문서 기준)"""
+        
+        # 🧪 테스트 환경 (Sandbox) - Sepolia/Testnet
+        testnet_token_mapping = {
             "ethereum": "5797fbd6-3795-519d-84ca-ec4c5f80c3b1",  # ETH-SEPOLIA USDC
-            "base": "7bf22cd8-5d13-5b8e-9fc6-12e5b15e93e5",     # BASE-SEPOLIA USDC
-            "arbitrum": "8c4d5f7e-6a9b-4e2f-8d3c-1a7b9e0f5c2d", # ARB-SEPOLIA USDC (예시)
-            "avalanche": "9d5e6f8f-7b0c-5f3e-9e4d-2b8c0f1e6d3e" # AVAX-FUJI USDC (예시)
+            "base": "bdf128b4-827b-5267-8f9e-243694989b5f",     # BASE-SEPOLIA USDC (수정됨)
+            "arbitrum": "4b8daacc-5f47-5909-a3ba-30d171ebad98",  # ARB-SEPOLIA USDC
+            "avalanche": "ff47a560-9795-5b7c-adfc-8f47dad9e06a", # AVAX-FUJI USDC
+            "polygon": "36b6931a-873a-56a8-8a27-b706b17104ee",   # MATIC-AMOY USDC
+            "solana": "8fb3cadb-0ef4-573d-8fcd-e194f961c728"     # SOL-DEVNET USDC
         }
-        return token_mapping.get(chain.lower(), token_mapping["ethereum"])
+        
+        # 🚀 운영 환경 (Production) - Mainnet
+        mainnet_token_mapping = {
+            "ethereum": "b037d751-fb22-5f0d-bae6-47373e7ae3e3",  # ETH Mainnet USDC
+            "base": "915ce944-32df-5df5-a6b1-daa9b5069f96",     # BASE Mainnet USDC
+            "arbitrum": "c87ffcb4-e2cf-5e67-84c6-388c965d2a66",  # ARB Mainnet USDC
+            "avalanche": "7efdfdbf-1799-5089-a588-31beb97ba755", # AVAX Mainnet USDC
+            "polygon": "db6905b9-8bcd-5537-8b08-f5548bdf7925",   # MATIC Mainnet USDC
+            "solana": "33ca4ef6-2500-5d79-82bf-e3036139cc29"     # SOL Mainnet USDC
+        }
+        
+        # 환경에 따라 적절한 매핑 선택 (기본값: 테스트 환경)
+        current_mapping = testnet_token_mapping
+        
+        # 운영 환경 감지 (환경변수로 제어 가능)
+        if hasattr(self, 'settings') and hasattr(self.settings, 'environment'):
+            if self.settings.environment == 'production':
+                current_mapping = mainnet_token_mapping
+                print(f"🚀 운영 환경 Token ID 사용: {chain}")
+            else:
+                print(f"🧪 테스트 환경 Token ID 사용: {chain}")
+        
+        return current_mapping.get(chain.lower(), current_mapping["ethereum"])
+    
+    def _extract_error_code(self, error_str: str) -> str:
+        """오류 문자열에서 HTTP 상태 코드 추출"""
+        import re
+        # HTTP 상태 코드 패턴 매칭 (예: 404, 401, 500 등)
+        status_match = re.search(r'(\d{3})', error_str)
+        if status_match:
+            return status_match.group(1)
+        return "UNKNOWN"
+    
+    def _get_error_suggestions(self, error_str: str) -> List[str]:
+        """오류 코드에 따른 해결 제안사항 반환"""
+        suggestions = []
+        
+        if "404" in error_str:
+            suggestions.extend([
+                "Circle API 엔드포인트 경로를 확인하세요",
+                "토큰 ID가 올바른지 확인하세요",
+                "지갑 ID가 유효한지 확인하세요"
+            ])
+        elif "401" in error_str:
+            suggestions.extend([
+                "Circle API 키가 유효한지 확인하세요",
+                "API 키가 만료되지 않았는지 확인하세요",
+                "Sandbox/Production 환경 설정을 확인하세요"
+            ])
+        elif "400" in error_str:
+            suggestions.extend([
+                "요청 파라미터가 올바른지 확인하세요",
+                "Entity Secret이 올바르게 암호화되었는지 확인하세요",
+                "송금 금액이 최소/최대 제한을 벗어나지 않았는지 확인하세요"
+            ])
+        elif "403" in error_str:
+            suggestions.extend([
+                "Circle 개발자 계정 권한을 확인하세요",
+                "API 키에 적절한 권한이 부여되었는지 확인하세요"
+            ])
+        else:
+            suggestions.append("Circle 개발자 콘솔에서 API 상태를 확인하세요")
+        
+        return suggestions
     
     async def create_cross_chain_transfer(
         self,
@@ -655,34 +722,31 @@ class CircleCCTPService(CircleAPIClient):
             else:
                 print(f"❌ 기타 오류: {error_str}")
             
-            # Mock 응답으로 대체 (Circle API 응답 형식에 맞춰 수정)
-            mock_response = {
-                "data": {
-                    "id": f"transfer_{uuid.uuid4()}",
-                    "state": "PENDING_RISK_SCREENING",  # Circle API 상태 형식
-                    "walletId": source_wallet_id,
-                    "destinationAddress": target_address,
-                    "amounts": [amount],
-                    "createDate": datetime.utcnow().isoformat() + "Z",
-                    "error": f"CCTP_API_FALLBACK: {str(api_error)}"
-                }
+            # API 실패 시 상세 오류 정보와 함께 예외 발생
+            error_detail = {
+                "error_type": "CCTP_API_FAILED",
+                "error_code": self._extract_error_code(error_str),
+                "error_message": str(api_error),
+                "request_details": {
+                    "source_chain": source_chain,
+                    "target_chain": target_chain,
+                    "amount": amount,
+                    "wallet_id": source_wallet_id,
+                    "target_address": target_address
+                },
+                "suggestions": self._get_error_suggestions(error_str)
             }
-            print(f"🔄 CCTP Mock 응답으로 대체: {mock_response}")
-            return mock_response
+            
+            print(f"❌ CCTP API 실패 - 상세 오류: {error_detail}")
+            raise Exception(f"CCTP API 호출 실패: {str(api_error)}")
     
     async def get_transfer_status(self, transfer_id: str) -> Dict[str, Any]:
         """전송 상태 조회"""
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "id": transfer_id,
-                    "status": "complete",
-                    "transactionHash": f"0x{uuid.uuid4().hex}"
-                }
-            }
-        
-        return await self._make_request("GET", f"/v1/transfers/{transfer_id}")
+        try:
+            return await self._make_request("GET", f"/v1/transfers/{transfer_id}")
+        except Exception as e:
+            print(f"❌ 전송 상태 조회 실패: {str(e)}")
+            raise Exception(f"전송 상태 조회 실패: {str(e)}")
 
 class CirclePaymasterService(CircleAPIClient):
     """Circle Paymaster 서비스"""
@@ -710,16 +774,11 @@ class CirclePaymasterService(CircleAPIClient):
             }
         }
         
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "userOperationHash": f"0x{uuid.uuid4().hex}",
-                    "status": "confirmed"
-                }
-            }
-        
-        return await self._make_request("POST", "/v1/w3s/userOperations", data)
+        try:
+            return await self._make_request("POST", "/v1/w3s/userOperations", data)
+        except Exception as e:
+            print(f"❌ User Operation 생성 실패: {str(e)}")
+            raise Exception(f"User Operation 생성 실패: {str(e)}")
 
 class CircleComplianceService(CircleAPIClient):
     """Circle Compliance Engine 서비스"""
@@ -743,17 +802,11 @@ class CircleComplianceService(CircleAPIClient):
             }
         }
         
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "screeningResult": "approved",
-                    "riskScore": 0.1,
-                    "reasons": []
-                }
-            }
-        
-        return await self._make_request("POST", "/v1/compliance/screen", data)
+        try:
+            return await self._make_request("POST", "/v1/compliance/screen", data)
+        except Exception as e:
+            print(f"❌ 거래 스크리닝 실패: {str(e)}")
+            raise Exception(f"거래 스크리닝 실패: {str(e)}")
 
 class CircleMintService(CircleAPIClient):
     """Circle Mint 서비스 - USDC 충전 및 출금"""
@@ -775,24 +828,11 @@ class CircleMintService(CircleAPIClient):
             "idempotencyKey": idempotency_key or str(uuid.uuid4())
         }
         
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "id": str(uuid.uuid4()),
-                    "status": "pending",
-                    "description": f"MOCK BANK ****{account_number[-4:]}",
-                    "trackingRef": f"CIR{uuid.uuid4().hex[:8].upper()}",
-                    "fingerprint": str(uuid.uuid4()),
-                    "virtualAccountEnabled": True,
-                    "billingDetails": billing_details,
-                    "bankAddress": bank_address,
-                    "createDate": datetime.utcnow().isoformat(),
-                    "updateDate": datetime.utcnow().isoformat()
-                }
-            }
-        
-        return await self._make_request("POST", "/v1/businessAccount/banks/wires", data)
+        try:
+            return await self._make_request("POST", "/v1/businessAccount/banks/wires", data)
+        except Exception as e:
+            print(f"❌ 은행 계좌 연결 실패: {str(e)}")
+            raise Exception(f"은행 계좌 연결 실패: {str(e)}")
     
     async def get_wire_instructions(
         self,
@@ -802,32 +842,11 @@ class CircleMintService(CircleAPIClient):
         """은행 송금 지침 조회"""
         params = {"currency": currency}
         
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "trackingRef": f"CIR{uuid.uuid4().hex[:8].upper()}",
-                    "beneficiary": {
-                        "name": "CIRCLE INTERNET FINANCIAL INC",
-                        "address1": "1 MAIN STREET",
-                        "address2": "SUITE 1"
-                    },
-                    "virtualAccountEnabled": True,
-                    "beneficiaryBank": {
-                        "name": "CIRCLE DEVELOPMENT BANK",
-                        "address": "1 MONEY STREET",
-                        "city": "NEW YORK",
-                        "postalCode": "10001",
-                        "country": "US",
-                        "swiftCode": "CIRCDEV1",
-                        "routingNumber": "999999999",
-                        "accountNumber": f"12345{uuid.uuid4().hex[:8]}",
-                        "currency": currency
-                    }
-                }
-            }
-        
-        return await self._make_request("GET", f"/v1/businessAccount/banks/wires/{bank_account_id}/instructions", params=params)
+        try:
+            return await self._make_request("GET", f"/v1/businessAccount/banks/wires/{bank_account_id}/instructions", params=params)
+        except Exception as e:
+            print(f"❌ 은행 송금 지침 조회 실패: {str(e)}")
+            raise Exception(f"은행 송금 지침 조회 실패: {str(e)}")
     
     async def create_deposit_address(
         self,
@@ -840,64 +859,35 @@ class CircleMintService(CircleAPIClient):
             "chain": chain
         }
         
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            # 유효한 이더리움 주소 생성
-            mock_address = f"0x{uuid.uuid4().hex[:40]}"
-            return {
-                "data": {
-                    "id": str(uuid.uuid4()),
-                    "address": mock_address,
-                    "currency": currency,
-                    "chain": chain
-                }
-            }
-        
-        return await self._make_request("POST", "/v1/businessAccount/wallets/addresses/deposit", data)
+        try:
+            return await self._make_request("POST", "/v1/businessAccount/wallets/addresses/deposit", data)
+        except Exception as e:
+            print(f"❌ 블록체인 입금 주소 생성 실패: {str(e)}")
+            raise Exception(f"블록체인 입금 주소 생성 실패: {str(e)}")
     
     async def list_deposit_addresses(self) -> Dict[str, Any]:
         """모든 입금 주소 조회"""
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            chains = ["ETH", "BASE", "ARB", "MATIC", "AVAX"]
-            addresses = []
-            for chain in chains:
-                addresses.append({
-                    "id": str(uuid.uuid4()),
-                    "address": f"0x{uuid.uuid4().hex[:40]}",
-                    "currency": "USD",
-                    "chain": chain
-                })
-            
-            return {"data": addresses}
-        
-        return await self._make_request("GET", "/v1/businessAccount/wallets/addresses/deposit")
+        try:
+            return await self._make_request("GET", "/v1/businessAccount/wallets/addresses/deposit")
+        except Exception as e:
+            print(f"❌ 입금 주소 목록 조회 실패: {str(e)}")
+            raise Exception(f"입금 주소 목록 조회 실패: {str(e)}")
     
     async def get_account_balances(self) -> Dict[str, Any]:
         """계정 잔액 조회"""
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "available": [
-                        {
-                            "amount": "1000.00",
-                            "currency": "USD"
-                        }
-                    ],
-                    "unsettled": []
-                }
-            }
-        
-        return await self._make_request("GET", "/v1/businessAccount/balances")
+        try:
+            return await self._make_request("GET", "/v1/businessAccount/balances")
+        except Exception as e:
+            print(f"❌ 계정 잔액 조회 실패: {str(e)}")
+            raise Exception(f"계정 잔액 조회 실패: {str(e)}")
     
-    async def create_mock_wire_deposit(
+    async def create_wire_deposit(
         self,
         amount: str,
         currency: str,
         beneficiary_account_number: str
     ) -> Dict[str, Any]:
-        """모의 은행 송금 (개발 환경용)"""
+        """은행 송금 생성"""
         data = {
             "amount": {
                 "amount": amount,
@@ -908,23 +898,11 @@ class CircleMintService(CircleAPIClient):
             }
         }
         
-        # 개발 환경에서만 사용 가능
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "trackingRef": f"CIR{uuid.uuid4().hex[:8].upper()}",
-                    "amount": {
-                        "amount": amount,
-                        "currency": currency
-                    },
-                    "beneficiaryBank": {
-                        "accountNumber": beneficiary_account_number
-                    },
-                    "status": "pending"
-                }
-            }
-        
-        return await self._make_request("POST", "/v1/mocks/payments/wire", data)
+        try:
+            return await self._make_request("POST", "/v1/businessAccount/payments/wire", data)
+        except Exception as e:
+            print(f"❌ 은행 송금 생성 실패: {str(e)}")
+            raise Exception(f"은행 송금 생성 실패: {str(e)}")
     
     async def create_payout(
         self,
@@ -946,42 +924,19 @@ class CircleMintService(CircleAPIClient):
             "idempotencyKey": idempotency_key or str(uuid.uuid4())
         }
         
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "id": str(uuid.uuid4()),
-                    "amount": {
-                        "amount": amount,
-                        "currency": currency
-                    },
-                    "status": "pending",
-                    "sourceWalletId": "1000000001",
-                    "destination": {
-                        "type": "wire",
-                        "id": destination_id,
-                        "name": "MOCK BANK ****0001"
-                    },
-                    "createDate": datetime.utcnow().isoformat(),
-                    "updateDate": datetime.utcnow().isoformat()
-                }
-            }
-        
-        return await self._make_request("POST", "/v1/businessAccount/payouts", data)
+        try:
+            return await self._make_request("POST", "/v1/businessAccount/payouts", data)
+        except Exception as e:
+            print(f"❌ 외부 송금 생성 실패: {str(e)}")
+            raise Exception(f"외부 송금 생성 실패: {str(e)}")
     
     async def get_payout_status(self, payout_id: str) -> Dict[str, Any]:
         """송금 상태 조회"""
-        # 개발 환경에서는 mock 응답 반환
-        if self.settings.environment == "development":
-            return {
-                "data": {
-                    "id": payout_id,
-                    "status": "complete",
-                    "updateDate": datetime.utcnow().isoformat()
-                }
-            }
-        
-        return await self._make_request("GET", f"/v1/businessAccount/payouts/{payout_id}")
+        try:
+            return await self._make_request("GET", f"/v1/businessAccount/payouts/{payout_id}")
+        except Exception as e:
+            print(f"❌ 송금 상태 조회 실패: {str(e)}")
+            raise Exception(f"송금 상태 조회 실패: {str(e)}")
 
 # 서비스 인스턴스들
 circle_wallet_service = CircleWalletService()

@@ -15,10 +15,11 @@ import { useTranslation } from 'react-i18next';
 import { useApp } from '../contexts/AppContext';
 import { Transaction } from '../types';
 import { safeToFixed } from '../utils/formatters';
+import apiService from '../services/apiService';
 
 export default function HistoryScreen() {
   const { t } = useTranslation();
-  const { state, loadTransactions } = useApp();
+  const { state, loadTransactions, dispatch } = useApp();
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'payment' | 'transfer' | 'deposit' | 'received'>('all');
   const [syncStatus, setSyncStatus] = useState<{
@@ -53,10 +54,29 @@ export default function HistoryScreen() {
     try {
       console.log('🔄 거래 내역 새로고침 시작');
       
-      // 모든 지갑의 거래 내역 로드 (백엔드에서 자동 동기화)
+      // 모든 지갑의 거래 내역을 누적하여 로드 (백엔드에서 자동 동기화)
+      let allTransactions: Transaction[] = [];
+      
       for (const wallet of state.wallets) {
         console.log(`📱 지갑 ${wallet.walletId} 거래 내역 로드 중...`);
-        await loadTransactions(wallet.walletId);
+        try {
+          const response = await apiService.getWalletTransactions(wallet.walletId);
+          if (response.transactions && response.transactions.length > 0) {
+            console.log(`📊 지갑 ${wallet.walletId}: ${response.transactions.length}건의 거래 발견`);
+            allTransactions = [...allTransactions, ...response.transactions];
+          }
+        } catch (error) {
+          console.error(`❌ 지갑 ${wallet.walletId} 거래 내역 로드 실패:`, error);
+        }
+      }
+      
+      // 모든 거래를 한 번에 상태에 설정
+      if (allTransactions.length > 0) {
+        console.log(`✅ 총 ${allTransactions.length}건의 거래 내역 로드 완료`);
+        dispatch({ type: 'SET_TRANSACTIONS', payload: allTransactions });
+      } else {
+        console.log('📭 모든 지갑에서 거래 내역을 찾을 수 없습니다');
+        dispatch({ type: 'SET_TRANSACTIONS', payload: [] });
       }
       
       // 동기화 완료 상태 업데이트

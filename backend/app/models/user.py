@@ -70,6 +70,7 @@ class Wallet(Base):
     
     # 관계
     user = relationship("User", back_populates="wallets")
+    transactions = relationship("Transaction", back_populates="wallet")
     
     # 테이블 제약 조건
     __table_args__ = (
@@ -102,6 +103,9 @@ class Transaction(Base):
     source_address = Column(String(42))
     target_address = Column(String(42))
     
+    # 지갑 연결 정보
+    wallet_id = Column(Integer, ForeignKey("wallets.id"), nullable=True, index=True)  # 거래가 발생한 지갑
+    
     # 수수료 정보
     gas_fee = Column(Numeric(18, 6))
     service_fee = Column(Numeric(18, 6))
@@ -122,6 +126,7 @@ class Transaction(Base):
     
     # 관계
     user = relationship("User", back_populates="transactions")
+    wallet = relationship("Wallet", back_populates="transactions")
 
 class KYCDocument(Base):
     """KYC 문서 모델"""
