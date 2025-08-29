@@ -95,7 +95,7 @@ export default function HistoryScreen() {
       setSyncStatus({
         isSyncing: false,
         lastSyncTime: null,
-        syncMessage: '새로고침 중 오류가 발생했습니다',
+        syncMessage: t('common.refreshError'),
       });
     } finally {
       setRefreshing(false);
@@ -273,19 +273,19 @@ export default function HistoryScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
       <Ionicons name="receipt-outline" size={64} color="#CCC" />
-      <Text style={styles.emptyStateTitle}>{t('common.noTransactionHistory', { defaultValue: '거래 내역이 없습니다' })}</Text>
+              <Text style={styles.emptyStateTitle}>{t('common.noTransactionHistory')}</Text>
       <Text style={styles.emptyStateText}>
         {filter === 'all' ? 
-          '아직 거래 내역이 없습니다.\n아래로 당겨서 새로고침하거나\n첫 번째 결제나 송금을 시작해보세요!' :
-          filter === 'payment' ? '결제 내역이 없습니다.\n다른 탭을 확인해보세요.' :
-          filter === 'transfer' ? '송금 내역이 없습니다.\n다른 탭을 확인해보세요.' :
-          filter === 'deposit' ? '입금 내역이 없습니다.\n다른 탭을 확인해보세요.' :
-          '거래 내역이 없습니다.\n다른 탭을 확인해보세요.'
+                  t('common.emptyStateMessages.noHistory') :
+        filter === 'payment' ? t('common.emptyStateMessages.noPayment') :
+        filter === 'transfer' ? t('common.emptyStateMessages.noTransfer') :
+        filter === 'deposit' ? t('common.emptyStateMessages.noDeposit') :
+        t('common.emptyStateMessages.noTransactions')
         }
       </Text>
       <TouchableOpacity style={styles.refreshButton} onPress={onRefresh}>
         <Ionicons name="refresh" size={16} color="#007AFF" />
-        <Text style={styles.refreshButtonText}>{t('common.refresh', { defaultValue: '새로고침' })}</Text>
+                      <Text style={styles.refreshButtonText}>{t('common.refresh')}</Text>
       </TouchableOpacity>
     </View>
   );
@@ -297,7 +297,7 @@ export default function HistoryScreen() {
         <View>
           <Text style={styles.title}>{t('headers.transactionHistory')}</Text>
           <Text style={styles.subtitle}>
-            총 {filteredTransactions.length}건의 거래
+            {t('common.totalTransactions', { count: filteredTransactions.length })}
           </Text>
         </View>
         
@@ -313,7 +313,7 @@ export default function HistoryScreen() {
           onPress={() => setFilter('all')}
         >
           <Text style={[styles.filterTabText, filter === 'all' && styles.filterTabTextActive]}>
-            전체
+            {t('common.filterTabs.all')}
           </Text>
         </TouchableOpacity>
         
@@ -322,7 +322,7 @@ export default function HistoryScreen() {
           onPress={() => setFilter('payment')}
         >
           <Text style={[styles.filterTabText, filter === 'payment' && styles.filterTabTextActive]}>
-            결제
+            {t('common.filterTabs.payment')}
           </Text>
         </TouchableOpacity>
         
@@ -331,7 +331,7 @@ export default function HistoryScreen() {
           onPress={() => setFilter('transfer')}
         >
           <Text style={[styles.filterTabText, filter === 'transfer' && styles.filterTabTextActive]}>
-            송금
+            {t('common.filterTabs.transfer')}
           </Text>
         </TouchableOpacity>
         
@@ -340,7 +340,7 @@ export default function HistoryScreen() {
           onPress={() => setFilter('deposit')}
         >
           <Text style={[styles.filterTabText, filter === 'deposit' && styles.filterTabTextActive]}>
-            입금
+            {t('common.filterTabs.deposit')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -366,7 +366,7 @@ export default function HistoryScreen() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>{t('common.thisMonthSpending', { defaultValue: '이번 달 지출' })}</Text>
+              <Text style={styles.summaryLabel}>{t('common.thisMonthSpending')}</Text>
               <Text style={styles.summaryValue}>
                 ${safeToFixed(filteredTransactions
                   .filter(t => t.type === 'payment' && new Date(t.createdAt).getMonth() === new Date().getMonth())
@@ -377,7 +377,7 @@ export default function HistoryScreen() {
             <View style={styles.summaryDivider} />
             
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>{t('common.thisMonthSent', { defaultValue: '이번 달 송금' })}</Text>
+              <Text style={styles.summaryLabel}>{t('common.thisMonthSent')}</Text>
               <Text style={styles.summaryValue}>
                 ${safeToFixed(filteredTransactions
                   .filter(t => (t.type === 'transfer' || t.type === 'sent') && new Date(t.createdAt).getMonth() === new Date().getMonth())
@@ -388,7 +388,7 @@ export default function HistoryScreen() {
             <View style={styles.summaryDivider} />
             
             <View style={styles.summaryItem}>
-              <Text style={styles.summaryLabel}>{t('common.thisMonthReceived', { defaultValue: '이번 달 입금' })}</Text>
+              <Text style={styles.summaryLabel}>{t('common.thisMonthReceived')}</Text>
               <Text style={styles.summaryValue}>
                 ${safeToFixed(filteredTransactions
                   .filter(t => (t.type === 'deposit' || t.type === 'received') && new Date(t.createdAt).getMonth() === new Date().getMonth())

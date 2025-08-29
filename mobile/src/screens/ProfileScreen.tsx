@@ -78,7 +78,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert(
       t('common.logout'),
-      t('common.logoutConfirm', { defaultValue: '정말 로그아웃하시겠습니까?' }),
+      t('common.logoutConfirm'),
       [
         { text: t('common.cancel'), style: 'cancel' },
         { text: t('common.logout'), style: 'destructive', onPress: async () => {
@@ -87,7 +87,7 @@ export default function ProfileScreen() {
             // 로그아웃 성공 후 LoginScreen으로 이동
             (navigation as any).navigate('Login');
           } catch (error) {
-            Alert.alert(t('common.error'), t('common.logoutError', { defaultValue: '로그아웃 중 오류가 발생했습니다.' }));
+            Alert.alert(t('common.error'), t('common.logoutError'));
           }
         }}
       ]
@@ -98,7 +98,14 @@ export default function ProfileScreen() {
     try {
       setIsLoading(true);
       const profile = await getUserProfile();
+      console.log('🔍 프로필 데이터 로드 결과:', profile);
       setProfileData({
+        first_name: profile.firstName || profile.first_name || '',
+        last_name: profile.lastName || profile.last_name || '',
+        phone: profile.phone || '',
+        preferred_currency: profile.preferred_currency || 'USDC'
+      });
+      console.log('✅ profileData 설정 완료:', {
         first_name: profile.first_name || '',
         last_name: profile.last_name || '',
         phone: profile.phone || '',
@@ -189,9 +196,9 @@ export default function ProfileScreen() {
     
     const colors = statusColors[status as keyof typeof statusColors] || statusColors.pending;
     const statusText = {
-      pending: '검토 중',
-      approved: '승인됨',
-      rejected: '거절됨'
+      pending: t('screens.profile.kycStatus.pending'),
+      approved: t('screens.profile.kycStatus.approved'),
+      rejected: t('screens.profile.kycStatus.rejected')
     };
     
     return (
@@ -207,7 +214,7 @@ export default function ProfileScreen() {
   const renderProfileSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>{t('screens.profile.profileInfo', { defaultValue: '프로필 정보' })}</Text>
+        <Text style={styles.sectionTitle}>{t('screens.profile.profileInfo')}</Text>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => setShowEditProfile(true)}
@@ -252,25 +259,25 @@ export default function ProfileScreen() {
   const renderKYCSection = () => (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>KYC 인증</Text>
+        <Text style={styles.sectionTitle}>{t('screens.profile.kycVerification')}</Text>
         {kycStatus && renderKYCStatusBadge(kycStatus.kyc_status)}
       </View>
       
       {kycStatus ? (
         <View style={styles.kycInfo}>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>인증 레벨</Text>
-            <Text style={styles.infoValue}>Level {kycStatus.kyc_level}</Text>
+            <Text style={styles.infoLabel}>{t('screens.profile.kycLabels.authLevel')}</Text>
+            <Text style={styles.infoValue}>{t('screens.profile.kycLevel', { level: kycStatus.kyc_level })}</Text>
           </View>
           
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>문서 수</Text>
-            <Text style={styles.infoValue}>{kycStatus.documents?.length || 0}개</Text>
+            <Text style={styles.infoLabel}>{t('screens.profile.kycLabels.documentCount')}</Text>
+            <Text style={styles.infoValue}>{t('screens.profile.kycDocuments', { count: kycStatus.documents?.length || 0 })}</Text>
           </View>
           
           {kycStatus.last_updated && (
             <View style={styles.infoRow}>
-              <Text style={styles.infoLabel}>마지막 업데이트</Text>
+              <Text style={styles.infoLabel}>{t('screens.profile.kycLastUpdated')}</Text>
               <Text style={styles.infoValue}>
                 {new Date(kycStatus.last_updated).toLocaleDateString('ko-KR')}
               </Text>
@@ -279,7 +286,7 @@ export default function ProfileScreen() {
           
           {kycStatus.next_steps && kycStatus.next_steps.length > 0 && (
             <View style={styles.nextSteps}>
-              <Text style={styles.nextStepsTitle}>다음 단계:</Text>
+              <Text style={styles.nextStepsTitle}>{t('screens.profile.kycNextSteps')}:</Text>
               {kycStatus.next_steps.map((step: string, index: number) => (
                 <Text key={index} style={styles.nextStepItem}>• {step}</Text>
               ))}
@@ -292,14 +299,14 @@ export default function ProfileScreen() {
               onPress={() => setShowKYCForm(true)}
             >
               <Text style={styles.kycButtonText}>
-                {kycStatus.kyc_status === 'rejected' ? 'KYC 재제출' : 'KYC 인증 시작'}
+                {kycStatus.kyc_status === 'rejected' ? t('screens.profile.kycResubmit') : t('screens.profile.kycStart')}
               </Text>
             </TouchableOpacity>
           )}
         </View>
       ) : (
         <View style={styles.kycInfo}>
-          <Text style={styles.emptyText}>KYC 정보를 불러오는 중...</Text>
+          <Text style={styles.emptyText}>{t('screens.profile.kycLoading')}</Text>
         </View>
       )}
     </View>
@@ -309,7 +316,7 @@ export default function ProfileScreen() {
   const renderDocumentsSection = () => (
     kycStatus && kycStatus.documents && kycStatus.documents.length > 0 && (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>제출된 문서</Text>
+        <Text style={styles.sectionTitle}>{t('screens.profile.documents')}</Text>
         
         {kycStatus.documents.map((doc: any, index: number) => (
           <View key={index} style={styles.documentItem}>
@@ -325,7 +332,7 @@ export default function ProfileScreen() {
               {renderKYCStatusBadge(doc.verification_status)}
               {doc.risk_score !== null && (
                 <Text style={styles.riskScore}>
-                  위험도: {(doc.risk_score * 100).toFixed(1)}%
+                  {t('screens.profile.riskScore')}: {(doc.risk_score * 100).toFixed(1)}%
                 </Text>
               )}
             </View>
@@ -338,10 +345,10 @@ export default function ProfileScreen() {
   // 문서 타입 한국어 변환
   const getDocumentTypeName = (type: string) => {
     const typeNames = {
-      passport: '여권',
-      driver_license: '운전면허증',
-      national_id: '주민등록증',
-      utility_bill: '공과금 고지서'
+      passport: t('screens.profile.documentTypes.passport'),
+      driver_license: t('screens.profile.documentTypes.driverLicense'),
+      national_id: t('screens.profile.documentTypes.nationalId'),
+      utility_bill: t('screens.profile.documentTypes.utilityBill')
     };
     return typeNames[type as keyof typeof typeNames] || type;
   };
@@ -386,7 +393,7 @@ export default function ProfileScreen() {
               styles.languageName,
               state.currentLanguage === language.code && styles.languageNameSelected
             ]}>
-              {language.name}
+              {t(`common.languages.${language.code}`)}
             </Text>
             {state.currentLanguage === language.code && (
               <Ionicons name="checkmark-circle" size={20} color="#007AFF" />
@@ -407,39 +414,39 @@ export default function ProfileScreen() {
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setShowEditProfile(false)}>
-            <Text style={styles.modalCancel}>취소</Text>
+            <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>프로필 편집</Text>
+          <Text style={styles.modalTitle}>{t('screens.profile.kycEditProfile')}</Text>
           <TouchableOpacity onPress={handleUpdateProfile} disabled={isLoading}>
-            <Text style={styles.modalSave}>저장</Text>
+            <Text style={styles.modalSave}>{t('common.save')}</Text>
           </TouchableOpacity>
         </View>
         
         <ScrollView style={styles.modalContent}>
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>이름 *</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.profileForm.firstNameRequired')}</Text>
             <TextInput
               style={styles.input}
               value={profileData.first_name}
               onChangeText={(text) => setProfileData({...profileData, first_name: text})}
-              placeholder="이름"
+              placeholder={t('screens.profile.profileForm.firstName')}
               placeholderTextColor="#9ca3af"
             />
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>성 *</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.profileForm.lastNameRequired')}</Text>
             <TextInput
               style={styles.input}
               value={profileData.last_name}
               onChangeText={(text) => setProfileData({...profileData, last_name: text})}
-              placeholder="성"
+              placeholder={t('screens.profile.profileForm.lastName')}
               placeholderTextColor="#9ca3af"
             />
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>전화번호</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.profileForm.phoneNumber')}</Text>
             <TextInput
               style={styles.input}
               value={profileData.phone}
@@ -451,7 +458,7 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>선호 통화</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.profileForm.preferredCurrency')}</Text>
             <View style={styles.currencyContainer}>
               {['USDC', 'USD', 'KRW', 'THB'].map((currency) => (
                 <TouchableOpacity
@@ -487,23 +494,23 @@ export default function ProfileScreen() {
       <View style={styles.modalContainer}>
         <View style={styles.modalHeader}>
           <TouchableOpacity onPress={() => setShowKYCForm(false)}>
-            <Text style={styles.modalCancel}>취소</Text>
+            <Text style={styles.modalCancel}>{t('common.cancel')}</Text>
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>KYC 인증</Text>
+          <Text style={styles.modalTitle}>{t('screens.profile.kycFormTitle')}</Text>
           <TouchableOpacity onPress={handleSubmitKYC} disabled={isLoading}>
-            <Text style={styles.modalSave}>제출</Text>
+            <Text style={styles.modalSave}>{t('common.submit')}</Text>
           </TouchableOpacity>
         </View>
         
         <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
           {/* 문서 타입 선택 */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>신분증 종류 *</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.kycForm.documentType')} *</Text>
             <View style={styles.documentTypeContainer}>
               {[
-                { type: 'national_id', name: '주민등록증' },
-                { type: 'passport', name: '여권' },
-                { type: 'driver_license', name: '운전면허증' }
+                { type: 'national_id', name: t('screens.profile.documentTypes.nationalId') },
+                { type: 'passport', name: t('screens.profile.documentTypes.passport') },
+                { type: 'driver_license', name: t('screens.profile.documentTypes.driverLicense') }
               ].map((docType) => (
                 <TouchableOpacity
                   key={docType.type}
@@ -525,10 +532,10 @@ export default function ProfileScreen() {
           </View>
 
           {/* 개인 정보 */}
-          <Text style={styles.sectionSubtitle}>개인 정보</Text>
+          <Text style={styles.sectionSubtitle}>{t('screens.profile.kycForm.personalInfo')}</Text>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>전체 이름 *</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.kycForm.fullName')} *</Text>
             <TextInput
               style={styles.input}
               value={kycData.full_name}
@@ -539,7 +546,7 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>생년월일 *</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.kycForm.dateOfBirth')} *</Text>
             <TextInput
               style={styles.input}
               value={kycData.date_of_birth}
@@ -550,9 +557,9 @@ export default function ProfileScreen() {
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>성별</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.kycForm.gender')}</Text>
             <View style={styles.genderContainer}>
-              {['남성', '여성', '기타'].map((gender) => (
+              {[t('screens.profile.kycForm.male'), t('screens.profile.kycForm.female'), t('screens.profile.kycForm.other')].map((gender) => (
                 <TouchableOpacity
                   key={gender}
                   style={[
@@ -573,10 +580,10 @@ export default function ProfileScreen() {
           </View>
 
           {/* 주소 정보 (Level 2) */}
-          <Text style={styles.sectionSubtitle}>주소 정보 (선택사항 - Level 2 인증)</Text>
+          <Text style={styles.sectionSubtitle}>{t('screens.profile.kycForm.addressInfo')}</Text>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>주소</Text>
+            <Text style={styles.inputLabel}>{t('screens.profile.kycForm.address')}</Text>
             <TextInput
               style={styles.input}
               value={kycData.address_line1}

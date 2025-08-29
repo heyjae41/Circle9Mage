@@ -163,7 +163,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
             
             {data.recommendations && (
               <View style={styles.recommendationsBox}>
-                <Text style={styles.recommendationsTitle}>보안 권장사항</Text>
+                <Text style={styles.recommendationsTitle}>{t('security.recommendationsTitle')}</Text>
                 {data.recommendations.map((rec, index) => (
                   <View key={index} style={styles.recommendationItem}>
                     <Ionicons name="checkmark-circle" size={20} color="#34C759" />
@@ -174,7 +174,7 @@ const SecurityConfirmModal: React.FC<SecurityConfirmModalProps> = ({
             )}
 
             <View style={styles.additionalTips}>
-              <Text style={styles.tipsTitle}>추가 보안 팁</Text>
+              <Text style={styles.tipsTitle}>{t('security.tipsTitle')}</Text>
               <Text style={styles.tipText}>• 블록체인 거래는 되돌릴 수 없습니다</Text>
               <Text style={styles.tipText}>• 의심스럽다면 거래를 중단하세요</Text>
               <Text style={styles.tipText}>• 주소를 다시 한 번 확인해 주세요</Text>

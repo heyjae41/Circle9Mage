@@ -357,7 +357,7 @@ export default function HomeScreen() {
           style={styles.actionButton}
           onPress={() => Alert.alert(
             '쇼핑몰 준비중 🛍️',
-            'USDC 크로스체인 결제 쇼핑몰을 준비 중입니다',
+            t('screens.home.comingSoon.shopping'),
             [{ text: '확인' }]
           )}
         >
@@ -374,7 +374,7 @@ export default function HomeScreen() {
           style={styles.actionButton}
           onPress={() => Alert.alert(
             '핫플 서비스 준비중 🔥',
-            '핫플과 맛집에서 상품을 주문하고 QR로 결제할 수 있는 POS를 준비 중입니다.',
+            t('screens.home.comingSoon.hotplace'),
             [{ text: '확인' }]
           )}
         >
@@ -468,7 +468,7 @@ export default function HomeScreen() {
               </View>
               <View style={styles.transactionInfo}>
                 <Text style={styles.transactionTitle}>
-                  {transaction.type === 'payment' ? '결제' : '송금'}
+                  {transaction.type === 'payment' ? t('common.filterTabs.payment') : t('common.filterTabs.transfer')}
                   {transaction.merchantName && ` - ${transaction.merchantName}`}
                 </Text>
                 <Text style={styles.transactionDate}>

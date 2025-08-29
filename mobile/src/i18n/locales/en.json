@@ -34,7 +34,56 @@
     "phone": "Phone",
     "preferredCurrency": "Preferred Currency",
     "country": "Country",
-    "logout": "Logout"
+    "logout": "Logout",
+    "logoutConfirm": "Are you sure you want to logout?",
+    "logoutError": "An error occurred while logging out.",
+    "submit": "Submit",
+    "profileSubtitle": "Personal Information Management & Identity Verification",
+    "noTransactionHistory": "No transaction history",
+    "refresh": "Refresh",
+    "totalTransactions": "Total {{count}} transactions",
+    "filterTabs": {
+      "all": "All",
+      "payment": "Payment",
+      "transfer": "Send",
+      "deposit": "Deposit"
+    },
+    "emptyStateMessages": {
+      "noHistory": "There is no transaction history yet.\nPull down to refresh or\nstart your first payment or transfer!",
+      "noPayment": "No payment history.\nCheck other tabs.",
+      "noTransfer": "No transfer history.\nCheck other tabs.",
+      "noDeposit": "No deposit history.\nCheck other tabs.",
+      "noTransactions": "No transaction history.\nCheck other tabs."
+    },
+    "refreshError": "An error occurred while refreshing"
+  },
+  "security": {
+    "highAmount": {
+      "title": "High Amount Transfer Confirmation"
+    },
+    "suspiciousAddress": {
+      "title": "Address Security Warning"
+    },
+    "complianceFailed": {
+      "description": "This transaction violates security policy."
+    },
+    "additional": {
+      "title": "Security Verification",
+      "description": "Additional security verification is required."
+    },
+    "confirmRequired": "Confirmation Required",
+    "riskAcknowledgmentRequired": "Risk acknowledgment confirmation is required.",
+    "steps": {
+      "step1": "Step 1: Information Verification",
+      "step2": "Step 2: Security Guide",
+      "step3": "Step 3: Final Confirmation"
+    },
+    "recommendationsTitle": "Security Recommendations",
+    "tipsTitle": "Additional Security Tips",
+    "tipText": "• Please verify the address one more time",
+    "finalConfirmTitle": "Transaction Final Confirmation",
+    "finalConfirmText": "Have you confirmed all the security items above and proceed with the transaction?",
+    "confirmAndProceed": "Confirm and Proceed"
   },
   "navigation": {
     "home": "Home",
@@ -68,7 +117,8 @@
     "usdcDeposit": "USDC Deposit",
     "transactionHistory": "Transaction History",
     "aiAssistant": "AI Assistant",
-    "profileKyc": "Profile & KYC"
+    "profileKyc": "Profile & KYC",
+    "profileAndKyc": "Profile & KYC"
   },
   "screens": {
     "home": {
@@ -86,6 +136,10 @@
       "auth": {
         "getStarted": "Get Started",
         "alreadyHaveAccount": "Already have an account?"
+      },
+      "comingSoon": {
+        "shopping": "USDC cross-chain payment shopping mall is being prepared",
+        "hotplace": "POS system is being prepared where you can order products from hot places and restaurants and pay with QR."
       },
       "wallet": {
         "totalBalance": "Total Balance",
@@ -126,16 +180,80 @@
     "profile": {
       "title": "Profile & KYC",
       "subtitle": "Personal Information Management & Identity Verification",
+      "profileInfo": "Profile Information",
       "personalInfo": "Personal Information",
       "editProfile": "Edit Profile",
-      "kycStatus": "KYC Verification Status",
+      "kycVerification": "KYC Verification",
+      "kycStart": "Start KYC Verification",
+      "kycResubmit": "Resubmit KYC",
+      "kycLevel": "Level {{level}}",
+      "kycDocuments": "{{count}} documents",
+      "kycLastUpdated": "Last Updated",
+      "kycNextSteps": "Next Steps",
+      "kycLoading": "Loading KYC information...",
+      "kycEditProfile": "Edit Profile",
+      "kycFormTitle": "KYC Verification",
+      "kycSubmissionComplete": "KYC Document Submission Complete!",
+      "kycSubmissionFailed": "KYC Submission Failed",
+      "kycEstimatedTime": "Estimated Processing Time",
       "documents": "Submitted Documents",
-      "loadingKyc": "Loading KYC information...",
-      "loadingProfile": "Loading profile information...",
-      "logout": "Logout",
-      "riskScore": "Risk Score: {{score}}%",
+      "riskScore": "Risk Score",
+      "documentTypes": {
+        "passport": "Passport",
+        "driverLicense": "Driver's License",
+        "nationalId": "National ID",
+        "utilityBill": "Utility Bill"
+      },
+      "kycForm": {
+        "documentType": "Document Type",
+        "personalInfo": "Personal Information",
+        "fullName": "Full Name",
+        "dateOfBirth": "Date of Birth",
+        "gender": "Gender",
+        "male": "Male",
+        "female": "Female",
+        "other": "Other",
+        "addressInfo": "Address Information (Optional - Level 2 Verification)",
+        "address": "Address",
+        "city": "City",
+        "stateProvince": "State/Province",
+        "postalCode": "Postal Code",
+        "country": "Country",
+        "occupation": "Occupation",
+        "employer": "Employer",
+        "incomeRange": "Income Range",
+        "sourceOfFunds": "Source of Funds"
+      },
+      "profileForm": {
+        "firstName": "First Name",
+        "lastName": "Last Name",
+        "phoneNumber": "Phone Number",
+        "preferredCurrency": "Preferred Currency",
+        "firstNameRequired": "First Name *",
+        "lastNameRequired": "Last Name *"
+      },
+      "kycLabels": {
+        "authLevel": "Authentication Level",
+        "documentCount": "Document Count"
+      },
+      "kycStatus": {
+        "pending": "Under Review",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
       "language": "Language Settings",
       "selectLanguage": "Select Language"
+    },
+    "languages": {
+      "ko": "Korean",
+      "en": "English",
+      "zh": "Chinese",
+      "ar": "Arabic",
+      "fr": "French",
+      "de": "German",
+      "es": "Spanish",
+      "hi": "Hindi",
+      "ja": "Japanese"
     },
     "ai": {
       "title": "AI Assistant",

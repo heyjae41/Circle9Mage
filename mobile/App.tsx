@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // i18n 초기화 (반드시 다른 컴포넌트보다 먼저 import)
 import './src/i18n';
+import { useTranslation } from 'react-i18next';
 
 // 화면 임포트
 import HomeScreen from './src/screens/HomeScreen';
@@ -30,108 +31,108 @@ import { AppProvider, useApp } from './src/contexts/AppContext';
 const Tab = createBottomTabNavigator();
 
 // 인증된 사용자를 위한 메인 앱
-function AuthenticatedApp() {
+function AuthenticatedApp({ t }: { t: any }) {
   return (
     <Tab.Navigator
-            screenOptions={({ route }) => ({
-              tabBarIcon: ({ focused, color, size }) => {
-                let iconName: keyof typeof Ionicons.glyphMap;
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName: keyof typeof Ionicons.glyphMap;
 
-                if (route.name === 'Home') {
-                  iconName = focused ? 'home' : 'home-outline';
-                } else if (route.name === 'Payment') {
-                  iconName = focused ? 'qr-code' : 'qr-code-outline';
-                } else if (route.name === 'Send') {
-                  iconName = focused ? 'send' : 'send-outline';
-                } else if (route.name === 'Deposit') {
-                  iconName = focused ? 'add-circle' : 'add-circle-outline';
-                } else if (route.name === 'History') {
-                  iconName = focused ? 'list' : 'list-outline';
-                } else if (route.name === 'AIAssistant') {
-                  iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-                } else if (route.name === 'Profile') {
-                  iconName = focused ? 'person' : 'person-outline';
-                } else if (route.name === 'SignUp') {
-                  iconName = focused ? 'person-add' : 'person-add-outline';
-                } else {
-                  iconName = 'help-outline';
-                }
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Payment') {
+            iconName = focused ? 'qr-code' : 'qr-code-outline';
+          } else if (route.name === 'Send') {
+            iconName = focused ? 'send' : 'send-outline';
+          } else if (route.name === 'Deposit') {
+            iconName = focused ? 'add-circle' : 'add-circle-outline';
+          } else if (route.name === 'History') {
+            iconName = focused ? 'list' : 'list-outline';
+          } else if (route.name === 'AIAssistant') {
+            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
+          } else if (route.name === 'Profile') {
+            iconName = focused ? 'person' : 'person-outline';
+          } else if (route.name === 'SignUp') {
+            iconName = focused ? 'person-add' : 'person-add-outline';
+          } else {
+            iconName = 'help-outline';
+          }
 
-                return <Ionicons name={iconName} size={size} color={color} />;
-              },
-              tabBarActiveTintColor: '#007AFF',
-              tabBarInactiveTintColor: 'gray',
-              headerStyle: {
-                backgroundColor: '#007AFF',
-              },
-              headerTintColor: '#fff',
-              headerTitleStyle: {
-                fontWeight: 'bold',
-              },
-            })}
-          >
-            <Tab.Screen 
-              name="Home" 
-              component={HomeScreen} 
-              options={{
-                title: 'CirclePay',
-                headerTitle: 'CirclePay Global'
-              }}
-            />
-            <Tab.Screen 
-              name="Payment" 
-              component={PaymentScreen} 
-              options={{
-                title: '결제',
-                headerTitle: 'QR 결제'
-              }}
-            />
-            <Tab.Screen 
-              name="Send" 
-              component={SendScreen} 
-              options={{
-                title: '송금',
-                headerTitle: '크로스체인 송금'
-              }}
-            />
-            <Tab.Screen 
-              name="Deposit" 
-              component={DepositScreen} 
-              options={{
-                title: '충전',
-                headerTitle: 'USDC 충전'
-              }}
-            />
-            <Tab.Screen 
-              name="History" 
-              component={HistoryScreen} 
-              options={{
-                title: '내역',
-                headerTitle: '거래 내역'
-              }}
-            />
-            <Tab.Screen 
-              name="AIAssistant" 
-              component={AIAssistantScreen} 
-              options={{
-                title: 'AI',
-                headerTitle: 'AI 어시스턴트'
-              }}
-            />
-            <Tab.Screen 
-              name="Profile" 
-              component={ProfileScreen} 
-              options={{
-                title: '프로필',
-                headerTitle: '프로필 & KYC'
-              }}
-            />
-          </Tab.Navigator>
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: 'gray',
+        headerStyle: {
+          backgroundColor: '#007AFF',
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      })}
+    >
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={{
+          title: 'CirclePay',
+          headerTitle: 'CirclePay Global'
+        }}
+      />
+      <Tab.Screen 
+        name="Payment" 
+        component={PaymentScreen} 
+        options={{
+          title: t('navigation.payment'),
+          headerTitle: t('headers.qrPayment')
+        }}
+      />
+      <Tab.Screen 
+        name="Send" 
+        component={SendScreen} 
+        options={{
+          title: t('navigation.send'),
+          headerTitle: t('headers.crossChainSend')
+        }}
+      />
+      <Tab.Screen 
+        name="Deposit" 
+        component={DepositScreen} 
+        options={{
+          title: t('navigation.deposit'),
+          headerTitle: t('headers.usdcDeposit')
+        }}
+      />
+      <Tab.Screen 
+        name="History" 
+        component={HistoryScreen} 
+        options={{
+          title: t('navigation.history'),
+          headerTitle: t('headers.transactionHistory')
+        }}
+      />
+      <Tab.Screen 
+        name="AIAssistant" 
+        component={AIAssistantScreen} 
+        options={{
+          title: t('navigation.aiAssistant'),
+          headerTitle: t('headers.aiAssistant')
+        }}
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{
+          title: t('navigation.profile'),
+          headerTitle: t('headers.profileKyc')
+        }}
+      />
+    </Tab.Navigator>
   );
 }
 
 // 인증되지 않은 사용자를 위한 앱 (로그인/회원가입)
-function UnauthenticatedApp() {
+function UnauthenticatedApp({ t }: { t: any }) {
   const UnauthTab = createBottomTabNavigator();
   
   return (
@@ -165,16 +166,16 @@ function UnauthenticatedApp() {
         name="Login" 
         component={LoginScreen} 
         options={{
-          title: '로그인',
-          headerTitle: '로그인'
+          title: t('navigation.login'),
+          headerTitle: t('navigation.login')
         }}
       />
       <UnauthTab.Screen 
         name="SignUp" 
         component={SignUpScreen} 
         options={{
-          title: '회원가입',
-          headerTitle: '회원가입'
+          title: t('navigation.signUp'),
+          headerTitle: t('navigation.signUp')
         }}
       />
     </UnauthTab.Navigator>
@@ -183,15 +184,17 @@ function UnauthenticatedApp() {
 
 // 앱 내비게이션 관리자
 function AppNavigator() {
+  const { t } = useTranslation();
+  
   return (
     <AppProvider>
-      <AppNavigatorContent />
+      <AppNavigatorContent t={t} />
     </AppProvider>
   );
 }
 
 // AppProvider 내부에서 사용할 컴포넌트
-function AppNavigatorContent() {
+function AppNavigatorContent({ t }: { t: any }) {
   const { state, dispatch, hideTokenExpiredModal, hideOfflineModal } = useApp();
   
   // 상태 변경 로깅 (디버깅용)
@@ -215,9 +218,9 @@ function AppNavigatorContent() {
     <>
       {/* 인증 상태에 따라 다른 네비게이션 표시 */}
       {shouldShowAuthenticatedApp ? (
-        <AuthenticatedApp />
+        <AuthenticatedApp t={t} />
       ) : (
-        <UnauthenticatedApp />
+        <UnauthenticatedApp t={t} />
       )}
       
       {/* 토큰 만료 모달 */}
@@ -237,14 +240,9 @@ function AppNavigatorContent() {
       {/* CCTP 실시간 알림 - 유효한 알림이 있을 때만 표시 */}
       {state.cctpNotification.notification && (
         <BottomNotification
-          visible={state.cctpNotification.visible}
+          visible={!!state.cctpNotification.notification}
           notification={state.cctpNotification.notification}
           onClose={() => dispatch({ type: 'HIDE_CCTP_NOTIFICATION' })}
-          onPress={() => {
-            // 알림 클릭 시 거래 내역으로 이동 등의 액션
-            console.log('📱 CCTP 알림 클릭:', state.cctpNotification.notification);
-            dispatch({ type: 'HIDE_CCTP_NOTIFICATION' });
-          }}
         />
       )}
     </>
